@@ -298,8 +298,12 @@
 
   #map{height:210px;border-radius:16px;margin:14px 0;overflow:hidden;border:1px solid var(--line);}
   .eta-box{display:flex;align-items:center;gap:14px;background:var(--yellow-soft);border-radius:16px;padding:14px;margin-bottom:14px;}
-  .eta-num{font-size:30px;font-weight:800;color:#8a5a00;line-height:1;}
+  .eta-num{font-size:27px;font-weight:800;color:#8a5a00;line-height:1;white-space:nowrap;}
   .eta-label{font-size:11.5px;color:#8a5a00;font-weight:700;text-transform:uppercase;}
+  /* Zeigt an, woher die Minuten kommen: echte Straßenroute oder grobe Schätzung. */
+  .route-note{display:flex;align-items:center;gap:8px;background:#F3F6F7;border-radius:12px;
+              padding:9px 12px;font-size:12px;color:#5d7a80;font-weight:700;margin-bottom:14px;line-height:1.4;}
+  .route-note.real{background:#E8F5E9;color:#1B5E20;}
   .driver-card{display:flex;align-items:center;gap:12px;background:var(--bg);border-radius:14px;padding:11px 13px;margin-bottom:14px;}
   .driver-avatar{width:44px;height:44px;border-radius:50%;background:var(--dark);color:var(--yellow);display:flex;align-items:center;justify-content:center;font-weight:800;flex-shrink:0;}
   .driver-info b{font-size:14px;}
@@ -628,21 +632,22 @@
       <div class="eta-box">
         <div>
           <div class="eta-num" id="etaNum">--</div>
-          <div class="eta-label">Minuten bis Ankunft</div>
+          <div class="eta-label">Minuten (geschätzt)</div>
         </div>
         <div style="flex:1;font-size:13px;color:#8a5a00;" id="etaDesc">Dein Fahrer ist unterwegs zu dir.</div>
       </div>
+      <div class="route-note" id="routeNote">⏳ Route wird berechnet …</div>
       <div id="map"></div>
       <div class="driver-card">
-        <div class="driver-avatar" id="driverInitial">–</div>
+        <div class="driver-avatar" id="driverInitial">⏳</div>
         <div class="driver-info">
-          <b id="driverName">–</b>
-          <div id="driverMeta">–</div>
+          <b id="driverName">Fahrer wird zugeteilt</b>
+          <div id="driverMeta">Sobald ein Fahrer bestätigt, bekommst du Name und genaue Zeit per WhatsApp.</div>
         </div>
       </div>
       <div class="wa-bubble" id="waBubble"></div>
-      <a class="wa-btn" id="waLink" href="#" target="_blank" rel="noopener">📲 In WhatsApp öffnen</a>
-      <p class="demo-note">Live-Tracking im Demo-Tempo beschleunigt dargestellt. Der WhatsApp-Button öffnet bereits echt die Nummer 0176 2066 0723.</p>
+      <a class="wa-btn" id="waLink" href="#" target="_blank" rel="noopener">📲 Bestellung per WhatsApp senden</a>
+      <p class="demo-note">Die Zeit ist eine Schätzung aus echter Straßenroute und Küchenzeit. Verbindlich wird sie, sobald der Fahrer per WhatsApp bestätigt (0176 2066 0723).</p>
     </div>
   </div>
 </div>
@@ -899,8 +904,27 @@ const DIST = {
   'Langwedel-Verden':7.4, 'Langwedel-Langwedel':1.1, 'Langwedel-Etelsen':3.1,
   'Etelsen-Verden':9.6, 'Etelsen-Langwedel':3.1, 'Etelsen-Etelsen':1.1
 };
-const BIKE_DRIVERS=[{n:'Finn',v:'E-Bike'},{n:'Mara',v:'E-Bike'},{n:'Jonas',v:'E-Bike'}];
-const CAR_DRIVERS=[{n:'Lea',v:'Auto'},{n:'Deniz',v:'Auto'},{n:'Alex',v:'Auto'}];
+/* Echte Straßenadressen der Restaurants. Steht hier eine Adresse, wird die
+   Route ab genau diesem Punkt berechnet statt ab der Ortsmitte. Fehlt sie,
+   nimmt die App die Ortsmitte – dann ist die Zeit etwas gröber.
+   → Neue Adresse einfach hier eintragen, sonst nichts ändern. */
+const REST_ADDRESS = {
+  'berlin-doener': 'Große Straße 54, 27299 Langwedel, Deutschland'
+};
+
+/* Zubereitungszeit pro Restaurant in Minuten [von, bis].
+   Das ist der Teil, den die App nicht messen kann – trag hier ein, was in
+   deiner Küche realistisch ist. */
+const REST_PREP = {
+  'berlin-doener':    [10, 18],
+  'mcd':              [ 8, 14],
+  'imbiss-berlin':    [10, 18],
+  'pizza-hawaii':     [18, 28],
+  'burger-king':      [ 8, 14],
+  'sushi-sakura':     [20, 30],
+  'getraenke-express':[ 3,  6]
+};
+const DEFAULT_PREP = [12, 20];
 
 const WHATSAPP_NUMBER = '4917620660723';
 const EXTRA_REST_FEE = 1;
@@ -910,6 +934,11 @@ const EXTRA_REST_FEE = 1;
 let cart = { items:{}, town:null, pay:null, customerCoords:null, tip:0, cash:null };
 let activeFilter='Alle';
 let leafletMap=null, driverMarker=null, trackTimer=null;
+/* Zählt echte Minuten herunter (kein Demo-Tempo). */
+let etaTimer=null;
+/* Jede Bestellung bekommt eine Nummer. Kommt die echte Route erst an, wenn der
+   Kunde schon eine neue Bestellung gestartet hat, wird sie einfach verworfen. */
+let orderSeq=0;
 let reklaReason=null;
 
 function cartRestIds(){ return Object.keys(cart.items); }
@@ -931,6 +960,74 @@ function distToCustomer(restTown){
   if(cart.customerCoords) return haversineKm(TOWN_COORDS[restTown], cart.customerCoords);
   if(cart.town) return DIST[restTown+'-'+cart.town];
   return null;
+}
+
+/* ============================================================
+   ECHTE FAHRZEIT STATT SCHÄTZUNG
+   Die Route wird bei OSRM berechnet – demselben Routing-Dienst, der auch
+   OpenStreetMap antreibt. Er kennt die echten Straßen, Tempolimits und
+   Einbahnstraßen. Antwortet er nicht (kein Netz, Dienst überlastet), fällt
+   die App automatisch auf die alte Luftlinien-Schätzung zurück, damit eine
+   Bestellung nie hängen bleibt.
+   ============================================================ */
+const OSRM_CAR  = 'https://router.project-osrm.org/route/v1/driving';
+const OSRM_BIKE = 'https://routing.openstreetmap.de/routed-bike/route/v1/driving';
+
+const geoCache = {};   // Adresse → [lat, lng], damit wir nie doppelt fragen
+
+/* Adresse → Koordinaten (nur nötig, wenn der Kunde kein GPS erlaubt hat) */
+function geocodeAddress(query){
+  if(!query) return Promise.reject(new Error('leer'));
+  if(geoCache[query]) return Promise.resolve(geoCache[query]);
+  const url = 'https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&countrycodes=de&q='
+            + encodeURIComponent(query);
+  return fetch(url).then(r=>{
+    if(!r.ok) throw new Error('geocode '+r.status);
+    return r.json();
+  }).then(list=>{
+    if(!list || !list.length) throw new Error('nicht gefunden');
+    const c = [parseFloat(list[0].lat), parseFloat(list[0].lon)];
+    geoCache[query] = c;
+    return c;
+  });
+}
+
+/* Startpunkt eines Restaurants: echte Adresse wenn hinterlegt, sonst Ortsmitte */
+function restaurantPoint(rest){
+  const addr = REST_ADDRESS[rest.id];
+  if(!addr) return Promise.resolve(TOWN_COORDS[rest.town]);
+  return geocodeAddress(addr).catch(()=> TOWN_COORDS[rest.town]);
+}
+
+/* Echte Route über mehrere Stationen: Restaurant(s) → Kunde.
+   Liefert { km, min, real:true }. Bei Problemen wirft sie, damit der
+   Aufrufer auf die Schätzung zurückfallen kann. */
+function routeVia(points, vehicle){
+  if(!points || points.length < 2) return Promise.reject(new Error('zu wenig Punkte'));
+  const base = vehicle==='E-Bike' ? OSRM_BIKE : OSRM_CAR;
+  const coords = points.map(p=> p[1]+','+p[0]).join(';');
+  const url = base+'/'+coords+'?overview=false&alternatives=false&steps=false';
+  return fetch(url).then(r=>{
+    if(!r.ok) throw new Error('osrm '+r.status);
+    return r.json();
+  }).then(j=>{
+    const rt = j.routes && j.routes[0];
+    if(!rt || !isFinite(rt.duration)) throw new Error('osrm leer');
+    return { km: rt.distance/1000, min: rt.duration/60, real:true };
+  });
+}
+
+/* Zubereitungszeit: bei mehreren Restaurants zählt die längste Küche,
+   plus ein kleiner Aufschlag pro zusätzlichem Stopp. */
+function prepRange(ids){
+  let lo=0, hi=0;
+  ids.forEach(id=>{
+    const p = REST_PREP[id] || DEFAULT_PREP;
+    if(p[0]>lo) lo=p[0];
+    if(p[1]>hi) hi=p[1];
+  });
+  const extra = Math.max(0, ids.length-1) * 4;
+  return [lo+extra, hi+extra];
 }
 
 /* ---- Lieferadresse: Felder lesen / prüfen ---- */
@@ -1843,17 +1940,22 @@ function finalizePlaceOrder(){
   const tip = cart.tip || 0;
   const total = subtotal + fee + tip;
 
+  const orderId = ++orderSeq;
+  const orderAt = Date.now();
+
   const allSameTown = ids.every(id=> RESTAURANTS.find(x=>x.id===id).town===destTown);
-  const pool = allSameTown ? BIKE_DRIVERS : CAR_DRIVERS;
-  const driver = pool[Math.floor(Math.random()*pool.length)];
-  const speed = driver.v==='E-Bike' ? 16 : 32;
+  const vehicle = allSameTown ? 'E-Bike' : 'Auto';
+  const speed = vehicle==='E-Bike' ? 16 : 32;   // nur für die erste grobe Schätzung
 
   let farthest=0;
   ids.forEach(id=>{ const r=RESTAURANTS.find(x=>x.id===id); const d=distToCustomer(r.town); if(d>farthest) farthest=d; });
-  const prep = 11 + Math.floor(Math.random()*4);
-  const travel = Math.round(farthest/speed*60);
-  const extraStops = (ids.length-1)*4;
-  const eta = prep + travel + extraStops;
+
+  /* Erste Schätzung aus der Luftlinie: steht sofort auf dem Bildschirm.
+     Wenige Sekunden später ersetzt die echte Straßenroute diese Zahlen. */
+  const prepR = prepRange(ids);
+  const est = { km: farthest, drive: Math.round(farthest/speed*60), real:false, pending:true, lo:0, hi:0 };
+  est.lo = prepR[0] + est.drive;
+  est.hi = prepR[1] + est.drive;
 
   // Kurze, aufgeräumte Artikelliste – ein Restaurant pro Block, eine Zeile pro Gericht.
   let itemLines='';
@@ -1872,18 +1974,20 @@ function finalizePlaceOrder(){
 
   closeModal('cartOverlay');
   closeModal('reviewOverlay');
-  document.getElementById('etaNum').textContent = eta;
   const destLabel = addr.street ? (addr.street+', '+destTown) : destTown;
   document.getElementById('etaDesc').innerHTML = ids.length>1
     ? ('Dein Fahrer sammelt bei <b>'+ids.length+' Restaurants</b> ein und bringt alles zusammen zu <b>'+destLabel+'</b>.')
-    : ('Dein Fahrer ist unterwegs von <b>'+restNames[0]+'</b> zu dir: <b>'+destLabel+'</b>.');
-  document.getElementById('driverInitial').textContent = driver.n[0];
-  document.getElementById('driverName').textContent = driver.n;
-  document.getElementById('driverMeta').textContent = (driver.v==='E-Bike'?'🚲 E-Bike':'🚗 Auto')+' · '+farthest.toFixed(1).replace('.',',')+' km · '+ids.length+' Stopp'+(ids.length>1?'s':'');
+    : ('Dein Fahrer holt bei <b>'+restNames[0]+'</b> ab und bringt es zu <b>'+destLabel+'</b>.');
 
-  const now = new Date(Date.now()+eta*60000);
-  const arriveTime = now.getHours().toString().padStart(2,'0')+':'+now.getMinutes().toString().padStart(2,'0');
-  const eur = n => n.toFixed(2).replace('.',',')+' €';
+  /* Kein erfundener Fahrername mehr. Der echte Name kommt per WhatsApp zurück,
+     sobald ein Fahrer die Bestellung annimmt. */
+  document.getElementById('driverInitial').textContent = '⏳';
+  document.getElementById('driverName').textContent = 'Fahrer wird zugeteilt';
+
+  const eur   = n => n.toFixed(2).replace('.',',')+' €';
+  const kmTxt = n => n.toFixed(1).replace('.',',')+' km';
+  const clock = m => { const d = new Date(orderAt + m*60000);
+    return d.getHours().toString().padStart(2,'0')+':'+d.getMinutes().toString().padStart(2,'0'); };
 
   /* --- Kostenblock: kurz, eine Zeile pro Posten --- */
   let costBlock = 'Zwischensumme  '+eur(subtotal)+'\n'
@@ -1913,14 +2017,82 @@ function finalizePlaceOrder(){
            + (destCoords ? '🗺️ *Route öffnen* (GPS genau):\n' : '🗺️ *Route öffnen* (manuell eingegeben):\n')
            + mapsUrl;
 
-  const msg = '🧾 *BESTELLUX – NEUE BESTELLUNG*\n\n'
-            + itemLines + '\n'
-            + costBlock
-            + payLine + '\n\n'
-            + locLine + '\n\n'
-            + '🚴 '+driver.n+' ('+driver.v+') · ca. '+arriveTime+' Uhr';
-  document.getElementById('waBubble').innerHTML = '<b>Bestellux</b>'+msg.replace(/\n/g,'<br>');
-  document.getElementById('waLink').href = 'https://wa.me/'+WHATSAPP_NUMBER+'?text='+encodeURIComponent(msg);
+  /* --- Zeitblock: ehrlich als Spanne, mit der Quelle der Zahl dahinter --- */
+  function buildMsg(){
+    const routeLine = est.real
+      ? '🛣️ Echte Route: '+kmTxt(est.km)+' · '+est.drive+' Min Fahrt ('+vehicle+')'
+      : '🛣️ ca. '+kmTxt(est.km)+' Luftlinie ('+vehicle+') – Straßenroute nicht abrufbar';
+    return '🧾 *BESTELLUX – NEUE BESTELLUNG*\n\n'
+         + itemLines + '\n'
+         + costBlock
+         + payLine + '\n\n'
+         + locLine + '\n\n'
+         + '⏱️ *Geschätzt '+est.lo+'–'+est.hi+' Min* (Ankunft ca. '+clock(est.lo)+'–'+clock(est.hi)+' Uhr)\n'
+         + routeLine + '\n\n'
+         + '👉 Bitte kurz bestätigen: *Fahrername* + *echte Ankunftszeit*.';
+  }
+
+  /* Echte Minuten, die wirklich weiterlaufen – kein beschleunigtes Demo. */
+  function renderEtaNum(){
+    const gone = Math.floor((Date.now()-orderAt)/60000);
+    const lo = Math.max(0, est.lo-gone), hi = Math.max(0, est.hi-gone);
+    const n = document.getElementById('etaNum');
+    if(!n) return;
+    n.textContent = hi<=0 ? 'jetzt' : (lo<=0 ? 'bis '+hi : lo+'–'+hi);
+  }
+
+  /* Alles, was von der Zeit abhängt, wird hier an EINER Stelle geschrieben.
+     So kann die echte Route einfach noch einmal drüberschreiben. */
+  function applyEta(){
+    renderEtaNum();
+    const note = document.getElementById('routeNote');
+    if(note){
+      note.className = 'route-note'+(est.real?' real':'');
+      note.textContent = est.pending
+        ? '⏳ Echte Route wird berechnet …'
+        : (est.real
+            ? '✅ Echte Straßenroute: '+kmTxt(est.km)+' · '+est.drive+' Min Fahrt + Küchenzeit'
+            : '📏 Grobe Schätzung (Luftlinie '+kmTxt(est.km)+') – Straßenroute nicht abrufbar');
+    }
+    const meta = document.getElementById('driverMeta');
+    if(meta) meta.textContent =
+      (vehicle==='E-Bike'?'🚲 E-Bike':'🚗 Auto')+' · '+kmTxt(est.km)+' · '
+      + ids.length+' Stopp'+(ids.length>1?'s':'')+' · Ankunft ca. '+clock(est.lo)+'–'+clock(est.hi)+' Uhr';
+
+    const msg = buildMsg();
+    document.getElementById('waBubble').innerHTML = '<b>Bestellux</b>'+msg.replace(/\n/g,'<br>');
+    document.getElementById('waLink').href = 'https://wa.me/'+WHATSAPP_NUMBER+'?text='+encodeURIComponent(msg);
+  }
+
+  applyEta();
+
+  if(etaTimer) clearInterval(etaTimer);
+  etaTimer = setInterval(()=>{
+    if(orderId!==orderSeq){ clearInterval(etaTimer); return; }
+    renderEtaNum();
+  }, 15000);
+
+  /* Echte Straßenroute: Restaurant(s) → Kunde, über OSRM (kostenlos, ohne Schlüssel).
+     Geht das schief, bleibt die Luftlinien-Schätzung stehen und der Kunde sieht
+     ehrlich, dass sie grob ist. */
+  const destPoint = destCoords || TOWN_COORDS[destTown];
+  Promise.all(ids.map(id=> restaurantPoint(RESTAURANTS.find(x=>x.id===id))))
+    .then(pts=> routeVia(pts.concat([destPoint]), vehicle))
+    .then(res=>{
+      if(orderId!==orderSeq) return;          // Kunde hat schon neu bestellt
+      est.km      = res.km;
+      est.drive   = Math.max(1, Math.round(res.min) + 2*ids.length);  // +2 Min pro Abholstopp
+      est.real    = true;
+      est.pending = false;
+      est.lo      = prepR[0] + est.drive;
+      est.hi      = prepR[1] + est.drive;
+      applyEta();
+    })
+    .catch(()=>{
+      if(orderId!==orderSeq) return;
+      est.pending = false;
+      applyEta();                              // zeigt ehrlich „grobe Schätzung“
+    });
 
   openModal('confirmOverlay');
 
@@ -1940,7 +2112,7 @@ function finalizePlaceOrder(){
   const gpsBtnEl=document.getElementById('gpsBtn');
   if(gpsBtnEl){ gpsBtnEl.disabled=false; gpsBtnEl.textContent='📍 Meine Adresse per GPS finden'; }
 
-  try{ initMap(points, restObjs, destTown, eta, farthest); }
+  try{ initMap(points, restObjs, destTown, farthest); }
   catch(e){ renderFallbackTrack(document.getElementById('map'), restObjs, destTown, farthest); }
 }
 
@@ -1957,7 +2129,7 @@ function pointAlong(points, t){
   return points[points.length-1];
 }
 
-function initMap(points, restaurants, townTo, etaMinutes, farthest){
+function initMap(points, restaurants, townTo, farthest){
   const mapDiv = document.getElementById('map');
   if(trackTimer) clearInterval(trackTimer);
   let useLeaflet = (typeof L !== 'undefined');
@@ -1982,17 +2154,15 @@ function initMap(points, restaurants, townTo, etaMinutes, farthest){
   }
   if(!useLeaflet){ renderFallbackTrack(mapDiv, restaurants, townTo, farthest); }
 
-  const DEMO_MS = 40000, stepMs = 400, steps = DEMO_MS/stepMs;
+  /* Die Karte zeigt nur den Weg. Sie fasst die Minuten NICHT mehr an – die
+     Zeit oben läuft in echten Minuten, nicht im beschleunigten Demo-Tempo. */
+  const LOOP_MS = 12000, stepMs = 400, steps = LOOP_MS/stepMs;
   let step=0;
-  document.getElementById('etaNum').textContent = etaMinutes;
   trackTimer = setInterval(()=>{
-    step++;
-    const t = Math.min(step/steps,1);
+    step = (step+1) % (steps+1);
+    const t = step/steps;
     if(useLeaflet && driverMarker){ driverMarker.setLatLng(pointAlong(points, t)); }
     else { const dot = mapDiv.querySelector('.fb-driver'); if(dot) dot.style.left = (6 + t*88) + '%'; }
-    const remaining = Math.max(0, Math.round(etaMinutes*(1-t)));
-    document.getElementById('etaNum').textContent = remaining;
-    if(t>=1){ clearInterval(trackTimer); document.getElementById('etaNum').textContent='0'; }
   }, stepMs);
 }
 
