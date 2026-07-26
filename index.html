@@ -986,9 +986,29 @@ function reverseGeocode(lat, lng){
   return geocodeNominatim(lat, lng).catch(()=> geocodeBigDataCloud(lat, lng));
 }
 
-function detectGPS(){
+/* Wird der Standort automatisch (ohne Klick) abgefragt? Nur einmal pro Bestellung. */
+let gpsAutoTried = false;
+let gpsDenied = false;
+
+/* Beim ersten Öffnen des Warenkorbs den Standort von selbst anfragen,
+   damit die genaue Position IMMER in der Bestellung landet – auch wenn
+   der Kunde den GPS-Knopf gar nicht bemerkt. */
+function autoDetectGPS(){
+  if(gpsAutoTried || gpsDenied || cart.customerCoords || !navigator.geolocation) return;
+  gpsAutoTried = true;
+  if(navigator.permissions && navigator.permissions.query){
+    navigator.permissions.query({name:'geolocation'}).then(res=>{
+      if(res.state !== 'denied') detectGPS(true);
+      else gpsDenied = true;
+    }).catch(()=> detectGPS(true));
+  } else {
+    detectGPS(true);
+  }
+}
+
+function detectGPS(silent){
   if(!navigator.geolocation){
-    showToast('Dein Browser unterstützt kein GPS – bitte Adresse manuell eingeben');
+    if(!silent) showToast('Dein Browser unterstützt kein GPS – bitte Adresse manuell eingeben');
     return;
   }
   const btn = document.getElementById('gpsBtn');
@@ -1034,9 +1054,12 @@ function detectGPS(){
       });
     },
     (err)=>{
+      if(err.code===1) gpsDenied = true;
       if(btn){ btn.disabled=false; btn.textContent='📍 Meine Adresse per GPS finden'; }
       if(status){ status.style.display='none'; }
-      showToast(err.code===1 ? 'Standortzugriff verweigert – bitte Adresse manuell eingeben' : 'Standort konnte nicht ermittelt werden');
+      if(!silent){
+        showToast(err.code===1 ? 'Standortzugriff verweigert – bitte Adresse manuell eingeben' : 'Standort konnte nicht ermittelt werden');
+      }
     },
     { enableHighAccuracy:true, timeout:12000, maximumAge:60000 }
   );
@@ -1412,6 +1435,7 @@ function openCart(){
     document.getElementById('cartRestName').textContent = '';
   }
   openModal('cartOverlay');
+  if(hasItems) autoDetectGPS();
 }
 
 function changeQty(restId, key, delta){
@@ -1651,11 +1675,15 @@ function finalizePlaceOrder(){
   if(addr.extra) locLine += '   ' + addr.extra + '\n';
   locLine += '📞 Telefon: ' + addr.phone + '\n';
   if(destCoords){
-    locLine += '🗺️ Karte: https://www.google.com/maps/search/?api=1&query='
+    locLine += '🗺️ Navigation: https://www.google.com/maps/search/?api=1&query='
              + destCoords[0].toFixed(6) + ',' + destCoords[1].toFixed(6) + '\n'
-             + '   (📡 per GPS bestätigt · ' + farthest.toFixed(1).replace('.',',') + ' km entfernt)';
+             + '   📡 Per GPS bestätigt · ' + farthest.toFixed(1).replace('.',',') + ' km entfernt';
   } else {
-    locLine += '   (Entfernung ca. ' + farthest.toFixed(1).replace('.',',') + ' km)';
+    // Kein GPS erlaubt → Navigations-Link aus der getippten Adresse bauen
+    const q = [addr.street, addr.plz, destTown, 'Deutschland'].filter(Boolean).join(', ');
+    locLine += '🗺️ Navigation: https://www.google.com/maps/search/?api=1&query='
+             + encodeURIComponent(q) + '\n'
+             + '   ⚠️ Ohne GPS – Adresse wurde manuell eingetippt (ca. ' + farthest.toFixed(1).replace('.',',') + ' km)';
   }
   const msg = '✅ *Bestellux – Bestellbestätigung*\nDanke für deine Bestellung! 🙌\n\n➖➖➖➖➖➖➖➖➖➖\n'+itemLines+'➖➖➖➖➖➖➖➖➖➖\n💶 Zwischensumme: '+subtotal.toFixed(2).replace('.',',')+' €\n🚚 Liefergebühr: '+fee.toFixed(2).replace('.',',')+' €\n*Gesamt: '+total.toFixed(2).replace('.',',')+' €* ('+payMethod+' bei Lieferung)\n➖➖➖➖➖➖➖➖➖➖\n'+locLine+'\n➖➖➖➖➖➖➖➖➖➖\n🚴 Fahrer: '+driver.n+' ('+driver.v+')\n⏱️ Ankunft ca. '+arriveTime+' Uhr (in '+eta+' Min)\n\nFragen? Antworte einfach auf diese Nachricht!';
   document.getElementById('waBubble').innerHTML = '<b>Bestellux</b>'+msg.replace(/\n/g,'<br>');
@@ -1668,6 +1696,7 @@ function finalizePlaceOrder(){
   const restObjs = ids.map(id=>RESTAURANTS.find(x=>x.id===id));
 
   cart = { items:{}, town:null, pay:null, customerCoords:null };
+  gpsAutoTried = false;
   updateCartBadge();
   clearAddrFields();
   const gpsStatusEl=document.getElementById('gpsStatus');

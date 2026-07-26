@@ -3,7 +3,7 @@
    last-loaded page open instantly even on a flaky connection. It does not
    do anything with orders — those still go straight to WhatsApp. */
 
-const CACHE_NAME = 'bestellux-v3';
+const CACHE_NAME = 'bestellux-v4';
 const CORE_FILES = ['./', './index.html', './manifest.json', './icon-192.png', './icon-512.png'];
 
 self.addEventListener('install', (event) => {
@@ -24,8 +24,19 @@ self.addEventListener('activate', (event) => {
 
 self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return;
+
+  // Pages and the app files themselves are always fetched with {cache:'reload'},
+  // which bypasses the browser's own HTTP cache. Without this, a phone can keep
+  // showing a days-old version of the site after an update.
+  const url = new URL(event.request.url);
+  const isAppFile =
+    event.request.mode === 'navigate' ||
+    /\.(html|json|js)$/.test(url.pathname) ||
+    url.pathname.endsWith('/');
+  const req = isAppFile ? new Request(event.request, { cache: 'reload' }) : event.request;
+
   event.respondWith(
-    fetch(event.request)
+    fetch(req)
       .then((response) => {
         const copy = response.clone();
         caches.open(CACHE_NAME).then((cache) => cache.put(event.request, copy)).catch(() => {});
