@@ -241,7 +241,20 @@
   .field-label{font-weight:700;font-size:12px;margin:16px 0 8px;color:var(--gray);text-transform:uppercase;letter-spacing:0.5px;}
   .gps-btn{width:100%;background:var(--card);border:1.5px dashed var(--yellow-dark);color:#8a5a00;font-weight:800;font-size:12.5px;padding:11px;border-radius:12px;margin-bottom:10px;}
   .gps-btn:disabled{opacity:0.6;}
-  .gps-status{font-size:11.5px;color:#2E7D32;background:#E5F4E3;border-radius:10px;padding:8px 11px;margin:-2px 0 10px;font-weight:700;}
+  .gps-status{font-size:11.5px;color:#2E7D32;background:#E5F4E3;border-radius:10px;padding:8px 11px;margin:-2px 0 10px;font-weight:700;line-height:1.45;}
+  .gps-status.warn{color:#8a5a00;background:#FFF4D6;}
+  .addr-input{width:100%;border:1.5px solid var(--line);background:#fff;border-radius:12px;padding:11px 12px;font-size:13.5px;font-family:inherit;color:var(--dark);margin-bottom:8px;-webkit-appearance:none;}
+  .addr-input:focus{outline:none;border-color:var(--yellow-dark);box-shadow:0 0 0 3px rgba(255,184,0,.18);}
+  .addr-input::placeholder{color:#a89f8c;font-weight:600;}
+  .addr-input.missing{border-color:#E57373;background:#FFF6F5;}
+  .addr-row{display:flex;gap:8px;}
+  .addr-row #addrPlz{flex:0 0 34%;}
+  .addr-row #addrExtra{flex:1;}
+  .addr-hint{font-size:11px;color:var(--gray);margin:-2px 0 10px;line-height:1.45;}
+  .inst-step{display:flex;gap:11px;align-items:flex-start;padding:11px 0;border-bottom:1px solid var(--line);font-size:13.5px;line-height:1.5;}
+  .inst-step:last-child{border-bottom:none;}
+  .inst-num{flex:0 0 24px;height:24px;border-radius:50%;background:var(--yellow);color:var(--dark);font-weight:800;font-size:12px;display:flex;align-items:center;justify-content:center;}
+  .inst-note{background:var(--yellow-soft);border-radius:12px;padding:11px 13px;font-size:12.5px;line-height:1.5;color:#8a5a00;font-weight:600;margin-top:12px;}
   .choice-row{display:flex;gap:9px;flex-wrap:wrap;}
   .choice-pill{flex:1;min-width:95px;border:2px solid var(--line);border-radius:12px;padding:9px 10px;text-align:center;font-weight:700;font-size:13px;}
   .choice-pill.active{border-color:var(--yellow-dark);background:var(--yellow-soft);color:#8a5a00;}
@@ -506,10 +519,18 @@
         <div class="add-more-row">
           <button class="add-more-btn" onclick="closeModal('cartOverlay')">＋ Aus weiterem Restaurant hinzufügen</button>
         </div>
-        <div class="field-label">Liefergebiet</div>
-        <button type="button" class="gps-btn" id="gpsBtn" onclick="detectGPS()">📍 Standort automatisch erkennen (GPS)</button>
-        <div class="choice-row" id="townChoice"></div>
+        <div class="field-label">Lieferadresse</div>
+        <button type="button" class="gps-btn" id="gpsBtn" onclick="detectGPS()">📍 Meine Adresse per GPS finden</button>
         <div class="gps-status" id="gpsStatus" style="display:none;"></div>
+        <input class="addr-input" id="addrStreet" type="text" placeholder="Straße &amp; Hausnummer *" autocomplete="street-address" oninput="onAddrInput()">
+        <div class="addr-row">
+          <input class="addr-input" id="addrPlz" type="text" inputmode="numeric" placeholder="PLZ" autocomplete="postal-code" oninput="onAddrInput()">
+          <input class="addr-input" id="addrExtra" type="text" placeholder="Etage / Firma (optional)" oninput="onAddrInput()">
+        </div>
+        <input class="addr-input" id="addrPhone" type="tel" placeholder="Telefonnummer *" autocomplete="tel" oninput="onAddrInput()">
+        <div class="addr-hint">Deine Telefonnummer braucht der Fahrer, falls er dich nicht findet. Mit&nbsp;* markierte Felder sind Pflicht.</div>
+        <div class="field-label">Ort</div>
+        <div class="choice-row" id="townChoice"></div>
         <div class="field-label">Zahlungsart</div>
         <div class="choice-row" id="payChoice">
           <div class="choice-pill" data-pay="Bargeld" onclick="selectPay('Bargeld')">💵 Bargeld</div>
@@ -523,6 +544,21 @@
         </div>
         <button class="order-btn" id="orderBtn" onclick="placeOrder()" disabled>Bitte Ort &amp; Zahlungsart wählen</button>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- Install-Anleitung -->
+<div class="overlay" id="installHelpOverlay">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('installHelpOverlay')">✕</button>
+    <div class="modal-head">
+      <h3>📲 Bestellux installieren</h3>
+      <p>In wenigen Sekunden liegt Bestellux als App auf deinem Startbildschirm.</p>
+    </div>
+    <div class="modal-body">
+      <div id="installHelpBody"></div>
+      <button class="order-btn" style="margin-top:16px;" onclick="closeModal('installHelpOverlay')">Alles klar</button>
     </div>
   </div>
 </div>
@@ -884,9 +920,75 @@ function distToCustomer(restTown){
   return null;
 }
 
+/* ---- Lieferadresse: Felder lesen / prüfen ---- */
+function addrEl(id){ return document.getElementById(id); }
+function getAddr(){
+  return {
+    street: (addrEl('addrStreet') ? addrEl('addrStreet').value : '').trim(),
+    plz:    (addrEl('addrPlz')    ? addrEl('addrPlz').value    : '').trim(),
+    extra:  (addrEl('addrExtra')  ? addrEl('addrExtra').value  : '').trim(),
+    phone:  (addrEl('addrPhone')  ? addrEl('addrPhone').value  : '').trim()
+  };
+}
+function addrComplete(){
+  const a = getAddr();
+  return a.street.length >= 4 && /\d/.test(a.street) && a.phone.replace(/\D/g,'').length >= 6;
+}
+function clearAddrFields(){
+  ['addrStreet','addrPlz','addrExtra','addrPhone'].forEach(id=>{
+    const el = addrEl(id);
+    if(el){ el.value=''; el.classList.remove('missing'); }
+  });
+}
+function onAddrInput(){
+  const a = getAddr();
+  const s = addrEl('addrStreet'), p = addrEl('addrPhone');
+  if(s) s.classList.toggle('missing', a.street.length>0 && !(a.street.length>=4 && /\d/.test(a.street)));
+  if(p) p.classList.toggle('missing', a.phone.length>0 && a.phone.replace(/\D/g,'').length<6);
+  updateSummary();
+}
+
+/* ---- GPS-Koordinaten → echte Straßenadresse ----
+   Zuerst OpenStreetMap/Nominatim (liefert Straße + Hausnummer).
+   Falls das nicht antwortet, BigDataCloud als Reserve (liefert PLZ + Ort). */
+function geocodeNominatim(lat, lng){
+  const url = 'https://nominatim.openstreetmap.org/reverse?format=jsonv2&zoom=18&addressdetails=1'
+            + '&accept-language=de&lat='+encodeURIComponent(lat)+'&lon='+encodeURIComponent(lng);
+  return fetch(url).then(r=>{
+    if(!r.ok) throw new Error('nominatim '+r.status);
+    return r.json();
+  }).then(j=>{
+    const a = j.address || {};
+    const road = a.road || a.pedestrian || a.footway || a.residential || a.neighbourhood || '';
+    const nr   = a.house_number || '';
+    const out = {
+      street: (road + (nr ? ' ' + nr : '')).trim(),
+      plz:    a.postcode || '',
+      city:   a.city || a.town || a.village || a.municipality || a.suburb || ''
+    };
+    if(!out.street && !out.plz) throw new Error('nominatim empty');
+    return out;
+  });
+}
+function geocodeBigDataCloud(lat, lng){
+  const url = 'https://api.bigdatacloud.net/data/reverse-geocode-client?localityLanguage=de'
+            + '&latitude='+encodeURIComponent(lat)+'&longitude='+encodeURIComponent(lng);
+  return fetch(url).then(r=>{
+    if(!r.ok) throw new Error('bdc '+r.status);
+    return r.json();
+  }).then(j=>({
+    street: '',
+    plz:    j.postcode || '',
+    city:   j.city || j.locality || j.localityInfo && j.localityInfo.administrative && j.localityInfo.administrative.slice(-1)[0] && j.localityInfo.administrative.slice(-1)[0].name || ''
+  }));
+}
+function reverseGeocode(lat, lng){
+  return geocodeNominatim(lat, lng).catch(()=> geocodeBigDataCloud(lat, lng));
+}
+
 function detectGPS(){
   if(!navigator.geolocation){
-    showToast('Dein Browser unterstützt kein GPS – bitte Ort manuell wählen');
+    showToast('Dein Browser unterstützt kein GPS – bitte Adresse manuell eingeben');
     return;
   }
   const btn = document.getElementById('gpsBtn');
@@ -901,17 +1003,42 @@ function detectGPS(){
         if(d<nearestDist){ nearestDist=d; nearest=t; }
       });
       cart.town = nearest;
-      if(btn){ btn.disabled=false; btn.textContent='📍 Standort erkannt – neu ermitteln'; }
-      if(status){ status.style.display='block'; status.textContent='✅ Genaue Distanz wird ab jetzt live aus deinem GPS-Standort berechnet (~'+pos.coords.accuracy.toFixed(0)+'m genau).'; }
-      showToast('📍 Standort erkannt');
+      if(btn){ btn.disabled=false; btn.textContent='📍 Standort erneut ermitteln'; }
+      const acc = pos.coords.accuracy.toFixed(0);
+      if(status){
+        status.className='gps-status';
+        status.style.display='block';
+        status.innerHTML='📡 Standort gefunden (±'+acc+' m) – suche deine Adresse …';
+      }
       openCart();
+
+      reverseGeocode(cart.customerCoords[0], cart.customerCoords[1]).then(ad=>{
+        if(ad.street && addrEl('addrStreet') && !addrEl('addrStreet').value.trim()) addrEl('addrStreet').value = ad.street;
+        if(ad.plz    && addrEl('addrPlz')    && !addrEl('addrPlz').value.trim())    addrEl('addrPlz').value    = ad.plz;
+        const shown = [ad.street, [ad.plz, ad.city].filter(Boolean).join(' ')].filter(Boolean).join(', ');
+        if(status){
+          if(ad.street){
+            status.className='gps-status';
+            status.innerHTML='✅ Adresse erkannt: <b>'+shown+'</b><br>Bitte Hausnummer prüfen und Telefonnummer ergänzen.';
+          } else {
+            status.className='gps-status warn';
+            status.innerHTML='📡 Standort erkannt (±'+acc+' m), aber die Straße konnte nicht gelesen werden – bitte manuell eintragen.';
+          }
+        }
+        onAddrInput();
+      }).catch(()=>{
+        if(status){
+          status.className='gps-status warn';
+          status.innerHTML='📡 Standort erkannt (±'+acc+' m). Adresse konnte nicht automatisch geladen werden – bitte Straße &amp; Hausnummer eintragen.';
+        }
+      });
     },
     (err)=>{
-      if(btn){ btn.disabled=false; btn.textContent='📍 Standort automatisch erkennen (GPS)'; }
+      if(btn){ btn.disabled=false; btn.textContent='📍 Meine Adresse per GPS finden'; }
       if(status){ status.style.display='none'; }
-      showToast(err.code===1 ? 'Standortzugriff verweigert – bitte Ort manuell wählen' : 'Standort konnte nicht ermittelt werden');
+      showToast(err.code===1 ? 'Standortzugriff verweigert – bitte Adresse manuell eingeben' : 'Standort konnte nicht ermittelt werden');
     },
-    { enableHighAccuracy:true, timeout:10000, maximumAge:60000 }
+    { enableHighAccuracy:true, timeout:12000, maximumAge:60000 }
   );
 }
 
@@ -970,26 +1097,78 @@ window.addEventListener('beforeinstallprompt', (e)=>{
   if(banner && !isStandaloneNow) banner.classList.remove('hidden');
 });
 
+/* Manuelle Schritt-für-Schritt-Anleitung, je nach Browser.
+   Wird immer gezeigt, wenn der automatische Dialog nicht verfügbar ist –
+   so passiert beim Tippen auf „Installieren" nie „gar nichts". */
+function installSteps(){
+  const ua = navigator.userAgent;
+  const isAndroid = /android/i.test(ua);
+  const isSafari  = /^((?!chrome|android|crios|fxios).)*safari/i.test(ua);
+  const isFirefox = /firefox|fxios/i.test(ua);
+
+  if(isIOS && isSafari){
+    return { t:'iPhone / iPad · Safari', s:[
+      'Tippe unten in der Mitte auf das <b>Teilen-Symbol</b> ⬆️ (Viereck mit Pfeil nach oben).',
+      'Scrolle in der Liste nach unten bis <b>„Zum Home-Bildschirm"</b> und tippe darauf.',
+      'Oben rechts auf <b>„Hinzufügen"</b> tippen – fertig.'
+    ], n:'Wichtig: Auf dem iPhone geht das <b>nur in Safari</b>. In Chrome oder Firefox fehlt diese Funktion.' };
+  }
+  if(isIOS){
+    return { t:'iPhone / iPad', s:[
+      'Öffne <b>bestellux.com</b> noch einmal im Browser <b>Safari</b>.',
+      'Tippe unten auf das <b>Teilen-Symbol</b> ⬆️.',
+      'Wähle <b>„Zum Home-Bildschirm"</b> und tippe auf <b>„Hinzufügen"</b>.'
+    ], n:'Apple erlaubt das Installieren einer Web-App nur über Safari.' };
+  }
+  if(isAndroid && isFirefox){
+    return { t:'Android · Firefox', s:[
+      'Tippe oben rechts auf das <b>Menü ⋮</b>.',
+      'Wähle <b>„Installieren"</b> bzw. <b>„Zum Startbildschirm hinzufügen"</b>.',
+      'Bestätige mit <b>„Hinzufügen"</b>.'
+    ], n:'' };
+  }
+  if(isAndroid){
+    return { t:'Android · Chrome', s:[
+      'Tippe oben rechts auf das <b>Menü ⋮</b>.',
+      'Wähle <b>„App installieren"</b> oder <b>„Zum Startbildschirm hinzufügen"</b>.',
+      'Bestätige mit <b>„Installieren"</b>.'
+    ], n:'Tipp: Erscheint der Punkt nicht, lade die Seite einmal neu und warte kurz.' };
+  }
+  return { t:'Computer · Chrome oder Edge', s:[
+    'Schau oben rechts in die <b>Adressleiste</b> – dort erscheint ein kleines <b>Installations-Symbol</b> ⊕.',
+    'Alternativ: <b>Menü ⋮</b> → <b>„Bestellux installieren"</b>.',
+    'Auf <b>„Installieren"</b> klicken – die App öffnet sich dann in einem eigenen Fenster.'
+  ], n:'Safari und Firefox am Computer unterstützen das Installieren leider nicht.' };
+}
+
+function showInstallHelp(){
+  const info = installSteps();
+  let html = '<div style="font-weight:800;font-size:13px;margin-bottom:6px;">'+info.t+'</div>';
+  info.s.forEach((step,i)=>{
+    html += '<div class="inst-step"><div class="inst-num">'+(i+1)+'</div><div>'+step+'</div></div>';
+  });
+  if(info.n) html += '<div class="inst-note">💡 '+info.n+'</div>';
+  document.getElementById('installHelpBody').innerHTML = html;
+  openModal('installHelpOverlay');
+}
+
 function triggerInstall(){
+  if(isStandaloneNow){
+    showToast('Bestellux ist bereits als App geöffnet 👍');
+    dismissInstall();
+    return;
+  }
   if(deferredInstallPrompt){
     // Chrome/Android/Edge: echter Installations-Dialog
     deferredInstallPrompt.prompt();
-    deferredInstallPrompt.userChoice.finally(()=>{
-      deferredInstallPrompt = null;
-      dismissInstall();
-    });
+    deferredInstallPrompt.userChoice.then((choice)=>{
+      if(choice && choice.outcome === 'accepted'){ dismissInstall(); }
+      else { showInstallHelp(); }   // abgelehnt → Anleitung zeigen, falls doch gewollt
+    }).catch(()=>{ showInstallHelp(); }).finally(()=>{ deferredInstallPrompt = null; });
     return;
   }
-  if(isIOS){
-    // iOS/Safari hat keinen automatischen Install-Dialog – Anleitung zeigen
-    document.getElementById('installBannerTxt').innerHTML =
-      'Tippe unten auf <b>Teilen ⬆️</b> und dann auf <b>„Zum Home-Bildschirm"</b>.';
-    document.getElementById('installBtn').style.display='none';
-    return;
-  }
-  // Browser unterstützt keinen Install-Prompt (oder App ist schon installiert)
-  showToast('App ist bereits installiert oder wird von diesem Browser nicht unterstützt');
-  dismissInstall();
+  // Kein automatischer Dialog verfügbar → immer die passende Anleitung zeigen
+  showInstallHelp();
 }
 
 window.addEventListener('appinstalled', ()=>{ dismissInstall(); });
@@ -1245,12 +1424,16 @@ function changeQty(restId, key, delta){
 }
 
 function selectTown(t){
+  // Nur wenn der Kunde einen ANDEREN Ort wählt als den per GPS gefundenen,
+  // wird die GPS-Position verworfen – sonst bleibt die genaue Position erhalten.
+  if(cart.customerCoords && cart.town !== t){
+    cart.customerCoords=null;
+    const status=document.getElementById('gpsStatus');
+    if(status) status.style.display='none';
+    const btn=document.getElementById('gpsBtn');
+    if(btn){ btn.disabled=false; btn.textContent='📍 Meine Adresse per GPS finden'; }
+  }
   cart.town=t;
-  cart.customerCoords=null; // manuelle Auswahl hat Vorrang vor vorherigem GPS-Fund
-  const status=document.getElementById('gpsStatus');
-  if(status) status.style.display='none';
-  const btn=document.getElementById('gpsBtn');
-  if(btn){ btn.disabled=false; btn.textContent='📍 Standort automatisch erkennen (GPS)'; }
   openCart();
 }
 function selectPay(p){ cart.pay=p; openCart(); }
@@ -1274,12 +1457,16 @@ function updateSummary(){
   }
 
   const btn = document.getElementById('orderBtn');
-  if(cart.town && cart.pay){
+  const a = getAddr();
+  if(cart.town && cart.pay && addrComplete()){
     btn.disabled=false;
     btn.textContent = 'Bestellung aufgeben · '+total.toFixed(2).replace('.',',')+' €';
   } else {
     btn.disabled=true;
-    btn.textContent='Bitte Ort & Zahlungsart wählen';
+    if(!(a.street.length>=4 && /\d/.test(a.street)))            btn.textContent='Bitte Straße & Hausnummer eingeben';
+    else if(a.phone.replace(/\D/g,'').length<6)                 btn.textContent='Bitte Telefonnummer eingeben';
+    else if(!cart.town)                                         btn.textContent='Bitte Ort wählen';
+    else                                                        btn.textContent='Bitte Zahlungsart wählen';
   }
 }
 
@@ -1380,9 +1567,13 @@ function renderOrderReview(){
   document.getElementById('revFee').textContent = fee!==null ? fee.toFixed(2).replace('.',',')+' €' : '–';
   document.getElementById('revTotal').textContent = total.toFixed(2).replace('.',',')+' €';
 
+  const a = getAddr();
+  const addrLine = [a.street, [a.plz, cart.town].filter(Boolean).join(' ')].filter(Boolean).join(', ')
+                 + (a.extra ? ' · '+a.extra : '');
   const metaDiv = document.getElementById('reviewMeta');
   metaDiv.innerHTML =
-    '<div class="rm-chip"><small>Lieferung nach</small><b>📍 '+(cart.town||'–')+'</b></div>'+
+    '<div class="rm-chip" style="flex-basis:100%"><small>Lieferadresse</small><b>📍 '+(addrLine||'–')+'</b></div>'+
+    '<div class="rm-chip"><small>Telefon</small><b>📞 '+(a.phone||'–')+'</b></div>'+
     '<div class="rm-chip"><small>Zahlung</small><b>'+(cart.pay==='Karte'?'💳':'💵')+' '+(cart.pay||'–')+'</b></div>';
 }
 
@@ -1407,6 +1598,7 @@ function finalizePlaceOrder(){
   const ids = cartRestIds();
   const destTown = cart.town;
   const destCoords = cart.customerCoords; // echte GPS-Position, falls erkannt
+  const addr = getAddr();
   const payMethod = cart.pay;
   const subtotal = cartSubtotal();
   const fee = computeFee();
@@ -1443,17 +1635,29 @@ function finalizePlaceOrder(){
   closeModal('cartOverlay');
   closeModal('reviewOverlay');
   document.getElementById('etaNum').textContent = eta;
+  const destLabel = addr.street ? (addr.street+', '+destTown) : destTown;
   document.getElementById('etaDesc').innerHTML = ids.length>1
-    ? ('Dein Fahrer sammelt bei <b>'+ids.length+' Restaurants</b> ein und bringt alles zusammen nach <b>'+destTown+'</b>.')
-    : ('Dein Fahrer ist unterwegs von <b>'+restNames[0]+'</b> zu dir nach <b>'+destTown+'</b>.');
+    ? ('Dein Fahrer sammelt bei <b>'+ids.length+' Restaurants</b> ein und bringt alles zusammen zu <b>'+destLabel+'</b>.')
+    : ('Dein Fahrer ist unterwegs von <b>'+restNames[0]+'</b> zu dir: <b>'+destLabel+'</b>.');
   document.getElementById('driverInitial').textContent = driver.n[0];
   document.getElementById('driverName').textContent = driver.n;
   document.getElementById('driverMeta').textContent = (driver.v==='E-Bike'?'🚲 E-Bike':'🚗 Auto')+' · '+farthest.toFixed(1).replace('.',',')+' km · '+ids.length+' Stopp'+(ids.length>1?'s':'');
 
   const now = new Date(Date.now()+eta*60000);
   const arriveTime = now.getHours().toString().padStart(2,'0')+':'+now.getMinutes().toString().padStart(2,'0');
-  const locLine = '📍 Lieferung nach: '+destTown+(destCoords ? ' (📡 GPS-Standort, '+farthest.toFixed(1).replace('.',',')+' km entfernt)' : '');
-  const msg = '✅ *Bestellux – Bestellbestätigung*\nDanke für deine Bestellung! 🙌\n\n➖➖➖➖➖➖➖➖➖➖\n'+itemLines+'➖➖➖➖➖➖➖➖➖➖\n💶 Zwischensumme: '+subtotal.toFixed(2).replace('.',',')+' €\n🚚 Liefergebühr: '+fee.toFixed(2).replace('.',',')+' €\n*Gesamt: '+total.toFixed(2).replace('.',',')+' €* ('+payMethod+' bei Lieferung)\n➖➖➖➖➖➖➖➖➖➖\n'+locLine+'\n🚴 Fahrer: '+driver.n+' ('+driver.v+')\n⏱️ Ankunft ca. '+arriveTime+' Uhr (in '+eta+' Min)\n\nFragen? Antworte einfach auf diese Nachricht!';
+  let locLine = '📍 *Lieferadresse:*\n'
+    + '   ' + addr.street + '\n'
+    + '   ' + [addr.plz, destTown].filter(Boolean).join(' ') + '\n';
+  if(addr.extra) locLine += '   ' + addr.extra + '\n';
+  locLine += '📞 Telefon: ' + addr.phone + '\n';
+  if(destCoords){
+    locLine += '🗺️ Karte: https://www.google.com/maps/search/?api=1&query='
+             + destCoords[0].toFixed(6) + ',' + destCoords[1].toFixed(6) + '\n'
+             + '   (📡 per GPS bestätigt · ' + farthest.toFixed(1).replace('.',',') + ' km entfernt)';
+  } else {
+    locLine += '   (Entfernung ca. ' + farthest.toFixed(1).replace('.',',') + ' km)';
+  }
+  const msg = '✅ *Bestellux – Bestellbestätigung*\nDanke für deine Bestellung! 🙌\n\n➖➖➖➖➖➖➖➖➖➖\n'+itemLines+'➖➖➖➖➖➖➖➖➖➖\n💶 Zwischensumme: '+subtotal.toFixed(2).replace('.',',')+' €\n🚚 Liefergebühr: '+fee.toFixed(2).replace('.',',')+' €\n*Gesamt: '+total.toFixed(2).replace('.',',')+' €* ('+payMethod+' bei Lieferung)\n➖➖➖➖➖➖➖➖➖➖\n'+locLine+'\n➖➖➖➖➖➖➖➖➖➖\n🚴 Fahrer: '+driver.n+' ('+driver.v+')\n⏱️ Ankunft ca. '+arriveTime+' Uhr (in '+eta+' Min)\n\nFragen? Antworte einfach auf diese Nachricht!';
   document.getElementById('waBubble').innerHTML = '<b>Bestellux</b>'+msg.replace(/\n/g,'<br>');
   document.getElementById('waLink').href = 'https://wa.me/'+WHATSAPP_NUMBER+'?text='+encodeURIComponent(msg);
 
@@ -1465,10 +1669,11 @@ function finalizePlaceOrder(){
 
   cart = { items:{}, town:null, pay:null, customerCoords:null };
   updateCartBadge();
+  clearAddrFields();
   const gpsStatusEl=document.getElementById('gpsStatus');
   if(gpsStatusEl) gpsStatusEl.style.display='none';
   const gpsBtnEl=document.getElementById('gpsBtn');
-  if(gpsBtnEl){ gpsBtnEl.disabled=false; gpsBtnEl.textContent='📍 Standort automatisch erkennen (GPS)'; }
+  if(gpsBtnEl){ gpsBtnEl.disabled=false; gpsBtnEl.textContent='📍 Meine Adresse per GPS finden'; }
 
   try{ initMap(points, restObjs, destTown, eta, farthest); }
   catch(e){ renderFallbackTrack(document.getElementById('map'), restObjs, destTown, farthest); }
