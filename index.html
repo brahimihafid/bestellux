@@ -218,9 +218,6 @@
   .rest-cartbar .rcb-arrow{background:var(--yellow);color:var(--dark);font-weight:800;font-size:12.5px;padding:10px 16px;border-radius:999px;white-space:nowrap;flex-shrink:0;}
 
   /* ---------- Drinks upsell modal ---------- */
-  .drink-upsell-intro{font-size:12.5px;color:var(--gray);margin:0 0 6px;line-height:1.4;}
-  .upsell-footer{position:sticky;bottom:0;background:var(--card);padding:12px 0 4px;margin-top:6px;border-top:1px solid var(--line);display:flex;flex-direction:column;gap:8px;}
-  .upsell-skip{background:none;border:none;color:var(--gray);font-weight:700;font-size:12.5px;padding:6px;text-decoration:underline;}
   .dish-note{width:100%;border:1.5px solid var(--line);border-radius:11px;padding:9px 12px;font-size:12.5px;font-family:inherit;color:var(--dark);background:var(--bg);}
   .dish-note:focus{outline:none;border-color:var(--yellow-dark);background:#fff;}
 
@@ -255,6 +252,24 @@
   .inst-step:last-child{border-bottom:none;}
   .inst-num{flex:0 0 24px;height:24px;border-radius:50%;background:var(--yellow);color:var(--dark);font-weight:800;font-size:12px;display:flex;align-items:center;justify-content:center;}
   .inst-note{background:var(--yellow-soft);border-radius:12px;padding:11px 13px;font-size:12.5px;line-height:1.5;color:#8a5a00;font-weight:600;margin-top:12px;}
+  /* ---------- Inline-Getränkevorschlag im Warenkorb ---------- */
+  .upsell-box{background:#E8F4F6;border-radius:16px;padding:14px;margin:14px 0 4px;}
+  .upsell-box h4{font-size:15px;font-weight:800;color:var(--dark);margin:0 0 3px;}
+  .upsell-box p.us-sub{font-size:12px;color:#5d7a80;margin:0 0 11px;line-height:1.4;}
+  .us-item{display:flex;align-items:center;gap:11px;background:#fff;border-radius:12px;padding:10px 11px;margin-bottom:8px;}
+  .us-item:last-child{margin-bottom:0;}
+  .us-thumb{width:44px;height:44px;border-radius:10px;background:var(--yellow-soft);flex-shrink:0;overflow:hidden;display:flex;align-items:center;justify-content:center;font-size:21px;}
+  .us-thumb img{width:100%;height:100%;object-fit:cover;display:block;}
+  .us-info{flex:1;min-width:0;}
+  .us-info b{display:block;font-size:13.5px;font-weight:700;color:var(--dark);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .us-info span{font-size:12.5px;color:var(--gray);font-weight:700;}
+  .us-add{flex-shrink:0;width:34px;height:34px;border-radius:50%;border:none;background:var(--yellow);color:var(--dark);font-size:19px;font-weight:800;line-height:1;display:flex;align-items:center;justify-content:center;}
+  .us-add.added{background:#2E7D32;color:#fff;font-size:16px;}
+  /* ---------- Trinkgeld / Bargeld ---------- */
+  .mini-pill-row{display:flex;gap:8px;flex-wrap:wrap;}
+  .mini-pill{border:2px solid var(--line);border-radius:999px;padding:8px 15px;font-weight:700;font-size:13px;background:#fff;color:var(--dark);}
+  .mini-pill.active{border-color:var(--yellow-dark);background:var(--yellow-soft);color:#8a5a00;}
+  .change-line{background:#E8F5E9;color:#1B5E20;border-radius:10px;padding:9px 12px;font-size:12.5px;font-weight:700;margin-top:9px;line-height:1.4;}
   .choice-row{display:flex;gap:9px;flex-wrap:wrap;}
   .choice-pill{flex:1;min-width:95px;border:2px solid var(--line);border-radius:12px;padding:9px 10px;text-align:center;font-weight:700;font-size:13px;}
   .choice-pill.active{border-color:var(--yellow-dark);background:var(--yellow-soft);color:#8a5a00;}
@@ -519,26 +534,42 @@
         <div class="add-more-row">
           <button class="add-more-btn" onclick="closeModal('cartOverlay')">＋ Aus weiterem Restaurant hinzufügen</button>
         </div>
+        <div class="upsell-box" id="upsellBox" style="display:none;">
+          <h4>🥤 Noch etwas zu trinken?</h4>
+          <p class="us-sub">Kommt in derselben Lieferung mit – ohne Aufpreis.</p>
+          <div id="upsellList"></div>
+        </div>
         <div class="field-label">Lieferadresse</div>
         <button type="button" class="gps-btn" id="gpsBtn" onclick="detectGPS()">📍 Meine Adresse per GPS finden</button>
         <div class="gps-status" id="gpsStatus" style="display:none;"></div>
-        <input class="addr-input" id="addrStreet" type="text" placeholder="Straße &amp; Hausnummer *" autocomplete="street-address" oninput="onAddrInput()">
+        <input class="addr-input" id="addrStreet" type="text" placeholder="Straße &amp; Hausnummer *" autocomplete="street-address" oninput="onAddrInput()" onblur="tidyStreetField()">
         <div class="addr-row">
           <input class="addr-input" id="addrPlz" type="text" inputmode="numeric" placeholder="PLZ" autocomplete="postal-code" oninput="onAddrInput()">
           <input class="addr-input" id="addrExtra" type="text" placeholder="Etage / Firma (optional)" oninput="onAddrInput()">
         </div>
         <input class="addr-input" id="addrPhone" type="tel" placeholder="Telefonnummer *" autocomplete="tel" oninput="onAddrInput()">
-        <div class="addr-hint">Deine Telefonnummer braucht der Fahrer, falls er dich nicht findet. Mit&nbsp;* markierte Felder sind Pflicht.</div>
+        <div class="addr-hint">Nur Straße und Hausnummer eintragen – PLZ und Ort haben ihr eigenes Feld. Deine Telefonnummer braucht der Fahrer, falls er dich nicht findet. Mit&nbsp;* markierte Felder sind Pflicht.</div>
         <div class="field-label">Ort</div>
         <div class="choice-row" id="townChoice"></div>
+        <div class="field-label">Trinkgeld für den Fahrer</div>
+        <div class="mini-pill-row" id="tipChoice"></div>
+        <input class="addr-input" id="tipCustom" type="text" inputmode="decimal" placeholder="Anderer Betrag, z. B. 4,00 €" style="display:none;margin-top:9px;" oninput="onTipCustom()">
+        <div class="addr-hint">Freiwillig – geht zu 100 % an deinen Fahrer.</div>
         <div class="field-label">Zahlungsart</div>
         <div class="choice-row" id="payChoice">
           <div class="choice-pill" data-pay="Bargeld" onclick="selectPay('Bargeld')">💵 Bargeld</div>
           <div class="choice-pill" data-pay="Karte" onclick="selectPay('Karte')">💳 Karte bei Lieferung</div>
         </div>
+        <div id="cashBox" style="display:none;">
+          <div class="field-label">Mit welchem Schein zahlst du?</div>
+          <div class="mini-pill-row" id="cashChoice"></div>
+          <div class="addr-hint">So hat dein Fahrer das Wechselgeld schon passend dabei.</div>
+          <div class="change-line" id="changeLine" style="display:none;"></div>
+        </div>
         <div class="summary-box">
           <div class="summary-row"><span>Zwischensumme</span><span id="sumSubtotal">0,00 €</span></div>
           <div class="summary-row"><span id="sumFeeLabel">Liefergebühr</span><span id="sumFee">–</span></div>
+          <div class="summary-row" id="sumTipRow" style="display:none;"><span>Trinkgeld</span><span id="sumTip">0,00 €</span></div>
           <div class="summary-row total"><span>Gesamt</span><span id="sumTotal">0,00 €</span></div>
           <div class="summary-note" id="sumNote" style="display:none;"></div>
         </div>
@@ -563,25 +594,6 @@
   </div>
 </div>
 
-<!-- Drinks upsell modal -->
-<div class="overlay" id="drinksOverlay">
-  <div class="modal">
-    <button class="modal-close" onclick="closeModal('drinksOverlay');openCart();">✕</button>
-    <div class="modal-head">
-      <h3>🥤 Noch Durst?</h3>
-      <p>Passt perfekt zu deiner Bestellung – direkt mitgeliefert.</p>
-    </div>
-    <div class="modal-body">
-      <p class="drink-upsell-intro">Beliebte Getränke von <b>Getränke Express</b>:</p>
-      <div id="drinksList"></div>
-      <div class="upsell-footer">
-        <button class="order-btn" onclick="closeModal('drinksOverlay');goToReview();">Weiter zur Bestellung →</button>
-        <button class="upsell-skip" onclick="closeModal('drinksOverlay');goToReview();">Nein danke, ohne Getränke bestellen</button>
-      </div>
-    </div>
-  </div>
-</div>
-
 <!-- Final review modal: shows everything selected + total BEFORE sending to WhatsApp -->
 <div class="overlay" id="reviewOverlay">
   <div class="modal">
@@ -595,6 +607,7 @@
       <div class="summary-box" id="reviewSummaryBox">
         <div class="summary-row"><span>Zwischensumme</span><span id="revSubtotal">0,00 €</span></div>
         <div class="summary-row"><span id="revFeeLabel">Liefergebühr</span><span id="revFee">–</span></div>
+        <div class="summary-row" id="revTipRow" style="display:none;"><span>Trinkgeld</span><span id="revTip">0,00 €</span></div>
         <div class="summary-row total"><span>Gesamt</span><span id="revTotal">0,00 €</span></div>
       </div>
       <div class="review-meta" id="reviewMeta"></div>
@@ -894,7 +907,7 @@ const EXTRA_REST_FEE = 1;
 
 /* ============ State ============
    cart.items = { restaurantId: { itemKey: {name, price, qty, note} } } */
-let cart = { items:{}, town:null, pay:null, customerCoords:null };
+let cart = { items:{}, town:null, pay:null, customerCoords:null, tip:0, cash:null };
 let activeFilter='Alle';
 let leafletMap=null, driverMarker=null, trackTimer=null;
 let reklaReason=null;
@@ -922,13 +935,49 @@ function distToCustomer(restTown){
 
 /* ---- Lieferadresse: Felder lesen / prüfen ---- */
 function addrEl(id){ return document.getElementById(id); }
+/* Viele Kunden tippen die komplette Adresse in das Straßenfeld
+   ("Hauptstraße 56 27299 Langwedel"). Ohne Aufräumen steht die PLZ und der
+   Ort dann doppelt in der WhatsApp-Nachricht. Wir ziehen beides heraus und
+   lassen im Straßenfeld nur Straße + Hausnummer stehen. */
+function tidyStreet(rawStreet, rawPlz){
+  let street = String(rawStreet || '').replace(/\s+/g,' ').trim();
+  let plz    = String(rawPlz || '').trim();
+
+  const found = street.match(/\b(\d{5})\b/);
+  if(found){
+    if(!plz) plz = found[1];
+    street = street.replace(/[,;]?\s*\b\d{5}\b/, ' ');
+  }
+  Object.keys(TOWN_COORDS).forEach(t=>{
+    street = street.replace(new RegExp('[,;]?\\s*\\b'+t+'\\b\\s*$', 'i'), '');
+  });
+  street = street.replace(/[,;]?\s*\b(deutschland|germany)\b\s*$/i, '');
+  street = street.replace(/\s+/g,' ').replace(/^[,;\s]+|[,;\s]+$/g,'').trim();
+
+  // "hauptstraße 56" → "Hauptstraße 56"
+  street = street.replace(/(^|[\s\-])([a-zäöüß])/g, (m,a,b)=> a + b.toUpperCase());
+  return { street: street, plz: plz.replace(/\D/g,'').slice(0,5) };
+}
 function getAddr(){
+  const rawStreet = (addrEl('addrStreet') ? addrEl('addrStreet').value : '').trim();
+  const rawPlz    = (addrEl('addrPlz')    ? addrEl('addrPlz').value    : '').trim();
+  const t = tidyStreet(rawStreet, rawPlz);
   return {
-    street: (addrEl('addrStreet') ? addrEl('addrStreet').value : '').trim(),
-    plz:    (addrEl('addrPlz')    ? addrEl('addrPlz').value    : '').trim(),
+    street: t.street,
+    plz:    t.plz,
     extra:  (addrEl('addrExtra')  ? addrEl('addrExtra').value  : '').trim(),
     phone:  (addrEl('addrPhone')  ? addrEl('addrPhone').value  : '').trim()
   };
+}
+/* Wenn der Kunde das Feld verlässt, zeigen wir ihm die aufgeräumte Fassung –
+   so sieht er selbst, was der Fahrer bekommt. */
+function tidyStreetField(){
+  const s = addrEl('addrStreet'), p = addrEl('addrPlz');
+  if(!s) return;
+  const t = tidyStreet(s.value, p ? p.value : '');
+  if(t.street && t.street !== s.value.trim()) s.value = t.street;
+  if(p && !p.value.trim() && t.plz) p.value = t.plz;
+  onAddrInput();
 }
 function addrComplete(){
   const a = getAddr();
@@ -1006,6 +1055,24 @@ function autoDetectGPS(){
   }
 }
 
+/* Kurze, gerätespezifische Anleitung, wie man den blockierten Standort wieder freigibt. */
+function gpsUnblockHint(){
+  const ua = navigator.userAgent;
+  const isSafari = /^((?!chrome|android|crios|fxios).)*safari/i.test(ua);
+  if(isIOS && isSafari){
+    return 'Tippe links oben in der Adressleiste auf <b>„AA"</b> → <b>Website-Einstellungen</b> → <b>Standort: Erlauben</b>. '
+         + 'Falls das nichts ändert: <b>Einstellungen → Datenschutz → Ortungsdienste → Safari-Websites → „Beim Verwenden"</b>.';
+  }
+  if(isIOS){
+    return 'Tippe in der Adressleiste auf das <b>Schloss-Symbol 🔒</b> → <b>Standort</b> → <b>Erlauben</b>.';
+  }
+  if(/android/i.test(ua)){
+    return 'Tippe links in der Adressleiste auf das <b>Schloss 🔒</b> → <b>Berechtigungen</b> → <b>Standort</b> → <b>Zulassen</b>, '
+         + 'danach die Seite neu laden.';
+  }
+  return 'Klicke links in der Adressleiste auf das <b>Schloss 🔒</b> → <b>Standort</b> → <b>Zulassen</b>, danach Seite neu laden.';
+}
+
 function detectGPS(silent){
   if(!navigator.geolocation){
     if(!silent) showToast('Dein Browser unterstützt kein GPS – bitte Adresse manuell eingeben');
@@ -1054,11 +1121,20 @@ function detectGPS(silent){
       });
     },
     (err)=>{
-      if(err.code===1) gpsDenied = true;
       if(btn){ btn.disabled=false; btn.textContent='📍 Meine Adresse per GPS finden'; }
-      if(status){ status.style.display='none'; }
-      if(!silent){
-        showToast(err.code===1 ? 'Standortzugriff verweigert – bitte Adresse manuell eingeben' : 'Standort konnte nicht ermittelt werden');
+      if(err.code===1){
+        // Zugriff blockiert → dauerhaft sichtbare Anleitung zum Wiederfreigeben
+        gpsDenied = true;
+        if(status){
+          status.className='gps-status warn';
+          status.style.display='block';
+          status.innerHTML = '📍 <b>Standort ist für diese Seite blockiert.</b><br>'+ gpsUnblockHint() +
+            '<br>Oder trage deine Adresse einfach unten von Hand ein – das geht genauso.';
+        }
+      } else if(status){
+        status.className='gps-status warn';
+        status.style.display='block';
+        status.innerHTML = '📍 Standort konnte nicht ermittelt werden (schlechter Empfang?). Bitte Adresse unten eintragen.';
       }
     },
     { enableHighAccuracy:true, timeout:12000, maximumAge:60000 }
@@ -1430,6 +1506,9 @@ function openCart(){
     document.querySelectorAll('#payChoice .choice-pill').forEach(p=>{
       p.classList.toggle('active', cart.pay===p.dataset.pay);
     });
+    renderUpsellInline();
+    renderTipChoice();
+    renderCashChoice();
     updateSummary();
   } else {
     document.getElementById('cartRestName').textContent = '';
@@ -1460,7 +1539,109 @@ function selectTown(t){
   cart.town=t;
   openCart();
 }
-function selectPay(p){ cart.pay=p; openCart(); }
+function selectPay(p){
+  cart.pay=p;
+  if(p!=='Bargeld') cart.cash=null;   // Wechselgeld nur bei Barzahlung
+  openCart();
+}
+
+/* ============ Trinkgeld ============ */
+const TIP_OPTIONS = [0, 1.5, 2, 2.5, 3];
+let tipCustomOpen = false;
+
+function renderTipChoice(){
+  const row = document.getElementById('tipChoice');
+  if(!row) return;
+  row.innerHTML='';
+  TIP_OPTIONS.forEach(v=>{
+    const pill=document.createElement('div');
+    const isActive = !tipCustomOpen && Math.abs((cart.tip||0) - v) < 0.005;
+    pill.className='mini-pill'+(isActive?' active':'');
+    pill.textContent = v===0 ? 'Kein Trinkgeld' : v.toFixed(2).replace('.',',')+' €';
+    pill.onclick=()=>selectTip(v);
+    row.appendChild(pill);
+  });
+  const more=document.createElement('div');
+  more.className='mini-pill'+(tipCustomOpen?' active':'');
+  more.textContent='Mehr …';
+  more.onclick=()=>openTipCustom();
+  row.appendChild(more);
+
+  const inp = document.getElementById('tipCustom');
+  if(inp) inp.style.display = tipCustomOpen ? 'block' : 'none';
+}
+function selectTip(v){
+  cart.tip = v;
+  tipCustomOpen = false;
+  const inp = document.getElementById('tipCustom');
+  if(inp) inp.value='';
+  renderTipChoice();
+  renderCashChoice();
+  updateSummary();
+}
+function openTipCustom(){
+  tipCustomOpen = true;
+  renderTipChoice();
+  const inp = document.getElementById('tipCustom');
+  if(inp){ inp.style.display='block'; inp.focus(); }
+}
+function onTipCustom(){
+  const inp = document.getElementById('tipCustom');
+  if(!inp) return;
+  const v = parseFloat(inp.value.replace(',','.').replace(/[^\d.]/g,''));
+  cart.tip = (isFinite(v) && v>0) ? Math.min(v, 50) : 0;
+  renderCashChoice();
+  updateSummary();
+}
+
+/* ============ Bargeld: Wechselgeld vorbereiten ============ */
+const CASH_NOTES = [5, 10, 20, 50, 100];
+
+function renderCashChoice(){
+  const box = document.getElementById('cashBox');
+  const row = document.getElementById('cashChoice');
+  const line = document.getElementById('changeLine');
+  if(!box || !row) return;
+  if(cart.pay !== 'Bargeld'){ box.style.display='none'; if(line) line.style.display='none'; return; }
+  box.style.display='block';
+
+  const total = cartSubtotal() + (computeFee()||0) + (cart.tip||0);
+  // Reicht der gewählte Schein nach einer Änderung nicht mehr? Dann Auswahl zurücksetzen.
+  if(typeof cart.cash === 'number' && cart.cash < total) cart.cash = null;
+  row.innerHTML='';
+
+  const exact=document.createElement('div');
+  exact.className='mini-pill'+(cart.cash==='passend'?' active':'');
+  exact.textContent='Passend';
+  exact.onclick=()=>selectCash('passend');
+  row.appendChild(exact);
+
+  CASH_NOTES.filter(n=>n>=total).slice(0,4).forEach(n=>{
+    const pill=document.createElement('div');
+    pill.className='mini-pill'+(cart.cash===n?' active':'');
+    pill.textContent=n+' €';
+    pill.onclick=()=>selectCash(n);
+    row.appendChild(pill);
+  });
+
+  if(line){
+    if(typeof cart.cash === 'number'){
+      const back = cart.cash - total;
+      line.style.display='block';
+      line.textContent = '💶 Dein Fahrer bringt '+back.toFixed(2).replace('.',',')+' € Wechselgeld mit.';
+    } else if(cart.cash==='passend'){
+      line.style.display='block';
+      line.textContent = '👍 Du zahlst passend – kein Wechselgeld nötig.';
+    } else {
+      line.style.display='none';
+    }
+  }
+}
+function selectCash(v){
+  cart.cash = v;
+  renderCashChoice();
+  updateSummary();
+}
 
 function updateSummary(){
   const ids = cartRestIds();
@@ -1469,7 +1650,13 @@ function updateSummary(){
   const fee = computeFee();
   document.getElementById('sumFeeLabel').textContent = ids.length>1 ? ('Liefergebühr ('+ids.length+ ' Restaurants)') : 'Liefergebühr';
   document.getElementById('sumFee').textContent = fee!==null ? fee.toFixed(2).replace('.',',')+' €' : '–';
-  const total = subtotal + (fee||0);
+  const tip = cart.tip || 0;
+  const tipRow = document.getElementById('sumTipRow');
+  if(tipRow){
+    tipRow.style.display = tip>0 ? 'flex' : 'none';
+    document.getElementById('sumTip').textContent = tip.toFixed(2).replace('.',',')+' €';
+  }
+  const total = subtotal + (fee||0) + tip;
   document.getElementById('sumTotal').textContent = total.toFixed(2).replace('.',',')+' €';
 
   const note = document.getElementById('sumNote');
@@ -1534,27 +1721,46 @@ function cartHasDrinks(){
   return false;
 }
 
-function renderDrinksUpsell(){
-  const listDiv = document.getElementById('drinksList');
-  listDiv.innerHTML='';
+/* Der Getränkevorschlag sitzt jetzt DIREKT im Warenkorb, gleich unter dem Essen
+   und noch vor der Adresse – so wie bei den großen Lieferdiensten. Ein Tipp auf
+   das ＋ legt das Getränk sofort dazu, ohne den Warenkorb zu verlassen. */
+const UPSELL_PICKS = ['Coca Cola 0,33l','Fanta 0,33l','Wasser 0,5l','Fritz-Kola 0,33l','Apfelschorle 0,5l','Red Bull 0,25l'];
+
+function renderUpsellInline(){
+  const box  = document.getElementById('upsellBox');
+  const list = document.getElementById('upsellList');
+  if(!box || !list) return;
+  const ids = cartRestIds();
+  // Nur zeigen, wenn überhaupt etwas im Korb liegt und noch kein Getränk dabei ist
+  if(ids.length===0 || cartHasDrinks()){ box.style.display='none'; return; }
   const r = RESTAURANTS.find(x=>x.id==='getraenke-express');
-  const picks = ['Coca Cola 0,33l','Fanta 0,33l','Wasser 0,5l','Fritz-Kola 0,33l','Apfelschorle 0,5l','Red Bull 0,25l'];
-  picks.forEach(name=>{
+  if(!r){ box.style.display='none'; return; }
+
+  list.innerHTML='';
+  let shown = 0;
+  UPSELL_PICKS.forEach(name=>{
     const item = r.menu.find(m=>m.name===name);
-    if(!item) return;
+    if(!item || shown>=3) return;
+    shown++;
     const row=document.createElement('div');
-    row.className='dish-row';
+    row.className='us-item';
     const directUrl = item.img || (r.catImg && r.catImg[item.cat]) || null;
     row.innerHTML =
-      '<div class="dish-main">'+
-        dishImg(item.photo, item.svg, directUrl)+
-        '<div class="dish-info"><h4>'+item.name+'</h4><p>'+(item.desc||'Getränke Express')+'</p><div class="dish-price">'+item.price.toFixed(2).replace('.',',')+' €</div></div>'+
-        '<div class="dish-qtywrap"></div>'+
-      '</div>';
-    const qtyWrap = row.querySelector('.dish-qtywrap');
-    renderDishQty(qtyWrap, r, item, null, row);
-    listDiv.appendChild(row);
+      '<div class="us-thumb">'+(directUrl ? '<img src="'+directUrl+'" alt="">' : '🥤')+'</div>'+
+      '<div class="us-info"><b>'+item.name+'</b><span>'+item.price.toFixed(2).replace('.',',')+' €</span></div>'+
+      '<button class="us-add" type="button" aria-label="'+item.name+' hinzufügen">＋</button>';
+    row.querySelector('.us-add').onclick = ()=> addUpsellDrink(item.name);
+    list.appendChild(row);
   });
+  box.style.display = shown ? 'block' : 'none';
+}
+
+function addUpsellDrink(name){
+  const r = RESTAURANTS.find(x=>x.id==='getraenke-express');
+  const item = r && r.menu.find(m=>m.name===name);
+  if(!item) return;
+  addToCart(r, item, '');
+  openCart();
 }
 
 /* ============ Order review (shown before sending to WhatsApp) ============ */
@@ -1585,20 +1791,32 @@ function renderOrderReview(){
 
   const subtotal = cartSubtotal();
   const fee = computeFee();
-  const total = subtotal + (fee||0);
+  const tip = cart.tip || 0;
+  const total = subtotal + (fee||0) + tip;
   document.getElementById('revSubtotal').textContent = subtotal.toFixed(2).replace('.',',')+' €';
   document.getElementById('revFeeLabel').textContent = ids.length>1 ? ('Liefergebühr ('+ids.length+' Restaurants)') : 'Liefergebühr';
   document.getElementById('revFee').textContent = fee!==null ? fee.toFixed(2).replace('.',',')+' €' : '–';
+  const revTipRow = document.getElementById('revTipRow');
+  if(revTipRow){
+    revTipRow.style.display = tip>0 ? 'flex' : 'none';
+    document.getElementById('revTip').textContent = tip.toFixed(2).replace('.',',')+' €';
+  }
   document.getElementById('revTotal').textContent = total.toFixed(2).replace('.',',')+' €';
 
   const a = getAddr();
   const addrLine = [a.street, [a.plz, cart.town].filter(Boolean).join(' ')].filter(Boolean).join(', ')
                  + (a.extra ? ' · '+a.extra : '');
+  let payLabel = (cart.pay==='Karte'?'💳 ':'💵 ') + (cart.pay||'–');
+  if(cart.pay==='Bargeld' && typeof cart.cash === 'number'){
+    payLabel += ' · zahlt mit '+cart.cash+' €';
+  } else if(cart.pay==='Bargeld' && cart.cash==='passend'){
+    payLabel += ' · passend';
+  }
   const metaDiv = document.getElementById('reviewMeta');
   metaDiv.innerHTML =
     '<div class="rm-chip" style="flex-basis:100%"><small>Lieferadresse</small><b>📍 '+(addrLine||'–')+'</b></div>'+
     '<div class="rm-chip"><small>Telefon</small><b>📞 '+(a.phone||'–')+'</b></div>'+
-    '<div class="rm-chip"><small>Zahlung</small><b>'+(cart.pay==='Karte'?'💳':'💵')+' '+(cart.pay||'–')+'</b></div>';
+    '<div class="rm-chip"><small>Zahlung</small><b>'+payLabel+'</b></div>';
 }
 
 function goToReview(){
@@ -1608,12 +1826,8 @@ function goToReview(){
 
 /* ============ Place order ============ */
 function placeOrder(){
-  if(!cartHasDrinks()){
-    renderDrinksUpsell();
-    closeModal('cartOverlay');
-    openModal('drinksOverlay');
-    return;
-  }
+  // Der Getränkevorschlag kommt jetzt schon oben im Warenkorb – hier geht es
+  // direkt zur Prüfung der Bestellung.
   closeModal('cartOverlay');
   goToReview();
 }
@@ -1626,7 +1840,8 @@ function finalizePlaceOrder(){
   const payMethod = cart.pay;
   const subtotal = cartSubtotal();
   const fee = computeFee();
-  const total = subtotal + fee;
+  const tip = cart.tip || 0;
+  const total = subtotal + fee + tip;
 
   const allSameTown = ids.every(id=> RESTAURANTS.find(x=>x.id===id).town===destTown);
   const pool = allSameTown ? BIKE_DRIVERS : CAR_DRIVERS;
@@ -1640,18 +1855,17 @@ function finalizePlaceOrder(){
   const extraStops = (ids.length-1)*4;
   const eta = prep + travel + extraStops;
 
+  // Kurze, aufgeräumte Artikelliste – ein Restaurant pro Block, eine Zeile pro Gericht.
   let itemLines='';
-  ids.forEach(id=>{
+  ids.forEach((id,i)=>{
     const r=RESTAURANTS.find(x=>x.id===id);
-    let groupSub=0;
-    itemLines += '🍽️ *'+r.name+'*\n';
+    if(i>0) itemLines += '\n';
+    itemLines += '*'+r.name+'*\n';
     Object.keys(cart.items[id]).forEach(key=>{
       const it=cart.items[id][key];
-      const lineTotal = it.qty*it.price;
-      groupSub += lineTotal;
-      itemLines += '   • '+it.qty+'x '+it.name+(it.note?(' _('+it.note+')_'):'')+' — '+lineTotal.toFixed(2).replace('.',',')+' €\n';
+      itemLines += it.qty+'× '+it.name+'  '+(it.qty*it.price).toFixed(2).replace('.',',')+' €\n';
+      if(it.note) itemLines += '   ↳ '+it.note+'\n';
     });
-    itemLines += '   Zwischensumme: '+groupSub.toFixed(2).replace('.',',')+' €\n\n';
   });
 
   const restNames = ids.map(id=>RESTAURANTS.find(x=>x.id===id).name);
@@ -1669,23 +1883,42 @@ function finalizePlaceOrder(){
 
   const now = new Date(Date.now()+eta*60000);
   const arriveTime = now.getHours().toString().padStart(2,'0')+':'+now.getMinutes().toString().padStart(2,'0');
-  let locLine = '📍 *Lieferadresse:*\n'
-    + '   ' + addr.street + '\n'
-    + '   ' + [addr.plz, destTown].filter(Boolean).join(' ') + '\n';
-  if(addr.extra) locLine += '   ' + addr.extra + '\n';
-  locLine += '📞 Telefon: ' + addr.phone + '\n';
-  if(destCoords){
-    locLine += '🗺️ Navigation: https://www.google.com/maps/search/?api=1&query='
-             + destCoords[0].toFixed(6) + ',' + destCoords[1].toFixed(6) + '\n'
-             + '   📡 Per GPS bestätigt · ' + farthest.toFixed(1).replace('.',',') + ' km entfernt';
-  } else {
-    // Kein GPS erlaubt → Navigations-Link aus der getippten Adresse bauen
-    const q = [addr.street, addr.plz, destTown, 'Deutschland'].filter(Boolean).join(', ');
-    locLine += '🗺️ Navigation: https://www.google.com/maps/search/?api=1&query='
-             + encodeURIComponent(q) + '\n'
-             + '   ⚠️ Ohne GPS – Adresse wurde manuell eingetippt (ca. ' + farthest.toFixed(1).replace('.',',') + ' km)';
+  const eur = n => n.toFixed(2).replace('.',',')+' €';
+
+  /* --- Kostenblock: kurz, eine Zeile pro Posten --- */
+  let costBlock = 'Zwischensumme  '+eur(subtotal)+'\n'
+                + 'Liefergebühr  '+eur(fee)+'\n';
+  if(tip>0) costBlock += 'Trinkgeld  '+eur(tip)+'\n';
+  costBlock += '*GESAMT  '+eur(total)+'*\n';
+
+  /* --- Zahlung inkl. Wechselgeld, damit der Fahrer es passend dabei hat --- */
+  let payLine = (payMethod==='Karte' ? '💳 Karte bei Lieferung' : '💵 Bargeld bei Lieferung');
+  if(payMethod==='Bargeld' && typeof cart.cash === 'number'){
+    payLine += ' · zahlt mit '+cart.cash+' € → *Wechselgeld '+eur(cart.cash-total)+'*';
+  } else if(payMethod==='Bargeld' && cart.cash==='passend'){
+    payLine += ' · zahlt passend';
   }
-  const msg = '✅ *Bestellux – Bestellbestätigung*\nDanke für deine Bestellung! 🙌\n\n➖➖➖➖➖➖➖➖➖➖\n'+itemLines+'➖➖➖➖➖➖➖➖➖➖\n💶 Zwischensumme: '+subtotal.toFixed(2).replace('.',',')+' €\n🚚 Liefergebühr: '+fee.toFixed(2).replace('.',',')+' €\n*Gesamt: '+total.toFixed(2).replace('.',',')+' €* ('+payMethod+' bei Lieferung)\n➖➖➖➖➖➖➖➖➖➖\n'+locLine+'\n➖➖➖➖➖➖➖➖➖➖\n🚴 Fahrer: '+driver.n+' ('+driver.v+')\n⏱️ Ankunft ca. '+arriveTime+' Uhr (in '+eta+' Min)\n\nFragen? Antworte einfach auf diese Nachricht!';
+
+  /* --- Adresse als eigener Block, direkt darunter der antippbare Kartenlink --- */
+  const mapsUrl = destCoords
+    ? ('https://www.google.com/maps/search/?api=1&query='+destCoords[0].toFixed(6)+','+destCoords[1].toFixed(6))
+    : ('https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(
+        [addr.street, [addr.plz, destTown].filter(Boolean).join(' '), 'Deutschland'].filter(Boolean).join(', ')));
+
+  let locLine = '📍 *LIEFERADRESSE*\n'
+              + addr.street + '\n'
+              + [addr.plz, destTown].filter(Boolean).join(' ') + '\n';
+  if(addr.extra) locLine += 'Etage / Firma: ' + addr.extra + '\n';
+  locLine += '📞 ' + addr.phone + '\n\n'
+           + (destCoords ? '🗺️ *Route öffnen* (GPS genau):\n' : '🗺️ *Route öffnen* (manuell eingegeben):\n')
+           + mapsUrl;
+
+  const msg = '🧾 *BESTELLUX – NEUE BESTELLUNG*\n\n'
+            + itemLines + '\n'
+            + costBlock
+            + payLine + '\n\n'
+            + locLine + '\n\n'
+            + '🚴 '+driver.n+' ('+driver.v+') · ca. '+arriveTime+' Uhr';
   document.getElementById('waBubble').innerHTML = '<b>Bestellux</b>'+msg.replace(/\n/g,'<br>');
   document.getElementById('waLink').href = 'https://wa.me/'+WHATSAPP_NUMBER+'?text='+encodeURIComponent(msg);
 
@@ -1695,8 +1928,11 @@ function finalizePlaceOrder(){
   points.push(destCoords || TOWN_COORDS[destTown]);
   const restObjs = ids.map(id=>RESTAURANTS.find(x=>x.id===id));
 
-  cart = { items:{}, town:null, pay:null, customerCoords:null };
+  cart = { items:{}, town:null, pay:null, customerCoords:null, tip:0, cash:null };
   gpsAutoTried = false;
+  tipCustomOpen = false;
+  const tipInp = document.getElementById('tipCustom');
+  if(tipInp){ tipInp.value=''; tipInp.style.display='none'; }
   updateCartBadge();
   clearAddrFields();
   const gpsStatusEl=document.getElementById('gpsStatus');
