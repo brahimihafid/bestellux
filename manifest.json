@@ -1,0 +1,17 @@
+{
+  "name": "Bestellux – Essen schnell geliefert",
+  "short_name": "Bestellux",
+  "description": "Bestell aus mehreren Restaurants in Langwedel, Etelsen & Verden – in einer Lieferung.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#FBF7EE",
+  "theme_color": "#FFB800",
+  "orientation": "portrait",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

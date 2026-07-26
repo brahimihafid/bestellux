@@ -5,6 +5,14 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="theme-color" content="#FFB800">
 <title>Bestellux – Essen schnell geliefert in Langwedel, Etelsen & Verden</title>
+<!-- PWA: macht die Seite "installierbar" (Startbildschirm, eigenes Fenster ohne Browserleiste) -->
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-180.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Bestellux">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
 <style>
   :root{
@@ -231,6 +239,9 @@
   .add-more-row{margin-top:8px;text-align:center;}
   .add-more-btn{background:var(--yellow-soft);color:#8a5a00;border:1.5px dashed var(--yellow-dark);border-radius:12px;padding:11px;font-weight:800;font-size:13px;width:100%;}
   .field-label{font-weight:700;font-size:12px;margin:16px 0 8px;color:var(--gray);text-transform:uppercase;letter-spacing:0.5px;}
+  .gps-btn{width:100%;background:var(--card);border:1.5px dashed var(--yellow-dark);color:#8a5a00;font-weight:800;font-size:12.5px;padding:11px;border-radius:12px;margin-bottom:10px;}
+  .gps-btn:disabled{opacity:0.6;}
+  .gps-status{font-size:11.5px;color:#2E7D32;background:#E5F4E3;border-radius:10px;padding:8px 11px;margin:-2px 0 10px;font-weight:700;}
   .choice-row{display:flex;gap:9px;flex-wrap:wrap;}
   .choice-pill{flex:1;min-width:95px;border:2px solid var(--line);border-radius:12px;padding:9px 10px;text-align:center;font-weight:700;font-size:13px;}
   .choice-pill.active{border-color:var(--yellow-dark);background:var(--yellow-soft);color:#8a5a00;}
@@ -337,8 +348,8 @@
   <div class="statusbar"><span id="clockNow">14:32</span><span>●●●● 🔋</span></div>
 
   <div class="install-banner" id="installBanner">
-    <span class="txt">📲 Bestellux zum Startbildschirm hinzufügen für schnelleren Zugriff</span>
-    <button onclick="dismissInstall()">Installieren</button>
+    <span class="txt" id="installBannerTxt">📲 Bestellux zum Startbildschirm hinzufügen für schnelleren Zugriff</span>
+    <button id="installBtn" onclick="triggerInstall()">Installieren</button>
     <button class="install-close" onclick="dismissInstall()">✕</button>
   </div>
 
@@ -496,7 +507,9 @@
           <button class="add-more-btn" onclick="closeModal('cartOverlay')">＋ Aus weiterem Restaurant hinzufügen</button>
         </div>
         <div class="field-label">Liefergebiet</div>
+        <button type="button" class="gps-btn" id="gpsBtn" onclick="detectGPS()">📍 Standort automatisch erkennen (GPS)</button>
         <div class="choice-row" id="townChoice"></div>
+        <div class="gps-status" id="gpsStatus" style="display:none;"></div>
         <div class="field-label">Zahlungsart</div>
         <div class="choice-row" id="payChoice">
           <div class="choice-pill" data-pay="Bargeld" onclick="selectPay('Bargeld')">💵 Bargeld</div>
@@ -845,7 +858,7 @@ const EXTRA_REST_FEE = 1;
 
 /* ============ State ============
    cart.items = { restaurantId: { itemKey: {name, price, qty, note} } } */
-let cart = { items:{}, town:null, pay:null };
+let cart = { items:{}, town:null, pay:null, customerCoords:null };
 let activeFilter='Alle';
 let leafletMap=null, driverMarker=null, trackTimer=null;
 let reklaReason=null;
@@ -853,11 +866,60 @@ let reklaReason=null;
 function cartRestIds(){ return Object.keys(cart.items); }
 function cartTotalQty(){ let q=0; cartRestIds().forEach(id=>Object.values(cart.items[id]).forEach(it=>q+=it.qty)); return q; }
 function cartSubtotal(){ let s=0; cartRestIds().forEach(id=>Object.values(cart.items[id]).forEach(it=>s+=it.qty*it.price)); return s; }
+/* Echte Luftlinien-Distanz (Haversine) zwischen zwei [lat,lng] Punkten, in km */
+function haversineKm(a, b){
+  const R = 6371;
+  const dLat = (b[0]-a[0]) * Math.PI/180;
+  const dLon = (b[1]-a[1]) * Math.PI/180;
+  const lat1 = a[0]*Math.PI/180, lat2 = b[0]*Math.PI/180;
+  const h = Math.sin(dLat/2)**2 + Math.cos(lat1)*Math.cos(lat2)*Math.sin(dLon/2)**2;
+  return R * 2 * Math.atan2(Math.sqrt(h), Math.sqrt(1-h));
+}
+
+/* Distanz Restaurant → Kunde: nutzt die echte GPS-Position, falls erkannt,
+   sonst die grobe Stadt-zu-Stadt-Tabelle als Fallback. */
+function distToCustomer(restTown){
+  if(cart.customerCoords) return haversineKm(TOWN_COORDS[restTown], cart.customerCoords);
+  if(cart.town) return DIST[restTown+'-'+cart.town];
+  return null;
+}
+
+function detectGPS(){
+  if(!navigator.geolocation){
+    showToast('Dein Browser unterstützt kein GPS – bitte Ort manuell wählen');
+    return;
+  }
+  const btn = document.getElementById('gpsBtn');
+  const status = document.getElementById('gpsStatus');
+  if(btn){ btn.disabled=true; btn.textContent='📍 Suche Standort …'; }
+  navigator.geolocation.getCurrentPosition(
+    (pos)=>{
+      cart.customerCoords = [pos.coords.latitude, pos.coords.longitude];
+      let nearest=null, nearestDist=Infinity;
+      Object.keys(TOWN_COORDS).forEach(t=>{
+        const d = haversineKm(TOWN_COORDS[t], cart.customerCoords);
+        if(d<nearestDist){ nearestDist=d; nearest=t; }
+      });
+      cart.town = nearest;
+      if(btn){ btn.disabled=false; btn.textContent='📍 Standort erkannt – neu ermitteln'; }
+      if(status){ status.style.display='block'; status.textContent='✅ Genaue Distanz wird ab jetzt live aus deinem GPS-Standort berechnet (~'+pos.coords.accuracy.toFixed(0)+'m genau).'; }
+      showToast('📍 Standort erkannt');
+      openCart();
+    },
+    (err)=>{
+      if(btn){ btn.disabled=false; btn.textContent='📍 Standort automatisch erkennen (GPS)'; }
+      if(status){ status.style.display='none'; }
+      showToast(err.code===1 ? 'Standortzugriff verweigert – bitte Ort manuell wählen' : 'Standort konnte nicht ermittelt werden');
+    },
+    { enableHighAccuracy:true, timeout:10000, maximumAge:60000 }
+  );
+}
+
 function computeFee(){
   const ids = cartRestIds();
   if(!cart.town || ids.length===0) return null;
   let base=0;
-  ids.forEach(id=>{ const r=RESTAURANTS.find(x=>x.id===id); const d=DIST[r.town+'-'+cart.town]; const f=d<=2?2:3; if(f>base) base=f; });
+  ids.forEach(id=>{ const r=RESTAURANTS.find(x=>x.id===id); const d=distToCustomer(r.town); const f=d<=2?2:3; if(f>base) base=f; });
   return base + (ids.length-1)*EXTRA_REST_FEE;
 }
 
@@ -889,6 +951,54 @@ tickClock(); setInterval(tickClock,15000);
 })();
 
 function dismissInstall(){ document.getElementById('installBanner').classList.add('hidden'); }
+
+/* ============ PWA install (real "Zum Startbildschirm hinzufügen") ============ */
+let deferredInstallPrompt = null;
+const isStandaloneNow = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+
+if(isStandaloneNow){
+  // Bereits als App installiert & geöffnet → Banner braucht niemand mehr zu sehen
+  const b = document.getElementById('installBanner');
+  if(b) b.classList.add('hidden');
+}
+
+window.addEventListener('beforeinstallprompt', (e)=>{
+  e.preventDefault();
+  deferredInstallPrompt = e;
+  const banner = document.getElementById('installBanner');
+  if(banner && !isStandaloneNow) banner.classList.remove('hidden');
+});
+
+function triggerInstall(){
+  if(deferredInstallPrompt){
+    // Chrome/Android/Edge: echter Installations-Dialog
+    deferredInstallPrompt.prompt();
+    deferredInstallPrompt.userChoice.finally(()=>{
+      deferredInstallPrompt = null;
+      dismissInstall();
+    });
+    return;
+  }
+  if(isIOS){
+    // iOS/Safari hat keinen automatischen Install-Dialog – Anleitung zeigen
+    document.getElementById('installBannerTxt').innerHTML =
+      'Tippe unten auf <b>Teilen ⬆️</b> und dann auf <b>„Zum Home-Bildschirm"</b>.';
+    document.getElementById('installBtn').style.display='none';
+    return;
+  }
+  // Browser unterstützt keinen Install-Prompt (oder App ist schon installiert)
+  showToast('App ist bereits installiert oder wird von diesem Browser nicht unterstützt');
+  dismissInstall();
+}
+
+window.addEventListener('appinstalled', ()=>{ dismissInstall(); });
+
+if('serviceWorker' in navigator){
+  window.addEventListener('load', ()=>{
+    navigator.serviceWorker.register('sw.js').catch(()=>{ /* kein Problem falls sw.js noch fehlt */ });
+  });
+}
 
 function setTab(name){
   document.getElementById('tabHomeBtn').classList.toggle('active', name==='home');
@@ -1134,7 +1244,15 @@ function changeQty(restId, key, delta){
   openCart();
 }
 
-function selectTown(t){ cart.town=t; openCart(); }
+function selectTown(t){
+  cart.town=t;
+  cart.customerCoords=null; // manuelle Auswahl hat Vorrang vor vorherigem GPS-Fund
+  const status=document.getElementById('gpsStatus');
+  if(status) status.style.display='none';
+  const btn=document.getElementById('gpsBtn');
+  if(btn){ btn.disabled=false; btn.textContent='📍 Standort automatisch erkennen (GPS)'; }
+  openCart();
+}
 function selectPay(p){ cart.pay=p; openCart(); }
 
 function updateSummary(){
@@ -1288,6 +1406,7 @@ function placeOrder(){
 function finalizePlaceOrder(){
   const ids = cartRestIds();
   const destTown = cart.town;
+  const destCoords = cart.customerCoords; // echte GPS-Position, falls erkannt
   const payMethod = cart.pay;
   const subtotal = cartSubtotal();
   const fee = computeFee();
@@ -1299,7 +1418,7 @@ function finalizePlaceOrder(){
   const speed = driver.v==='E-Bike' ? 16 : 32;
 
   let farthest=0;
-  ids.forEach(id=>{ const r=RESTAURANTS.find(x=>x.id===id); const d=DIST[r.town+'-'+destTown]; if(d>farthest) farthest=d; });
+  ids.forEach(id=>{ const r=RESTAURANTS.find(x=>x.id===id); const d=distToCustomer(r.town); if(d>farthest) farthest=d; });
   const prep = 11 + Math.floor(Math.random()*4);
   const travel = Math.round(farthest/speed*60);
   const extraStops = (ids.length-1)*4;
@@ -1333,18 +1452,23 @@ function finalizePlaceOrder(){
 
   const now = new Date(Date.now()+eta*60000);
   const arriveTime = now.getHours().toString().padStart(2,'0')+':'+now.getMinutes().toString().padStart(2,'0');
-  const msg = '✅ *Bestellux – Bestellbestätigung*\nDanke für deine Bestellung! 🙌\n\n➖➖➖➖➖➖➖➖➖➖\n'+itemLines+'➖➖➖➖➖➖➖➖➖➖\n💶 Zwischensumme: '+subtotal.toFixed(2).replace('.',',')+' €\n🚚 Liefergebühr: '+fee.toFixed(2).replace('.',',')+' €\n*Gesamt: '+total.toFixed(2).replace('.',',')+' €* ('+payMethod+' bei Lieferung)\n➖➖➖➖➖➖➖➖➖➖\n📍 Lieferung nach: '+destTown+'\n🚴 Fahrer: '+driver.n+' ('+driver.v+')\n⏱️ Ankunft ca. '+arriveTime+' Uhr (in '+eta+' Min)\n\nFragen? Antworte einfach auf diese Nachricht!';
+  const locLine = '📍 Lieferung nach: '+destTown+(destCoords ? ' (📡 GPS-Standort, '+farthest.toFixed(1).replace('.',',')+' km entfernt)' : '');
+  const msg = '✅ *Bestellux – Bestellbestätigung*\nDanke für deine Bestellung! 🙌\n\n➖➖➖➖➖➖➖➖➖➖\n'+itemLines+'➖➖➖➖➖➖➖➖➖➖\n💶 Zwischensumme: '+subtotal.toFixed(2).replace('.',',')+' €\n🚚 Liefergebühr: '+fee.toFixed(2).replace('.',',')+' €\n*Gesamt: '+total.toFixed(2).replace('.',',')+' €* ('+payMethod+' bei Lieferung)\n➖➖➖➖➖➖➖➖➖➖\n'+locLine+'\n🚴 Fahrer: '+driver.n+' ('+driver.v+')\n⏱️ Ankunft ca. '+arriveTime+' Uhr (in '+eta+' Min)\n\nFragen? Antworte einfach auf diese Nachricht!';
   document.getElementById('waBubble').innerHTML = '<b>Bestellux</b>'+msg.replace(/\n/g,'<br>');
   document.getElementById('waLink').href = 'https://wa.me/'+WHATSAPP_NUMBER+'?text='+encodeURIComponent(msg);
 
   openModal('confirmOverlay');
 
   const points = ids.map(id=>{ const r=RESTAURANTS.find(x=>x.id===id); return TOWN_COORDS[r.town]; });
-  points.push(TOWN_COORDS[destTown]);
+  points.push(destCoords || TOWN_COORDS[destTown]);
   const restObjs = ids.map(id=>RESTAURANTS.find(x=>x.id===id));
 
-  cart = { items:{}, town:null, pay:null };
+  cart = { items:{}, town:null, pay:null, customerCoords:null };
   updateCartBadge();
+  const gpsStatusEl=document.getElementById('gpsStatus');
+  if(gpsStatusEl) gpsStatusEl.style.display='none';
+  const gpsBtnEl=document.getElementById('gpsBtn');
+  if(gpsBtnEl){ gpsBtnEl.disabled=false; gpsBtnEl.textContent='📍 Standort automatisch erkennen (GPS)'; }
 
   try{ initMap(points, restObjs, destTown, eta, farthest); }
   catch(e){ renderFallbackTrack(document.getElementById('map'), restObjs, destTown, farthest); }
