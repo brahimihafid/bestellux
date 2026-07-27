@@ -77,6 +77,17 @@ input,select{font-family:inherit;}
 }
 .btn-main:active{transform:scale(0.975);}
 .lg-note{color:var(--tx3);font-size:11.5px;text-align:center;margin:14px 0 0;max-width:400px;}
+.lg-err{background:rgba(224,60,60,.13);border:1px solid rgba(224,60,60,.45);color:#FF8A8A;
+  border-radius:11px;padding:10px 12px;font-size:13px;font-weight:700;margin-top:12px;line-height:1.45;}
+.lg-wait{text-align:center;}
+.lg-wait .wi{font-size:46px;margin-bottom:10px;}
+.lg-wait h2{margin:0 0 8px;font-size:19px;color:var(--yellow);}
+.lg-wait p{margin:0 0 6px;color:var(--tx2);font-size:14px;line-height:1.6;}
+.lg-mail{font-family:ui-monospace,Menlo,monospace;font-size:13px;color:var(--tx);
+  background:rgba(255,255,255,.05);border-radius:8px;padding:7px 11px;display:inline-block;margin:8px 0 14px;}
+.btn-ghost{width:100%;background:transparent;border:1.5px solid rgba(255,255,255,.16);color:var(--tx2);
+  border-radius:12px;padding:12px;font-size:14px;font-weight:800;cursor:pointer;}
+
 
 /* ================= TOPBAR ================= */
 .top{
@@ -332,6 +343,7 @@ body.online .sw::after{transform:translateX(28px);}
 </style>
 <script src="https://www.gstatic.com/firebasejs/12.15.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/12.15.0/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/12.15.0/firebase-auth-compat.js"></script>
 </head>
 <body>
 
@@ -339,35 +351,70 @@ body.online .sw::after{transform:translateX(28px);}
 <div id="login">
   <div class="lg-logo">🛵</div>
   <h1 class="lg-title"><b>Bestellux</b> Fahrer</h1>
-  <p class="lg-sub">Melde dich an und starte deine Schicht.</p>
-  <div class="lg-card">
-    <div class="fld">
-      <label>Dein Name</label>
-      <input id="inName" type="text" placeholder="z.&nbsp;B. Youssef" autocomplete="name">
-    </div>
-    <div class="fld">
-      <label>Handynummer</label>
-      <input id="inPhone" type="tel" placeholder="0176 1234567" autocomplete="tel">
-    </div>
-    <div class="fld">
-      <label>Fahrzeug</label>
-      <div class="chips" id="vehChips">
-        <button class="chip on" data-v="E-Bike">🚲 E-Bike</button>
-        <button class="chip" data-v="Auto">🚗 Auto</button>
-        <button class="chip" data-v="Roller">🛵 Roller</button>
+
+  <!-- ===== Stufe 1: Anmelden ===== -->
+  <div id="lgAuth">
+    <p class="lg-sub">Melde dich mit deinen Zugangsdaten an.</p>
+    <div class="lg-card">
+      <div class="fld">
+        <label>E-Mail</label>
+        <input id="inMail" type="email" placeholder="name@example.com" autocomplete="username" inputmode="email">
       </div>
-    </div>
-    <div class="fld">
-      <label>Ich starte in</label>
-      <div class="chips" id="townChips">
-        <button class="chip on" data-t="Langwedel">Langwedel</button>
-        <button class="chip" data-t="Etelsen">Etelsen</button>
-        <button class="chip" data-t="Verden">Verden</button>
+      <div class="fld">
+        <label>Passwort</label>
+        <input id="inPw" type="password" placeholder="••••••••" autocomplete="current-password">
       </div>
+      <button class="btn-main" onclick="doAuth()">Anmelden →</button>
+      <div class="lg-err hide" id="authErr"></div>
     </div>
-    <button class="btn-main" onclick="doLogin()">Schicht starten →</button>
+    <p class="lg-note">Deine Zugangsdaten bekommst du von Bestellux.<br>Du kannst dich hier nicht selbst registrieren.</p>
   </div>
-  <p class="lg-note">Demo-Version: alles läuft direkt auf diesem Gerät.<br>Bestellungen aus der Bestellux-App (gleicher Browser) kommen automatisch an.</p>
+
+  <!-- ===== Stufe 2: Profil anlegen ===== -->
+  <div id="lgProf" class="hide">
+    <p class="lg-sub">Nur einmal: erzähl uns kurz, wer du bist.</p>
+    <div class="lg-card">
+      <div class="fld">
+        <label>Dein Name</label>
+        <input id="inName" type="text" placeholder="z.&nbsp;B. Youssef" autocomplete="name">
+      </div>
+      <div class="fld">
+        <label>Handynummer</label>
+        <input id="inPhone" type="tel" placeholder="0176 1234567" autocomplete="tel">
+      </div>
+      <div class="fld">
+        <label>Fahrzeug</label>
+        <div class="chips" id="vehChips">
+          <button class="chip on" data-v="E-Bike">🚲 E-Bike</button>
+          <button class="chip" data-v="Auto">🚗 Auto</button>
+          <button class="chip" data-v="Roller">🛵 Roller</button>
+        </div>
+      </div>
+      <div class="fld">
+        <label>Ich starte in</label>
+        <div class="chips" id="townChips">
+          <button class="chip on" data-t="Langwedel">Langwedel</button>
+          <button class="chip" data-t="Etelsen">Etelsen</button>
+          <button class="chip" data-t="Verden">Verden</button>
+        </div>
+      </div>
+      <button class="btn-main" onclick="doProfile()">Weiter →</button>
+    </div>
+    <p class="lg-note" id="profNote">Diese Angaben sieht nur Bestellux und der Kunde, der dich bestellt hat.</p>
+  </div>
+
+  <!-- ===== Stufe 3: Warten auf Freigabe ===== -->
+  <div id="lgWait" class="hide">
+    <div class="lg-card lg-wait">
+      <div class="wi">⏳</div>
+      <h2>Fast geschafft</h2>
+      <p>Dein Zugang muss noch von Bestellux freigegeben werden.</p>
+      <div class="lg-mail" id="waitMail">–</div>
+      <p>Sobald du freigeschaltet bist, öffnet sich die App hier automatisch. Du musst nichts weiter tun.</p>
+      <button class="btn-ghost" style="margin-top:16px" onclick="logout()">Abmelden</button>
+    </div>
+    <p class="lg-note">Dauert das zu lange? Melde dich bei Bestellux.</p>
+  </div>
 </div>
 
 <!-- ========== APP ========== -->
@@ -451,6 +498,10 @@ try{
   }
 }catch(e){ FB_DB = null; FB_OK = false; }
 
+var FB_AUTH = null;
+try{ if(FB_OK && firebase.auth) FB_AUTH = firebase.auth(); }catch(e){ FB_AUTH = null; }
+var AUTH_UID = null, AUTH_MAIL = '';
+
 var FB_CACHE = [];   /* alle Auftraege, neueste zuerst */
 var FB_SNAP  = {};   /* id -> zuletzt bekannter Stand, damit wir nur Aenderungen senden */
 
@@ -525,10 +576,29 @@ const STEPS = [
 ];
 function stepIdx(st){ const i = STEPS.findIndex(x=>x.k===st); return i<0?-1:i; }
 
-/* ---------- Fahrer-Profil ---------- */
+/* ---------- Fahrer-Profil ----------
+   Das Profil liegt in der Datenbank unter drivers/<uid>.
+   'active' setzt NUR der Betreiber im Dashboard – die Fahrer-App
+   schreibt dieses Feld nie. */
 let ME = null;
 try{ ME = JSON.parse(localStorage.getItem(BX_DRIVER)||'null'); }catch(e){ ME = null; }
-function saveMe(){ try{ localStorage.setItem(BX_DRIVER, JSON.stringify(ME)); }catch(e){} }
+function saveMe(){
+  try{ localStorage.setItem(BX_DRIVER, JSON.stringify(ME)); }catch(e){}
+  if(!FB_OK || !AUTH_UID || !ME) return;
+  try{
+    FB_DB.ref('drivers/'+AUTH_UID).update({
+      uid:AUTH_UID, email:(ME.email||AUTH_MAIL||''),
+      name:(ME.name||''), ini:(ME.ini||''), phone:(ME.phone||''),
+      veh:(ME.veh||''), town:(ME.town||''),
+      online:!!ME.online, lastSeen:Date.now()
+    });
+  }catch(e){}
+}
+function isMine(o){
+  if(!o || !o.driver || !ME) return false;
+  if(o.driver.uid && ME.uid) return o.driver.uid === ME.uid;
+  return o.driver.name === ME.name;
+}
 function initials(n){
   const p = String(n||'').trim().split(/\s+/).filter(Boolean);
   if(!p.length) return 'FX';
@@ -547,20 +617,81 @@ document.getElementById('townChips').addEventListener('click', e=>{
   [].forEach.call(b.parentNode.children, c=>c.classList.remove('on'));
   b.classList.add('on'); pickTown = b.dataset.t;
 });
-function doLogin(){
+function showStage(id){
+  ['lgAuth','lgProf','lgWait'].forEach(function(k){
+    var el = document.getElementById(k); if(el) el.classList.toggle('hide', k!==id);
+  });
+  document.getElementById('login').classList.remove('hide');
+  document.getElementById('app').classList.add('hide');
+}
+function authErr(msg){
+  var el = document.getElementById('authErr');
+  if(!el) return;
+  el.textContent = msg || '';
+  el.classList.toggle('hide', !msg);
+}
+function doAuth(){
+  var m = document.getElementById('inMail').value.trim();
+  var pw = document.getElementById('inPw').value;
+  if(!m || !pw){ authErr('Bitte E-Mail und Passwort eingeben.'); return; }
+  if(!FB_AUTH){ authErr('Keine Verbindung zum Server. Prüfe dein Internet.'); return; }
+  authErr('');
+  FB_AUTH.signInWithEmailAndPassword(m, pw).catch(function(e){
+    var c = (e && e.code) || '';
+    authErr(
+      (c.indexOf('wrong-password')>=0 || c.indexOf('invalid-credential')>=0) ? 'E-Mail oder Passwort ist falsch.' :
+      (c.indexOf('user-not-found')>=0) ? 'Für diese E-Mail gibt es noch keinen Zugang.' :
+      (c.indexOf('invalid-email')>=0)  ? 'Diese E-Mail-Adresse sieht nicht richtig aus.' :
+      (c.indexOf('too-many-requests')>=0) ? 'Zu viele Versuche. Bitte ein paar Minuten warten.' :
+      (c.indexOf('network')>=0) ? 'Keine Internetverbindung.' :
+      'Anmeldung nicht möglich. Bitte nochmal versuchen.'
+    );
+  });
+}
+function doProfile(){
   const n = document.getElementById('inName').value.trim();
   if(n.length < 2){ toast('Bitte trag deinen Namen ein'); return; }
-  ME = {
+  ME = Object.assign(ME || {}, {
+    uid:AUTH_UID, email:AUTH_MAIL,
     name:n, phone:document.getElementById('inPhone').value.trim(),
     veh:pickVeh, town:pickTown, ini:initials(n),
-    online:true, since:Date.now()
-  };
-  saveMe(); startApp();
+    online:false, since:(ME && ME.since) || Date.now()
+  });
+  saveMe();
+  if(!FB_OK){ ME.online = true; startApp(); }
 }
 function logout(){
   if(ME){ ME.online=false; saveMe(); }
+  geoStop();
+  try{ if(FB_OK && AUTH_UID) FB_DB.ref('drivers/'+AUTH_UID+'/online').set(false); }catch(e){}
   localStorage.removeItem(BX_DRIVER);
-  location.reload();
+  if(FB_AUTH){ FB_AUTH.signOut().then(function(){ location.reload(); }).catch(function(){ location.reload(); }); }
+  else location.reload();
+}
+
+/* ---------- GPS: Live-Position, nur wenn der Fahrer online ist ---------- */
+var geoW = null, geoLast = 0;
+function geoStart(){
+  if(geoW !== null || !navigator.geolocation) return;
+  try{
+    geoW = navigator.geolocation.watchPosition(function(p){
+      var now = Date.now();
+      if(now - geoLast < 15000) return;      /* höchstens alle 15 s senden */
+      geoLast = now;
+      var pos = { lat:p.coords.latitude, lng:p.coords.longitude,
+                  acc:Math.round(p.coords.accuracy||0), t:now };
+      if(ME) ME.pos = pos;
+      if(FB_OK && AUTH_UID){
+        try{ FB_DB.ref('drivers/'+AUTH_UID).update({ pos:pos, lastSeen:now }); }catch(e){}
+      }
+    }, function(){ /* Fahrer hat GPS abgelehnt – App läuft trotzdem */ },
+       { enableHighAccuracy:true, maximumAge:10000, timeout:20000 });
+  }catch(e){ geoW = null; }
+}
+function geoStop(){
+  if(geoW === null) return;
+  try{ navigator.geolocation.clearWatch(geoW); }catch(e){}
+  geoW = null;
 }
 
 /* ---------- App-Start ---------- */
@@ -571,12 +702,21 @@ function startApp(){
   document.getElementById('tName').textContent = ME.name;
   document.body.classList.toggle('online', !!ME.online);
   document.getElementById('tState').textContent = ME.online ? '● Online · '+ME.veh+' · '+ME.town : 'Offline';
+  if(ME.online) geoStart(); else geoStop();
   render();
 }
 function toggleShift(){
   ME.online = !ME.online; saveMe();
   document.body.classList.toggle('online', ME.online);
   document.getElementById('tState').textContent = ME.online ? '● Online · '+ME.veh+' · '+ME.town : 'Offline';
+  if(ME.online){
+    geoStart();
+    /* Verliert das Handy die Verbindung, setzt der Server den Fahrer auf offline. */
+    try{ if(FB_OK && AUTH_UID) FB_DB.ref('drivers/'+AUTH_UID+'/online').onDisconnect().set(false); }catch(e){}
+  } else {
+    geoStop();
+    try{ if(FB_OK && AUTH_UID) FB_DB.ref('drivers/'+AUTH_UID+'/online').onDisconnect().cancel(); }catch(e){}
+  }
   toast(ME.online ? '🟢 Du bist online' : '⚪ Schicht beendet');
   render();
 }
@@ -621,7 +761,7 @@ function totalKm(o){
    RENDER
    ===================================================================== */
 function myActive(){
-  return bxLoad().find(o=> o.driver && o.driver.name===ME.name &&
+  return bxLoad().find(o=> isMine(o) &&
     ['angenommen','am_restaurant','abgeholt','unterwegs'].indexOf(o.status)>=0) || null;
 }
 function openJobs(){
@@ -723,7 +863,7 @@ function accept(id){
         if(!x) return x;
         if(x.status!=='neu') return;            /* abbrechen */
         x.status = 'angenommen';
-        x.driver = { name:ME.name, ini:ME.ini, veh:ME.veh, phone:ME.phone, town:ME.town,
+        x.driver = { uid:(ME.uid||null), name:ME.name, ini:ME.ini, veh:ME.veh, phone:ME.phone, town:ME.town,
                      nearKm: distTowns(ME.town, (x.stops&&x.stops[0]?x.stops[0].town:x.town)) };
         x.hist = (x.hist||[]).concat([{s:'angenommen', t:Date.now()}]);
         x.upd = Date.now();
@@ -739,7 +879,7 @@ function accept(id){
   const o = bxUpdate(id, x=>{
     if(x.status!=='neu') return;
     x.status = 'angenommen';
-    x.driver = { name:ME.name, ini:ME.ini, veh:ME.veh, phone:ME.phone, town:ME.town,
+    x.driver = { uid:(ME.uid||null), name:ME.name, ini:ME.ini, veh:ME.veh, phone:ME.phone, town:ME.town,
                  nearKm: distTowns(ME.town, (x.stops&&x.stops[0]?x.stops[0].town:x.town)) };
     x.hist = (x.hist||[]).concat([{s:'angenommen', t:Date.now()}]);
   });
@@ -856,7 +996,7 @@ function giveBack(id){
 
 /* ---------- Verdienst ---------- */
 function renderEarn(){
-  const all = bxLoad().filter(o=> o.status==='geliefert' && o.driver && o.driver.name===ME.name);
+  const all = bxLoad().filter(o=> o.status==='geliefert' && isMine(o));
   const d0 = new Date(); d0.setHours(0,0,0,0);
   const today = all.filter(o=> (o.doneAt||o.at) >= d0.getTime());
   const sum = a => a.reduce((s,o)=>s+payout(o),0);
@@ -891,7 +1031,7 @@ function renderEarn(){
 
 /* ---------- Profil ---------- */
 function renderProf(){
-  const all = bxLoad().filter(o=> o.status==='geliefert' && o.driver && o.driver.name===ME.name);
+  const all = bxLoad().filter(o=> o.status==='geliefert' && isMine(o));
   document.getElementById('profBox').innerHTML =
     '<div class="pf-card">'+
       '<div class="pf-top">'+
@@ -1009,9 +1149,48 @@ function watch(){
 window.addEventListener('storage', e=>{ if(e.key===BX_ORDERS && ME) watch(); });
 setInterval(()=>{ if(ME) watch(); }, FB_OK ? 8000 : 1800);
 
+/* ---------- Anmeldung steuert alles ---------- */
+var APP_ON = false, drvRef = null, meSig = '';
+function onAuth(u){
+  if(drvRef){ try{ drvRef.off(); }catch(e){} drvRef = null; }
+  if(!u){
+    AUTH_UID = null; AUTH_MAIL = ''; ME = null; APP_ON = false; meSig = '';
+    geoStop(); showStage('lgAuth'); return;
+  }
+  AUTH_UID = u.uid; AUTH_MAIL = u.email || '';
+  var wm = document.getElementById('waitMail'); if(wm) wm.textContent = AUTH_MAIL;
+  drvRef = FB_DB.ref('drivers/'+u.uid);
+  drvRef.on('value', function(snap){
+    var d = snap.val();
+    if(!d || !d.name){
+      ME = { uid:AUTH_UID, email:AUTH_MAIL, online:false };
+      meSig = ''; APP_ON = false; showStage('lgProf'); return;
+    }
+    d.uid = AUTH_UID; d.email = d.email || AUTH_MAIL;
+    var sig = [d.name,d.ini,d.phone,d.veh,d.town,!!d.active,!!d.online].join('|');
+    ME = d;
+    if(!d.active){
+      meSig = sig; APP_ON = false; geoStop(); showStage('lgWait'); return;
+    }
+    if(!APP_ON){
+      APP_ON = true; seen = null; fbStart();
+      toast('Willkommen zurück, '+String(d.name).split(' ')[0]);
+    }
+    if(sig !== meSig){ meSig = sig; startApp(); }
+  }, function(){ showStage('lgAuth'); authErr('Kein Zugriff. Bitte melde dich neu an.'); });
+}
+
 /* ---------- Start ---------- */
-fbStart();
-if(ME && ME.name){ startApp(); seen = FB_OK ? null : openJobs().map(o=>o.id).join('|'); }
+if(FB_OK && FB_AUTH){
+  FB_AUTH.onAuthStateChanged(onAuth);
+} else {
+  /* Notfall ohne Firebase (kein Netz): alter lokaler Modus, damit nichts blockiert */
+  fbStart();
+  if(ME && ME.name){ startApp(); seen = openJobs().map(o=>o.id).join('|'); }
+  else showStage('lgProf');
+  var pn = document.getElementById('profNote');
+  if(pn) pn.innerHTML = '⚠️ Offline-Modus: keine Verbindung zum Server.<br>Bestellungen kommen nur aus diesem Gerät.';
+}
 </script>
 </body>
 </html>

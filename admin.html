@@ -1,0 +1,735 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Bestellux Zentrale</title>
+<meta name="theme-color" content="#12100B">
+<meta name="robots" content="noindex,nofollow">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<style>
+:root{
+  --yellow:#FFB800; --yellow-dark:#E09E00; --gold:#C9A24B;
+  --red:#A0152C; --red-dark:#7C0F21;
+  --bg:#12100B; --bg2:#1B1810; --card:#221E14; --card2:#2B2618;
+  --line:rgba(255,184,0,0.16);
+  --tx:#F6F1E4; --tx2:#B7AE99; --tx3:#7E7767;
+  --green:#2BB673; --green-dark:#1E8C57;
+  --blue:#3D8BF2;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html,body{margin:0;padding:0;}
+body{
+  background:var(--bg);color:var(--tx);
+  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;
+  font-size:15px;line-height:1.45;
+  padding-bottom:calc(74px + env(safe-area-inset-bottom));
+}
+button{font-family:inherit;cursor:pointer;border:none;}
+input,select{font-family:inherit;}
+.hide{display:none !important;}
+
+/* ============ LOGIN ============ */
+#login{
+  position:fixed;inset:0;z-index:999;overflow-y:auto;
+  background:radial-gradient(120% 80% at 50% 0%,#2A2415 0%,var(--bg) 62%);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:26px 20px calc(30px + env(safe-area-inset-bottom));
+}
+.lg-logo{
+  width:84px;height:84px;border-radius:26px;margin-bottom:16px;
+  background:linear-gradient(140deg,var(--yellow),var(--yellow-dark) 60%,#C98600);
+  display:flex;align-items:center;justify-content:center;font-size:38px;
+  box-shadow:0 14px 34px rgba(255,184,0,0.28);
+}
+.lg-title{font-size:25px;font-weight:900;letter-spacing:-0.4px;margin:0;}
+.lg-title b{color:var(--yellow);}
+.lg-sub{color:var(--tx2);font-size:13.5px;margin:5px 0 26px;text-align:center;}
+.lg-card{
+  width:100%;max-width:400px;background:var(--card);border:1px solid var(--line);
+  border-radius:22px;padding:20px 18px;box-shadow:0 18px 40px rgba(0,0,0,0.45);
+}
+.fld{margin-bottom:15px;}
+.fld label{display:block;font-size:12px;font-weight:800;color:var(--tx2);
+  text-transform:uppercase;letter-spacing:0.6px;margin-bottom:7px;}
+.fld input{
+  width:100%;background:var(--bg2);border:1.5px solid var(--line);border-radius:13px;
+  padding:13px 14px;color:var(--tx);font-size:15.5px;font-weight:600;outline:none;
+  transition:border-color .16s;
+}
+.fld input:focus{border-color:var(--yellow);}
+.btn-main{
+  width:100%;background:linear-gradient(140deg,var(--yellow),var(--yellow-dark));
+  color:#241C00;font-size:16.5px;font-weight:900;border-radius:15px;padding:15px;
+  box-shadow:0 10px 26px rgba(255,184,0,0.30);transition:transform .14s;
+}
+.btn-main:active{transform:scale(0.975);}
+.lg-note{color:var(--tx3);font-size:11.5px;text-align:center;margin:14px 0 0;max-width:400px;}
+.lg-err{background:rgba(224,60,60,.13);border:1px solid rgba(224,60,60,.45);color:#FF8A8A;
+  border-radius:11px;padding:10px 12px;font-size:13px;font-weight:700;margin-top:12px;line-height:1.45;}
+
+/* ============ TOPBAR ============ */
+.top{
+  position:sticky;top:0;z-index:60;
+  background:linear-gradient(180deg,rgba(27,24,16,0.98),rgba(18,16,11,0.94));
+  backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+  border-bottom:1px solid var(--line);
+  padding:calc(10px + env(safe-area-inset-top)) 14px 10px;
+  display:flex;align-items:center;gap:11px;
+}
+.top .mark{
+  width:40px;height:40px;border-radius:13px;flex-shrink:0;
+  background:linear-gradient(140deg,var(--yellow),var(--yellow-dark));
+  display:flex;align-items:center;justify-content:center;font-size:19px;
+}
+.top-tx{flex:1;min-width:0;}
+.top-tx b{display:block;font-size:15px;font-weight:900;}
+.top-tx span{display:block;font-size:11.5px;color:var(--tx3);font-weight:700;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.top-out{background:transparent;border:1.5px solid rgba(255,255,255,.14);color:var(--tx2);
+  border-radius:11px;padding:8px 12px;font-size:12.5px;font-weight:800;}
+
+/* ============ LAYOUT ============ */
+.wrap{max-width:1180px;margin:0 auto;padding:14px;}
+.sec-h{display:flex;align-items:center;justify-content:space-between;margin:4px 2px 11px;}
+.sec-h h2{font-size:18px;font-weight:900;margin:0;letter-spacing:-0.3px;}
+.sec-h em{font-style:normal;font-size:12px;color:var(--tx3);font-weight:800;}
+
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:16px;}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px 15px;}
+.kpi b{display:block;font-size:24px;font-weight:900;letter-spacing:-0.6px;line-height:1.2;}
+.kpi span{display:block;font-size:11.5px;color:var(--tx3);font-weight:800;
+  text-transform:uppercase;letter-spacing:0.5px;margin-top:3px;}
+.kpi.g b{color:var(--green);} .kpi.y b{color:var(--yellow);} .kpi.b b{color:var(--blue);}
+
+/* ============ MAP ============ */
+#map{height:340px;border-radius:18px;border:1px solid var(--line);overflow:hidden;
+  background:var(--card2);margin-bottom:16px;}
+.leaflet-container{background:#1B1810;}
+.leaflet-tile{filter:invert(1) hue-rotate(185deg) brightness(.78) contrast(1.05) saturate(.6);}
+.leaflet-control-attribution{background:rgba(0,0,0,.55)!important;color:#8C8474!important;font-size:9px!important;}
+.leaflet-control-attribution a{color:#B7AE99!important;}
+.mk{width:40px;height:40px;border-radius:13px;display:flex;align-items:center;justify-content:center;
+  font-size:13px;font-weight:900;color:#fff;border:2.5px solid var(--bg);
+  background:linear-gradient(140deg,var(--red),var(--red-dark));box-shadow:0 5px 14px rgba(0,0,0,.5);}
+.mk.on{background:linear-gradient(140deg,var(--green),var(--green-dark));}
+.map-none{display:flex;align-items:center;justify-content:center;height:100%;
+  color:var(--tx3);font-size:13.5px;font-weight:700;text-align:center;padding:20px;}
+
+/* ============ CARDS ============ */
+.list{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:11px;}
+.dc{background:var(--card);border:1px solid var(--line);border-radius:17px;padding:14px;}
+.dc.off{opacity:.68;}
+.dc-h{display:flex;align-items:center;gap:11px;margin-bottom:11px;}
+.dc-av{width:44px;height:44px;border-radius:14px;flex-shrink:0;position:relative;
+  background:linear-gradient(140deg,var(--red),var(--red-dark));
+  display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:900;color:#fff;}
+.dc-av::after{content:"";position:absolute;right:-2px;bottom:-2px;width:13px;height:13px;
+  border-radius:50%;background:var(--tx3);border:2.5px solid var(--card);}
+.dc.online .dc-av::after{background:var(--green);}
+.dc-n{flex:1;min-width:0;}
+.dc-n b{display:block;font-size:15.5px;font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.dc-n span{display:block;font-size:11.5px;color:var(--tx3);font-weight:700;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.tag{display:inline-block;border-radius:8px;padding:3px 8px;font-size:10.5px;font-weight:900;
+  text-transform:uppercase;letter-spacing:0.4px;}
+.tag.on{background:rgba(43,182,115,.16);color:var(--green);}
+.tag.off{background:rgba(255,255,255,.07);color:var(--tx3);}
+.tag.wait{background:rgba(255,184,0,.15);color:var(--yellow);}
+.tag.blocked{background:rgba(224,60,60,.15);color:#FF8A8A;}
+.dc-rows{border-top:1px solid rgba(255,255,255,.06);padding-top:10px;margin-bottom:11px;}
+.dc-row{display:flex;justify-content:space-between;gap:10px;font-size:13px;padding:3px 0;}
+.dc-row i{font-style:normal;color:var(--tx3);font-weight:700;}
+.dc-row b{font-weight:800;text-align:right;}
+.dc-btns{display:flex;gap:8px;}
+.bt{flex:1;border-radius:12px;padding:11px;font-size:13.5px;font-weight:900;transition:transform .14s;}
+.bt:active{transform:scale(.97);}
+.bt.ok{background:linear-gradient(140deg,var(--green),var(--green-dark));color:#fff;}
+.bt.no{background:rgba(224,60,60,.14);border:1.5px solid rgba(224,60,60,.4);color:#FF8A8A;}
+.bt.gh{background:transparent;border:1.5px solid rgba(255,255,255,.14);color:var(--tx2);}
+
+.oc{background:var(--card);border:1px solid var(--line);border-radius:17px;padding:13px 14px;}
+.oc-h{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px;}
+.oc-id{font-family:ui-monospace,Menlo,monospace;font-size:12.5px;color:var(--tx3);font-weight:700;}
+.oc-b{font-size:14.5px;font-weight:800;margin:0 0 4px;}
+.oc-s{font-size:12.5px;color:var(--tx2);}
+.oc-f{display:flex;justify-content:space-between;align-items:baseline;margin-top:10px;
+  border-top:1px solid rgba(255,255,255,.06);padding-top:9px;}
+.oc-f b{font-size:16px;font-weight:900;color:var(--yellow);}
+.oc-f span{font-size:11.5px;color:var(--tx3);font-weight:700;}
+.st{display:inline-block;border-radius:8px;padding:3px 9px;font-size:10.5px;font-weight:900;
+  text-transform:uppercase;letter-spacing:0.4px;background:rgba(255,255,255,.07);color:var(--tx2);}
+.st.neu{background:rgba(255,184,0,.16);color:var(--yellow);}
+.st.lauf{background:rgba(61,139,242,.16);color:var(--blue);}
+.st.fertig{background:rgba(43,182,115,.16);color:var(--green);}
+
+/* ============ STATS ============ */
+.bars{background:var(--card);border:1px solid var(--line);border-radius:17px;padding:16px 14px;margin-bottom:12px;}
+.bars h3{margin:0 0 14px;font-size:14px;font-weight:900;color:var(--tx2);}
+.bar{display:flex;align-items:center;gap:10px;margin-bottom:9px;}
+.bar i{font-style:normal;width:78px;flex-shrink:0;font-size:11.5px;color:var(--tx3);font-weight:800;}
+.bar u{flex:1;text-decoration:none;height:22px;background:var(--bg2);border-radius:7px;overflow:hidden;display:block;}
+.bar u em{display:block;height:100%;border-radius:7px;
+  background:linear-gradient(90deg,var(--yellow-dark),var(--yellow));min-width:2px;transition:width .4s;}
+.bar b{width:74px;text-align:right;flex-shrink:0;font-size:12.5px;font-weight:900;}
+
+.empty{text-align:center;color:var(--tx3);font-size:13.5px;padding:34px 20px;font-weight:700;}
+
+/* ============ TABS ============ */
+.tabs{
+  position:fixed;left:0;right:0;bottom:0;z-index:70;display:flex;
+  background:rgba(18,16,11,0.96);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
+  border-top:1px solid var(--line);padding:8px 6px calc(8px + env(safe-area-inset-bottom));
+}
+.tabs button{
+  flex:1;background:none;color:var(--tx3);font-size:10.5px;font-weight:800;
+  display:flex;flex-direction:column;align-items:center;gap:3px;padding:5px 2px;
+  border-radius:12px;transition:color .16s;
+}
+.tabs button em{font-style:normal;font-size:20px;line-height:1;}
+.tabs button.on{color:var(--yellow);}
+.tabs .bdg{position:absolute;transform:translate(15px,-4px);background:var(--red);color:#fff;
+  font-size:9.5px;font-weight:900;border-radius:9px;padding:1px 5px;}
+
+#toast{
+  position:fixed;left:50%;bottom:calc(88px + env(safe-area-inset-bottom));transform:translateX(-50%) translateY(14px);
+  background:var(--card2);border:1px solid var(--line);border-radius:13px;padding:11px 17px;
+  font-size:13.5px;font-weight:800;box-shadow:0 12px 30px rgba(0,0,0,.5);
+  opacity:0;pointer-events:none;transition:all .22s;z-index:200;max-width:90vw;text-align:center;
+}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+@media(max-width:520px){ #map{height:270px;} .kpi b{font-size:21px;} }
+</style>
+</head>
+<body>
+
+<!-- ================= LOGIN ================= -->
+<div id="login">
+  <div class="lg-logo">🛡️</div>
+  <h1 class="lg-title">Bestellux <b>Zentrale</b></h1>
+  <p class="lg-sub">Nur für die Betriebsleitung</p>
+
+  <div class="lg-card" id="lgBox">
+    <div class="fld">
+      <label>E-Mail</label>
+      <input id="inMail" type="email" inputmode="email" autocomplete="username" placeholder="admin@bestellux.com">
+    </div>
+    <div class="fld">
+      <label>Passwort</label>
+      <input id="inPw" type="password" autocomplete="current-password" placeholder="••••••••">
+    </div>
+    <button class="btn-main" onclick="doAuth()">Anmelden</button>
+    <div id="authErr" class="lg-err hide"></div>
+  </div>
+  <p class="lg-note">Dieser Bereich ist geschützt. Fahrer melden sich in der Fahrer-App an.</p>
+</div>
+
+<!-- ================= APP ================= -->
+<div id="app" class="hide">
+
+  <div class="top">
+    <div class="mark">🛡️</div>
+    <div class="top-tx">
+      <b>Zentrale</b>
+      <span id="topMail">—</span>
+    </div>
+    <button class="top-out" onclick="logout()">Abmelden</button>
+  </div>
+
+  <div class="wrap">
+
+    <!-- TAB: Live -->
+    <div id="tab-Live">
+      <div class="kpis">
+        <div class="kpi g"><b id="kOn">0</b><span>Fahrer online</span></div>
+        <div class="kpi y"><b id="kNeu">0</b><span>offene Aufträge</span></div>
+        <div class="kpi b"><b id="kLauf">0</b><span>in Lieferung</span></div>
+        <div class="kpi"><b id="kAkt">0</b><span>aktive Konten</span></div>
+      </div>
+
+      <div class="sec-h"><h2>Karte</h2><em id="mapNote">—</em></div>
+      <div id="map"><div class="map-none">Karte wird geladen …</div></div>
+
+      <div class="sec-h"><h2>Fahrer live</h2><em id="drvNote">—</em></div>
+      <div id="liveList" class="list"></div>
+    </div>
+
+    <!-- TAB: Fahrer -->
+    <div id="tab-Fahrer" class="hide">
+      <div class="sec-h"><h2>Alle Fahrer</h2><em id="allNote">—</em></div>
+      <div id="drvList" class="list"></div>
+    </div>
+
+    <!-- TAB: Aufträge -->
+    <div id="tab-Orders" class="hide">
+      <div class="sec-h"><h2>Aufträge</h2><em id="ordNote">—</em></div>
+      <div id="ordList" class="list"></div>
+    </div>
+
+    <!-- TAB: Statistik -->
+    <div id="tab-Stats" class="hide">
+      <div class="kpis">
+        <div class="kpi y"><b id="sUms">0 €</b><span>Umsatz heute</span></div>
+        <div class="kpi"><b id="sUmsW">0 €</b><span>Umsatz 7 Tage</span></div>
+        <div class="kpi g"><b id="sCnt">0</b><span>Lieferungen heute</span></div>
+        <div class="kpi b"><b id="sZeit">—</b><span>Ø Lieferzeit</span></div>
+      </div>
+      <div class="bars"><h3>Lieferungen · letzte 7 Tage</h3><div id="barDays"></div></div>
+      <div class="bars"><h3>Umsatz je Fahrer · letzte 7 Tage</h3><div id="barDrv"></div></div>
+      <div class="bars"><h3>Nach Ort · letzte 7 Tage</h3><div id="barTown"></div></div>
+    </div>
+
+  </div>
+
+  <div class="tabs">
+    <button data-tab="Live"   class="on" onclick="go('Live')"><em>🛰️</em>Live</button>
+    <button data-tab="Fahrer" onclick="go('Fahrer')"><em>🧑‍🍳</em>Fahrer<span id="bdgWait" class="bdg hide">0</span></button>
+    <button data-tab="Orders" onclick="go('Orders')"><em>📦</em>Aufträge</button>
+    <button data-tab="Stats"  onclick="go('Stats')"><em>📊</em>Statistik</button>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script src="https://www.gstatic.com/firebasejs/12.15.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/12.15.0/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/12.15.0/firebase-auth-compat.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
+<script>
+/* ============================================================
+   BESTELLUX ZENTRALE
+   Nur Betriebsleitung. Steuert, wer als Fahrer arbeiten darf.
+   ============================================================ */
+
+/* Wer hier rein darf. Muss auch in den Firebase-Regeln stehen –
+   diese Liste allein ist nur die Anzeige, nicht die Sicherheit. */
+const ADMIN_EMAILS = ['ibrahimi.hafid22@gmail.com'];
+
+const FB_CONFIG = {
+  apiKey: "AIzaSyBsCEXpAKJwYI3Zg_8XHUE8CeIyjo7zX2c",
+  authDomain: "bestellux.firebaseapp.com",
+  databaseURL: "https://bestellux-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "bestellux",
+  storageBucket: "bestellux.firebasestorage.app",
+  messagingSenderId: "19751728202",
+  appId: "1:19751728202:web:a7daa8f4d57b01730ce2b3"
+};
+
+var FB_DB = null, FB_AUTH = null, FB_OK = false;
+try{
+  if(window.firebase && firebase.initializeApp){
+    if(!firebase.apps || !firebase.apps.length) firebase.initializeApp(FB_CONFIG);
+    FB_DB = firebase.database();
+    FB_AUTH = firebase.auth ? firebase.auth() : null;
+    FB_OK = !!(FB_DB && FB_AUTH);
+  }
+}catch(e){ FB_DB = null; FB_AUTH = null; FB_OK = false; }
+
+var ADMIN_MAIL = '';
+var DRIVERS = [];    /* Array aus drivers/<uid> */
+var ORDERS  = [];    /* Array aus orders/<id>, neueste zuerst */
+
+/* ---------- kleine Helfer ---------- */
+function $(id){ return document.getElementById(id); }
+function eur(n){ return (Number(n)||0).toFixed(2).replace('.',',') + ' €'; }
+function esc(s){
+  return String(s==null?'':s).replace(/[&<>"']/g, function(c){
+    return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+  });
+}
+function toast(m){
+  var t = $('toast'); if(!t) return;
+  t.textContent = m; t.classList.add('show');
+  clearTimeout(toast._t); toast._t = setTimeout(function(){ t.classList.remove('show'); }, 2400);
+}
+function ago(t){
+  if(!t) return '—';
+  var s = Math.floor((Date.now()-t)/1000);
+  if(s < 60) return 'gerade eben';
+  if(s < 3600) return Math.floor(s/60)+' Min';
+  if(s < 86400) return Math.floor(s/3600)+' Std';
+  return Math.floor(s/86400)+' Tage';
+}
+function uhr(t){
+  if(!t) return '—';
+  var d = new Date(t);
+  return ('0'+d.getHours()).slice(-2)+':'+('0'+d.getMinutes()).slice(-2);
+}
+function tagStart(off){    /* 0 = heute 00:00, 1 = gestern 00:00 … */
+  var d = new Date(); d.setHours(0,0,0,0);
+  return d.getTime() - (off||0)*86400000;
+}
+function wtag(t){
+  return ['So','Mo','Di','Mi','Do','Fr','Sa'][new Date(t).getDay()];
+}
+/* Verdienst des Fahrers – gleiche Regel wie in der Fahrer-App */
+function payout(o){ return (Number(o.fee)||0) + (Number(o.tip)||0); }
+
+const ST_TXT = {
+  neu:'neu', angenommen:'angenommen', am_restaurant:'am Lokal',
+  abgeholt:'abgeholt', unterwegs:'unterwegs', geliefert:'geliefert'
+};
+function stClass(s){
+  if(s === 'neu') return 'neu';
+  if(s === 'geliefert') return 'fertig';
+  return 'lauf';
+}
+
+/* ============================================================
+   LOGIN
+   ============================================================ */
+function authErr(msg){
+  var e = $('authErr');
+  if(!e) return;
+  if(!msg){ e.classList.add('hide'); e.textContent = ''; return; }
+  e.classList.remove('hide'); e.textContent = msg;
+}
+
+function doAuth(){
+  var mail = ($('inMail').value||'').trim().toLowerCase();
+  var pw   = $('inPw').value||'';
+  if(!mail || pw.length < 6){ authErr('Bitte E-Mail und Passwort eingeben.'); return; }
+  if(!FB_OK){ authErr('Keine Verbindung zum Server. Bitte Internet prüfen.'); return; }
+  authErr('');
+  FB_AUTH.signInWithEmailAndPassword(mail, pw).catch(function(err){
+    var c = (err && err.code) || '';
+    if(c.indexOf('wrong-password')>=0 || c.indexOf('invalid-credential')>=0)
+      authErr('E-Mail oder Passwort ist falsch.');
+    else if(c.indexOf('user-not-found')>=0) authErr('Dieses Konto gibt es nicht.');
+    else if(c.indexOf('invalid-email')>=0)  authErr('Diese E-Mail-Adresse ist ungültig.');
+    else if(c.indexOf('too-many-requests')>=0) authErr('Zu viele Versuche. Bitte kurz warten.');
+    else if(c.indexOf('network')>=0) authErr('Keine Internetverbindung.');
+    else authErr('Anmeldung fehlgeschlagen. Bitte nochmal.');
+  });
+}
+
+function logout(){
+  try{ if(FB_AUTH) FB_AUTH.signOut(); }catch(e){}
+  setTimeout(function(){ location.reload(); }, 150);
+}
+
+/* ============================================================
+   TABS
+   ============================================================ */
+var TAB = 'Live';
+function go(t){
+  TAB = t;
+  ['Live','Fahrer','Orders','Stats'].forEach(function(x){
+    var el = $('tab-'+x); if(el) el.classList.toggle('hide', x !== t);
+  });
+  var bs = document.querySelectorAll('.tabs button');
+  for(var i=0;i<bs.length;i++) bs[i].classList.toggle('on', bs[i].getAttribute('data-tab') === t);
+  window.scrollTo(0,0);
+  render();
+  if(t === 'Live') setTimeout(function(){ if(MAP) MAP.invalidateSize(); }, 60);
+}
+
+/* ============================================================
+   KARTE
+   ============================================================ */
+var MAP = null, MARKS = {};
+function mapInit(){
+  if(MAP || !window.L) return;
+  try{
+    $('map').innerHTML = '';
+    MAP = L.map('map', { zoomControl:true, attributionControl:true })
+           .setView([52.9230, 9.1870], 11);   /* Langwedel / Verden */
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom:18, attribution:'© OpenStreetMap'
+    }).addTo(MAP);
+  }catch(e){ MAP = null; }
+}
+/* Wenn Leaflet nicht geladen werden konnte, soll da kein ewiges "wird geladen" stehen. */
+function mapFail(){
+  if(MAP || !$('map')) return;
+  $('map').innerHTML = '<div class="map-none">Die Karte konnte nicht geladen werden.<br>Die Fahrerliste unten funktioniert trotzdem.</div>';
+}
+function mapDraw(){
+  if(!MAP) return;
+  var seen = {}, pts = [];
+  DRIVERS.forEach(function(d){
+    if(!d.pos || typeof d.pos.lat !== 'number' || typeof d.pos.lng !== 'number') return;
+    if(!d.active) return;                       /* gesperrte Fahrer nicht anzeigen */
+    seen[d.uid] = 1;
+    pts.push([d.pos.lat, d.pos.lng]);
+    var html = '<div class="mk'+(d.online?' on':'')+'">'+esc(d.ini||'?')+'</div>';
+    var ic = L.divIcon({ html:html, className:'', iconSize:[40,40], iconAnchor:[20,20] });
+    var pop = '<b>'+esc(d.name||'Fahrer')+'</b><br>'
+            + (d.online?'🟢 online':'⚫ offline')+' · '+esc(d.veh||'—')+'<br>'
+            + 'Position: '+ago(d.pos.t);
+    if(MARKS[d.uid]){
+      MARKS[d.uid].setLatLng([d.pos.lat, d.pos.lng]);
+      MARKS[d.uid].setIcon(ic);
+      MARKS[d.uid].setPopupContent(pop);
+    }else{
+      MARKS[d.uid] = L.marker([d.pos.lat, d.pos.lng], {icon:ic}).addTo(MAP).bindPopup(pop);
+    }
+  });
+  for(var k in MARKS){
+    if(!seen[k]){ try{ MAP.removeLayer(MARKS[k]); }catch(e){} delete MARKS[k]; }
+  }
+  if(pts.length && !mapDraw._fit){
+    mapDraw._fit = true;
+    try{ MAP.fitBounds(pts, {padding:[50,50], maxZoom:14}); }catch(e){}
+  }
+  $('mapNote').textContent = pts.length ? (pts.length+' Position'+(pts.length>1?'en':'')) : 'keine GPS-Daten';
+}
+
+/* ============================================================
+   FAHRER-KARTEN
+   ============================================================ */
+function jobOf(uid){
+  for(var i=0;i<ORDERS.length;i++){
+    var o = ORDERS[i];
+    if(o.status !== 'geliefert' && o.status !== 'neu' && o.driver && o.driver.uid === uid) return o;
+  }
+  return null;
+}
+function drvCard(d, kurz){
+  var job = jobOf(d.uid);
+  var cls = 'dc' + (d.online ? ' online' : ' off');
+  var tag = !d.active ? '<span class="tag blocked">gesperrt</span>'
+          : (d.online ? '<span class="tag on">online</span>' : '<span class="tag off">offline</span>');
+  var h = '<div class="'+cls+'">'
+    + '<div class="dc-h">'
+    +   '<div class="dc-av">'+esc(d.ini||'?')+'</div>'
+    +   '<div class="dc-n"><b>'+esc(d.name||'Ohne Namen')+'</b><span>'+esc(d.email||'')+'</span></div>'
+    +   tag
+    + '</div>'
+    + '<div class="dc-rows">'
+    +   '<div class="dc-row"><i>Fahrzeug</i><b>'+esc(d.veh||'—')+'</b></div>'
+    +   '<div class="dc-row"><i>Standort-Ort</i><b>'+esc(d.town||'—')+'</b></div>'
+    +   '<div class="dc-row"><i>Telefon</i><b>'+esc(d.phone||'—')+'</b></div>'
+    +   '<div class="dc-row"><i>GPS</i><b>'+(d.pos ? ago(d.pos.t)+(d.pos.acc?' · ±'+d.pos.acc+' m':'') : 'keine Daten')+'</b></div>'
+    +   '<div class="dc-row"><i>zuletzt gesehen</i><b>'+ago(d.lastSeen)+'</b></div>'
+    +   '<div class="dc-row"><i>Auftrag</i><b>'+(job ? esc(job.id)+' · '+esc(ST_TXT[job.status]||job.status) : 'frei')+'</b></div>';
+  if(!kurz){
+    var w = umsatzDrv(d, 7);
+    h += '<div class="dc-row"><i>7 Tage</i><b>'+w.n+' Lieferungen · '+eur(w.sum)+'</b></div>';
+  }
+  h += '</div><div class="dc-btns">';
+  if(d.active){
+    h += '<button class="bt no" onclick="setActive(\''+d.uid+'\',false)">Sperren</button>';
+  }else{
+    h += '<button class="bt ok" onclick="setActive(\''+d.uid+'\',true)">Aktivieren</button>';
+  }
+  if(d.phone) h += '<a class="bt gh" style="text-decoration:none;text-align:center;display:block;line-height:1.4" href="tel:'+esc(d.phone)+'">Anrufen</a>';
+  h += '</div></div>';
+  return h;
+}
+
+/* Nur die Zentrale schreibt dieses Feld. Die Fahrer-App fasst es nie an. */
+function setActive(uid, on){
+  var d = DRIVERS.filter(function(x){ return x.uid === uid; })[0];
+  var nm = d ? (d.name || d.email || 'Fahrer') : 'Fahrer';
+  if(!on && !confirm('„'+nm+'“ wirklich sperren?\n\nDer Fahrer kann dann keine Aufträge mehr annehmen.')) return;
+  if(!FB_OK){ toast('Keine Verbindung'); return; }
+  FB_DB.ref('drivers/'+uid+'/active').set(!!on)
+    .then(function(){ toast(on ? '✓ '+nm+' ist aktiviert' : '⛔ '+nm+' ist gesperrt'); })
+    .catch(function(){ toast('Keine Berechtigung dafür'); });
+}
+
+/* ============================================================
+   STATISTIK
+   ============================================================ */
+function geliefert(tage){
+  var von = tagStart((tage||1) - 1);
+  return ORDERS.filter(function(o){ return o.status === 'geliefert' && (o.at||0) >= von; });
+}
+function umsatzDrv(d, tage){
+  var a = geliefert(tage).filter(function(o){
+    return o.driver && (o.driver.uid ? o.driver.uid === d.uid : o.driver.name === d.name);
+  });
+  return { n:a.length, sum:a.reduce(function(s,o){ return s + payout(o); }, 0) };
+}
+function lieferMin(o){
+  if(!o.hist || !o.hist.length) return null;
+  var a = null, b = null;
+  o.hist.forEach(function(h){
+    if(h.s === 'neu') a = h.t;
+    if(h.s === 'geliefert') b = h.t;
+  });
+  if(!a) a = o.at;
+  if(!a || !b || b <= a) return null;
+  var m = (b - a) / 60000;
+  return (m > 0 && m < 300) ? m : null;    /* Ausreißer raus */
+}
+function bars(host, rows, fmt){
+  var el = $(host); if(!el) return;
+  if(!rows.length){ el.innerHTML = '<div class="empty" style="padding:12px">Noch keine Daten.</div>'; return; }
+  var max = Math.max.apply(null, rows.map(function(r){ return r.v; })) || 1;
+  el.innerHTML = rows.map(function(r){
+    return '<div class="bar"><i>'+esc(r.k)+'</i><u><em style="width:'
+         + Math.max(2, Math.round(r.v/max*100)) + '%"></em></u><b>'+fmt(r)+'</b></div>';
+  }).join('');
+}
+function renderStats(){
+  var heute = geliefert(1), woche = geliefert(7);
+  var sum = function(a){ return a.reduce(function(s,o){ return s + (Number(o.total)||0); }, 0); };
+  $('sUms').textContent  = eur(sum(heute));
+  $('sUmsW').textContent = eur(sum(woche));
+  $('sCnt').textContent  = heute.length;
+
+  var mins = woche.map(lieferMin).filter(function(x){ return x !== null; });
+  $('sZeit').textContent = mins.length
+    ? Math.round(mins.reduce(function(s,x){ return s+x; },0)/mins.length) + ' Min' : '—';
+
+  /* Lieferungen je Tag */
+  var days = [];
+  for(var i=6;i>=0;i--){
+    var a = tagStart(i), b = a + 86400000;
+    var n = ORDERS.filter(function(o){ return o.status==='geliefert' && (o.at||0)>=a && (o.at||0)<b; }).length;
+    days.push({ k:(i===0?'heute':wtag(a)+' '+new Date(a).getDate()+'.'), v:n });
+  }
+  bars('barDays', days, function(r){ return r.v + (r.v===1?' Lief.':' Lief.'); });
+
+  /* Umsatz je Fahrer */
+  var drv = DRIVERS.map(function(d){
+    var w = umsatzDrv(d, 7);
+    return { k:(d.name||d.email||'?').split(' ')[0], v:w.sum, n:w.n };
+  }).filter(function(r){ return r.n > 0; }).sort(function(a,b){ return b.v - a.v; });
+  bars('barDrv', drv, function(r){ return eur(r.v); });
+
+  /* Nach Ort */
+  var by = {};
+  woche.forEach(function(o){
+    var t = o.town || (o.stops && o.stops[0] ? o.stops[0].town : '') || 'unbekannt';
+    by[t] = (by[t]||0) + 1;
+  });
+  var towns = Object.keys(by).map(function(k){ return {k:k, v:by[k]}; })
+                    .sort(function(a,b){ return b.v - a.v; });
+  bars('barTown', towns, function(r){ return r.v + ' Lief.'; });
+}
+
+/* ============================================================
+   RENDER
+   ============================================================ */
+function render(){
+  var aktiv  = DRIVERS.filter(function(d){ return d.active; });
+  var online = aktiv.filter(function(d){ return d.online; });
+  var warten = DRIVERS.filter(function(d){ return !d.active; });
+  var neu    = ORDERS.filter(function(o){ return o.status === 'neu'; });
+  var lauf   = ORDERS.filter(function(o){ return o.status !== 'neu' && o.status !== 'geliefert'; });
+
+  $('kOn').textContent   = online.length;
+  $('kNeu').textContent  = neu.length;
+  $('kLauf').textContent = lauf.length;
+  $('kAkt').textContent  = aktiv.length;
+
+  var bd = $('bdgWait');
+  bd.textContent = warten.length;
+  bd.classList.toggle('hide', warten.length === 0);
+
+  if(TAB === 'Live'){
+    mapDraw();
+    $('drvNote').textContent = online.length + ' von ' + aktiv.length + ' online';
+    $('liveList').innerHTML = online.length
+      ? online.map(function(d){ return drvCard(d, true); }).join('')
+      : '<div class="empty">Gerade ist kein Fahrer online.</div>';
+  }
+
+  if(TAB === 'Fahrer'){
+    $('allNote').textContent = DRIVERS.length + ' Konten'
+      + (warten.length ? ' · '+warten.length+' wartet auf Freigabe' : '');
+    var sort = DRIVERS.slice().sort(function(a,b){
+      if(!!a.active !== !!b.active) return a.active ? 1 : -1;      /* Wartende zuerst */
+      if(!!a.online !== !!b.online) return a.online ? -1 : 1;
+      return String(a.name||'').localeCompare(String(b.name||''));
+    });
+    $('drvList').innerHTML = sort.length
+      ? sort.map(function(d){ return drvCard(d, false); }).join('')
+      : '<div class="empty">Noch keine Fahrer registriert.</div>';
+  }
+
+  if(TAB === 'Orders'){
+    var list = ORDERS.slice(0, 60);
+    $('ordNote').textContent = neu.length + ' offen · ' + lauf.length + ' laufend';
+    $('ordList').innerHTML = list.length ? list.map(function(o){
+      var st = o.stops && o.stops.length ? o.stops.map(function(s){ return s.rest || s.name || ''; }).join(' + ') : '—';
+      return '<div class="oc">'
+        + '<div class="oc-h"><span class="oc-id">'+esc(o.id)+'</span>'
+        +   '<span class="st '+stClass(o.status)+'">'+esc(ST_TXT[o.status]||o.status)+'</span></div>'
+        + '<p class="oc-b">'+esc(st)+'</p>'
+        + '<div class="oc-s">📍 '+esc(o.town||'—')+' '+esc(o.street||'')+' · '+uhr(o.at)+' Uhr</div>'
+        + '<div class="oc-s">'+(o.driver ? '🧑‍🍳 '+esc(o.driver.name||'—') : '⏳ noch kein Fahrer')+'</div>'
+        + '<div class="oc-f"><span>'+esc(o.pay||'—')+'</span><b>'+eur(o.total)+'</b></div>'
+        + '</div>';
+    }).join('') : '<div class="empty">Noch keine Aufträge.</div>';
+  }
+
+  if(TAB === 'Stats') renderStats();
+}
+
+/* ============================================================
+   DATEN
+   ============================================================ */
+var started = false;
+function start(){
+  if(started) return;
+  started = true;
+  mapInit();
+  if(!MAP) setTimeout(function(){ mapInit(); if(!MAP) mapFail(); else mapDraw(); }, 2500);
+
+  FB_DB.ref('drivers').on('value', function(snap){
+    var v = snap.val() || {}, a = [];
+    for(var k in v){
+      if(!v[k]) continue;
+      var d = v[k]; d.uid = d.uid || k;
+      a.push(d);
+    }
+    DRIVERS = a;
+    render();
+  }, function(){ toast('Kein Zugriff auf die Fahrerliste'); });
+
+  FB_DB.ref('orders').on('value', function(snap){
+    var v = snap.val() || {}, a = [];
+    for(var k in v){ if(v[k] && v[k].id) a.push(v[k]); }
+    a.sort(function(x,y){ return (y.at||0)-(x.at||0); });
+    ORDERS = a;
+    render();
+  }, function(){ toast('Kein Zugriff auf die Aufträge'); });
+
+  /* „vor 3 Min“ soll mitlaufen, auch wenn nichts Neues kommt */
+  setInterval(render, 20000);
+}
+
+/* ============================================================
+   START
+   ============================================================ */
+function onAuth(u){
+  if(!u){
+    ADMIN_MAIL = '';
+    $('login').classList.remove('hide');
+    $('app').classList.add('hide');
+    return;
+  }
+  var mail = (u.email||'').toLowerCase();
+  if(ADMIN_EMAILS.indexOf(mail) < 0){
+    try{ FB_AUTH.signOut(); }catch(e){}
+    $('login').classList.remove('hide');
+    $('app').classList.add('hide');
+    authErr('Dieses Konto hat keinen Zugang zur Zentrale.');
+    return;
+  }
+  ADMIN_MAIL = mail;
+  $('topMail').textContent = mail;
+  authErr('');
+  $('login').classList.add('hide');
+  $('app').classList.remove('hide');
+  start();
+  setTimeout(function(){ if(MAP) MAP.invalidateSize(); }, 120);
+}
+
+document.addEventListener('keydown', function(e){
+  if(e.key === 'Enter' && !$('login').classList.contains('hide')) doAuth();
+});
+
+if(FB_OK){
+  FB_AUTH.onAuthStateChanged(onAuth);
+}else{
+  authErr('Keine Verbindung zum Server. Bitte Seite neu laden.');
+}
+</script>
+</body>
+</html>
