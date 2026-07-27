@@ -633,10 +633,12 @@ function fertigUm(o){
 }
 
 function annehmen(id, prep){
+  var raus = false;                 /* ging der Auftrag jetzt an die Fahrer raus? */
   bxUpdate(id, function(o){
     var i = myIdx(o); if(i<0) return;
     o.stops[i].ok = 1; o.stops[i].prep = prep; o.stops[i].okAt = Date.now();
     var alle = o.stops.every(function(s){ return s.ok === 1; });
+    raus = alle;
     if(alle){
       o.status = 'bestaetigt';
       var ende = 0;
@@ -649,7 +651,9 @@ function annehmen(id, prep){
     }
   });
   closeSheet(); closeAlert();
-  toast('✓ Angenommen · fertig in '+prep+' Min');
+  /* Klare Rückmeldung: das war schon alles. Der Fahrer ist informiert. */
+  toast(raus ? '✓ Angenommen · der Fahrer sieht sie jetzt'
+             : '✓ Angenommen · wir warten noch auf das andere Lokal');
   render();
 }
 function ablehnen(id, grund){
@@ -798,13 +802,20 @@ function card(o, mode){
            '<button onclick="sheetGrund(\''+o.id+'\')">Geht heute nicht</button>'+
          '</div>';
   } else if(mode==='run'){
+    /* Das Lokal soll SEHEN, dass die Annahme sofort beim Fahrer landet –
+       sonst denkt es, es müsse noch irgendwo etwas drücken. Es muss nicht:
+       zwei Tipps insgesamt, die Minuten und "Fertig". */
     var wartetAufAndere = o.status === 'neu';
     if(wartetAufAndere){
-      h += '<div class="st wait">⏳ Angenommen. Wir warten noch auf das andere Lokal – '+
-           'danach bekommt der Fahrer den Auftrag.</div>';
+      /* Nur bei einer Sammelbestellung. Wir sagen auch, auf WEN gewartet wird. */
+      var offen = (o.stops||[]).filter(function(s){ return s.ok !== 1; })
+                               .map(function(s){ return s.name; });
+      h += '<div class="st wait">⏳ Ihr habt angenommen. Der Fahrer bekommt den Auftrag, '+
+           'sobald '+(offen.length ? esc(offen.join(' und ')) : 'das andere Lokal')+
+           ' auch angenommen hat.</div>';
     } else if(o.status==='bestaetigt'){
-      h += '<div class="st wait">👨‍🍳 In der Küche · fertig um '+fertigUm(o)+' Uhr. '+
-           'Ein Fahrer wird zugeteilt.</div>';
+      h += '<div class="st go">✅ Der Fahrer sieht die Bestellung jetzt · fertig um '+
+           fertigUm(o)+' Uhr</div>';
     } else {
       var d = o.driver ? o.driver.name : 'Der Fahrer';
       var txt = {
