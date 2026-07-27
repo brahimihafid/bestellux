@@ -1,0 +1,58 @@
+{
+  "rules": {
+
+    "orders": {
+      ".read": "auth != null",
+
+      "$oid": {
+        ".read": true,
+
+        ".write": "auth != null || (!data.exists() && newData.exists())",
+
+        ".validate": "newData.hasChildren(['id','at','status']) && newData.child('id').isString() && newData.child('id').val().length < 40 && newData.child('at').isNumber() && newData.child('status').isString()",
+
+        "status": {
+          ".validate": "newData.val() == 'neu' || newData.val() == 'angenommen' || newData.val() == 'am_restaurant' || newData.val() == 'abgeholt' || newData.val() == 'unterwegs' || newData.val() == 'geliefert'"
+        },
+
+        "driver": {
+          ".write": "auth != null"
+        }
+      }
+    },
+
+    "drivers": {
+      ".read": "auth != null",
+
+      "$uid": {
+        ".write": "auth != null && auth.uid == $uid && (newData.child('active').val() == data.child('active').val())",
+
+        ".validate": "newData.hasChildren(['uid','email'])",
+
+        "uid":   { ".validate": "newData.val() == $uid" },
+        "email": { ".validate": "newData.val() == auth.token.email || auth.token.email == 'bestellux1@gmail.com' || auth.token.email == 'ibrahimi.hafid22@gmail.com'" },
+
+        "active": {
+          ".write": "auth != null && (auth.token.email == 'bestellux1@gmail.com' || auth.token.email == 'ibrahimi.hafid22@gmail.com')",
+          ".validate": "newData.isBoolean()"
+        },
+
+        "online":   { ".validate": "newData.isBoolean()" },
+        "lastSeen": { ".validate": "newData.isNumber()" },
+
+        "pos": {
+          "lat": { ".validate": "newData.isNumber() && newData.val() >= -90  && newData.val() <= 90" },
+          "lng": { ".validate": "newData.isNumber() && newData.val() >= -180 && newData.val() <= 180" },
+          "acc": { ".validate": "newData.isNumber()" },
+          "t":   { ".validate": "newData.isNumber()" }
+        }
+      }
+    },
+
+    "$other": {
+      ".read": false,
+      ".write": false
+    }
+
+  }
+}
