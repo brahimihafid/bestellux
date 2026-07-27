@@ -133,11 +133,11 @@ body.open .sw-b{background:var(--card2);color:var(--tx2);border:1px solid var(--
 .sw-more button:active{border-color:var(--yellow);color:var(--tx);}
 
 /* ================= TABS ================= */
-.tabs{display:flex;gap:7px;padding:13px 15px 0;}
+.tabs{display:flex;gap:6px;padding:13px 15px 0;}
 .tab{
   flex:1;background:var(--card);border:1px solid var(--line);border-radius:13px;
-  padding:10px 6px;color:var(--tx2);font-size:12.5px;font-weight:800;
-  display:flex;align-items:center;justify-content:center;gap:6px;
+  padding:10px 3px;color:var(--tx2);font-size:12px;font-weight:800;white-space:nowrap;
+  display:flex;align-items:center;justify-content:center;gap:5px;
 }
 .tab.on{background:linear-gradient(140deg,var(--yellow),var(--yellow-dark));
   border-color:var(--yellow);color:#241C00;}
@@ -160,14 +160,30 @@ main{padding:13px 15px 30px;}
 .oc-sum b{font-size:17px;font-weight:900;color:var(--yellow);display:block;}
 .oc-sum span{font-size:10.5px;color:var(--tx3);font-weight:800;
   text-transform:uppercase;letter-spacing:.5px;}
-.oc-items{padding:11px 15px;}
-.it{display:flex;gap:10px;padding:6px 0;align-items:flex-start;}
-.it .q{background:var(--card2);border:1px solid var(--line);border-radius:9px;
-  min-width:29px;height:26px;display:flex;align-items:center;justify-content:center;
-  font-size:13px;font-weight:900;color:var(--yellow);flex:0 0 auto;}
-.it .n{flex:1;min-width:0;font-size:14.5px;font-weight:700;}
-.it .p{font-size:13.5px;font-weight:800;color:var(--tx2);flex:0 0 auto;}
-.it .note{display:block;font-size:12.5px;font-weight:800;color:#FFD466;margin-top:3px;}
+/* ===== ZUBEREITUNGS-ZETTEL ==============================================
+   Der wichtigste Teil der Karte: die Küche muss auf einen Blick sehen,
+   WAS sie machen soll. Darum große Zahl, großer Name – und ein
+   Sonderwunsch ("ohne scharf") als leuchtender Balken, nicht als
+   kleine graue Zeile, die man beim Arbeiten übersieht.
+   ===================================================================== */
+.oc-items{padding:11px 15px 13px;}
+.zu-h{display:flex;align-items:center;padding:1px 0 9px;
+  font-size:11.5px;font-weight:900;color:var(--tx3);
+  text-transform:uppercase;letter-spacing:.7px;}
+.zu-h em{margin-left:auto;font-style:normal;color:var(--tx2);}
+.it{display:flex;gap:11px;padding:9px 0;align-items:flex-start;
+  border-bottom:1px solid rgba(255,255,255,.045);}
+.it:last-child{border-bottom:none;}
+.it .q{background:rgba(255,184,0,.14);border:1px solid rgba(255,184,0,.36);
+  border-radius:11px;min-width:42px;height:37px;flex:0 0 auto;
+  display:flex;align-items:center;justify-content:center;gap:1px;
+  font-size:21px;font-weight:900;color:var(--yellow);letter-spacing:-.6px;}
+.it .q span{font-size:12px;font-weight:800;opacity:.7;}
+.it .n{flex:1;min-width:0;padding-top:2px;}
+.it .n b{display:block;font-size:17px;font-weight:800;line-height:1.3;letter-spacing:-.2px;}
+.it .p{font-size:13px;font-weight:800;color:var(--tx3);flex:0 0 auto;padding-top:9px;}
+.it .note{display:inline-block;margin-top:6px;padding:5px 11px;border-radius:9px;
+  background:var(--yellow);color:#241C00;font-size:14px;font-weight:900;line-height:1.3;}
 .oc-note{margin:0 15px 12px;background:rgba(255,184,0,.09);
   border:1px solid rgba(255,184,0,.28);border-radius:12px;padding:9px 11px;
   font-size:12.5px;font-weight:700;color:#FFD466;}
@@ -190,6 +206,53 @@ main{padding:13px 15px 30px;}
 .st.bad{background:rgba(224,60,60,.12);border:1px solid rgba(224,60,60,.40);color:#FF9E9E;}
 .empty{text-align:center;color:var(--tx3);font-size:13.5px;padding:46px 20px;font-weight:700;}
 .empty .ic{font-size:40px;display:block;margin-bottom:10px;opacity:.6;}
+
+/* ===== EIN-TIPP-ANNAHME =================================================
+   Das Lokal soll NICHT erst "Annehmen" und dann die Zeit tippen.
+   Ein einziger Tipp auf "15 Min" heißt: angenommen UND Zeit gesetzt.
+   ===================================================================== */
+.qa-h{padding:2px 15px 8px;font-size:12.5px;font-weight:900;color:var(--tx2);
+  text-transform:uppercase;letter-spacing:.5px;}
+.qa{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;padding:0 15px 10px;}
+.qa button{
+  background:linear-gradient(140deg,var(--green),var(--green-dark));color:#fff;
+  border-radius:14px;padding:15px 4px;font-size:19px;font-weight:900;line-height:1.05;
+  box-shadow:0 8px 20px rgba(43,182,115,.26);transition:transform .13s;
+}
+.qa button:active{transform:scale(.95);}
+.qa button small{display:block;font-size:10.5px;font-weight:800;opacity:.9;margin-top:2px;}
+.qa-foot{display:flex;gap:9px;padding:0 15px 14px;}
+.qa-foot button{
+  flex:1;background:none;border:none;color:var(--tx3);font-size:12.5px;font-weight:800;
+  padding:9px 4px;text-decoration:underline;
+}
+.qa-foot button:active{color:var(--tx);}
+
+/* ===== UMSATZ ===== */
+.money{
+  margin:0 0 13px;border-radius:20px;padding:20px 18px;
+  background:linear-gradient(140deg,#3A3014,#241F14);
+  border:1.5px solid rgba(255,184,0,.34);
+  box-shadow:0 10px 28px rgba(0,0,0,.34);
+}
+.money .lb{font-size:11.5px;font-weight:900;color:var(--yellow);
+  text-transform:uppercase;letter-spacing:1px;}
+.money .big{font-size:40px;font-weight:900;letter-spacing:-1.4px;line-height:1.05;margin:5px 0 3px;}
+.money .sm{font-size:12.5px;color:var(--tx2);font-weight:700;}
+.m2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:13px;}
+.mbox{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px 14px;}
+.mbox .lb{font-size:11px;font-weight:900;color:var(--tx3);
+  text-transform:uppercase;letter-spacing:.7px;}
+.mbox .v{font-size:22px;font-weight:900;margin-top:3px;letter-spacing:-.5px;}
+.mbox .s{font-size:11.5px;color:var(--tx3);font-weight:700;margin-top:1px;}
+.mrow{background:var(--card);border:1px solid var(--line);border-radius:16px;
+  padding:4px 15px;margin-bottom:13px;}
+.mrow .r{display:flex;align-items:center;gap:10px;padding:12px 0;
+  border-bottom:1px solid rgba(255,255,255,.05);font-size:14px;font-weight:700;}
+.mrow .r:last-child{border-bottom:none;}
+.mrow .r b{margin-left:auto;font-size:16px;font-weight:900;}
+.mnote{font-size:11.5px;color:var(--tx3);font-weight:700;line-height:1.6;
+  padding:0 4px 8px;text-align:center;}
 
 /* ================= SHEET ================= */
 #sheet{position:fixed;inset:0;z-index:800;background:rgba(0,0,0,.66);
@@ -219,6 +282,11 @@ main{padding:13px 15px 30px;}
 #alertOv h3{margin:0 0 4px;font-size:21px;font-weight:900;}
 #alertOv p{margin:0 0 16px;font-size:13.5px;color:var(--tx2);}
 #alertOv .amt{font-size:32px;font-weight:900;color:var(--yellow);margin-bottom:2px;}
+/* Die Küche soll schon im Klingel-Fenster sehen, was zu machen ist –
+   nicht erst, nachdem sie es weggetippt hat. */
+#alertOv .zu{text-align:left;background:var(--bg2);border:1px solid rgba(255,255,255,.06);
+  border-radius:16px;padding:4px 13px 6px;margin:14px 0 16px;max-height:34vh;overflow:auto;}
+#alertOv .zu .zu-h{padding-top:9px;}
 
 /* ================= TOAST ================= */
 #toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom));
@@ -303,8 +371,9 @@ main{padding:13px 15px 30px;}
 
   <div class="tabs">
     <button class="tab on" id="tbNeu"  onclick="go('neu')">Neu <span class="n hide" id="nNeu">0</span></button>
-    <button class="tab"    id="tbRun"  onclick="go('run')">Läuft <span class="n hide" id="nRun">0</span></button>
-    <button class="tab"    id="tbDone" onclick="go('done')">Heute</button>
+    <button class="tab"    id="tbRun"  onclick="go('run')">Küche <span class="n hide" id="nRun">0</span></button>
+    <button class="tab"    id="tbDone" onclick="go('done')">Erledigt</button>
+    <button class="tab"    id="tbGeld" onclick="go('geld')">💰 Umsatz</button>
   </div>
 
   <main id="list"></main>
@@ -533,18 +602,23 @@ function listNeu(){
     return o.status==='neu' && s && s.ok===undefined;
   });
 }
+/* In der Küche = angenommen, aber noch nicht auf "Fertig" getippt.
+   Sobald das Lokal "Fertig" drückt, ist die Karte hier weg. */
 function listRun(){
   return mine().filter(function(o){
     var s = myStop(o);
-    return s && s.ok===1 && o.status!=='geliefert' && o.status!=='abgelehnt';
+    return s && s.ok===1 && !s.fertig &&
+           o.status!=='geliefert' && o.status!=='abgelehnt';
   });
 }
+/* Erledigt = fertig gemacht, ausgeliefert oder abgelehnt – von heute. */
 function listDone(){
   var t0 = new Date(); t0.setHours(0,0,0,0);
   return mine().filter(function(o){
-    return (o.at||0) >= t0.getTime() &&
-           (o.status==='geliefert' || o.status==='abgelehnt');
-  });
+    if((o.at||0) < t0.getTime()) return false;
+    var s = myStop(o);
+    return (s && s.fertig) || o.status==='geliefert' || o.status==='abgelehnt';
+  }).sort(function(a,b){ return (b.at||0) - (a.at||0); });
 }
 /* Summe nur für DIESES Lokal – nicht der Gesamtbetrag der Bestellung. */
 function stopSum(o){
@@ -591,29 +665,46 @@ function ablehnen(id, grund){
   toast('Bestellung abgelehnt');
   render();
 }
-/* Das Essen ist früher fertig als angesagt – der Fahrer sieht es sofort. */
+/* =====================================================================
+   FERTIG  –  das Essen steht abholbereit da
+   ---------------------------------------------------------------------
+   Damit ist die Arbeit der Küche an dieser Bestellung erledigt: sie
+   verschwindet aus "In der Küche" und wandert nach "Erledigt".
+   Für den Fahrer heißt das: nicht mehr warten, sofort losfahren –
+   darum wird prepEnd neu gerechnet.
+   Zwei Tipps hat das Lokal also insgesamt: die Minuten und "Fertig".
+   ===================================================================== */
 function fertig(id){
   bxUpdate(id, function(o){
     var i = myIdx(o); if(i<0) return;
     o.stops[i].fertig = Date.now();
-    o.stops[i].prep = Math.max(0, Math.round((Date.now() - (o.stops[i].okAt||Date.now()))/60000));
-    o.hist = (o.hist||[]).concat([{s:'fertig', t:Date.now()}]);
+    /* Neue Abholzeit: das späteste Lokal bestimmt sie. Wer schon fertig
+       ist, zählt mit "jetzt" – wer noch kocht, mit seiner Minutenzahl. */
+    var ende = 0;
+    o.stops.forEach(function(s){
+      var e = s.fertig ? s.fertig : ((s.okAt || Date.now()) + (s.prep || 15)*60000);
+      if(e > ende) ende = e;
+    });
+    o.prepEnd = ende;
+    o.hist = (o.hist||[]).concat([{s:'fertig', t:Date.now(), von:(SHOP ? SHOP.name : '')}]);
   });
-  toast('🔔 Der Fahrer weiß Bescheid');
+  toast('✓ Fertig – der Fahrer ist unterwegs zu euch');
   render();
 }
 
-/* ---------- Bogen von unten: Zeit wählen / Grund wählen ---------- */
+/* ---------- Bogen von unten: mehr Zeit / Grund wählen ---------- */
 function closeSheet(){ document.getElementById('sheet').classList.add('hide'); }
+/* Standard sind die vier Knöpfe direkt auf der Karte (10/15/20/30 Min).
+   Braucht die Küche länger, kommt hier der Rest. */
 function sheetZeit(id){
   var el = document.getElementById('sheet');
   el.innerHTML =
     '<div class="bx" onclick="event.stopPropagation()">'+
-      '<h3>In wie vielen Minuten ist es fertig?</h3>'+
-      '<p>Der Kunde und der Fahrer sehen diese Zeit sofort.</p>'+
+      '<h3>Wie lange braucht ihr?</h3>'+
+      '<p>Ein Tipp genügt – damit ist die Bestellung angenommen.</p>'+
       '<div class="grid2">'+
-        [10,15,20,30,40,50].map(function(m){
-          return '<button class="gb" onclick="annehmen(\''+id+'\','+m+')">'+m+
+        [40,50,60,75].map(function(m){
+          return '<button class="gb" onclick="annehmen(\''+id+'\','+m+')">'+m+' Min'+
                  '<small>fertig um '+uhr(Date.now()+m*60000)+'</small></button>';
         }).join('')+
       '</div>'+
@@ -637,17 +728,42 @@ function sheetGrund(id){
 }
 
 /* ---------- Karten zeichnen ---------- */
+
+/* Gleiche Sachen werden zu EINER Zeile zusammengefasst.
+   Zweimal "Drehspieß-Pita, ohne scharf" plus noch einmal dasselbe
+   steht dann als "3× Drehspieß-Pita · ohne scharf" da – die Küche
+   soll eine Zahl lesen und nicht dreimal dieselbe Zeile abzählen.
+   Verschiedene Wünsche bleiben natürlich getrennte Zeilen. */
+function itemsList(o){
+  var s = myStop(o); if(!s) return [];
+  var out = [], map = {};
+  (s.items||[]).forEach(function(it){
+    var note = String(it.note || '').trim();
+    var qty  = Number(it.qty)   || 1;
+    var sum  = qty * (Number(it.price) || 0);
+    var k = String(it.name||'') + '|' + note.toLowerCase();
+    if(map[k]){ map[k].qty += qty; map[k].sum += sum; return; }
+    map[k] = { name: it.name, note: note, qty: qty, sum: sum };
+    out.push(map[k]);
+  });
+  return out;
+}
 function itemsHtml(o){
-  var s = myStop(o); if(!s) return '';
-  return (s.items||[]).map(function(it){
-    return '<div class="it">'+
-      '<div class="q">'+(it.qty||1)+'×</div>'+
-      '<div class="n">'+esc(it.name)+
-        (it.note ? '<span class="note">✏️ '+esc(it.note)+'</span>' : '')+
-      '</div>'+
-      '<div class="p">'+eur((it.qty||1)*(it.price||0))+'</div>'+
-    '</div>';
-  }).join('');
+  var li = itemsList(o); if(!li.length) return '';
+  var teile = li.reduce(function(a, x){ return a + x.qty; }, 0);
+  var wuensche = li.filter(function(x){ return x.note; }).length;
+  return '<div class="zu-h">🍳 Das ist zu machen'+
+           '<em>'+teile+' Stück'+(wuensche ? ' · '+wuensche+(wuensche===1?' Sonderwunsch':' Sonderwünsche') : '')+'</em>'+
+         '</div>'+
+    li.map(function(it){
+      return '<div class="it">'+
+        '<div class="q">'+it.qty+'<span>×</span></div>'+
+        '<div class="n"><b>'+esc(it.name)+'</b>'+
+          (it.note ? '<span class="note">✏️ '+esc(it.note)+'</span>' : '')+
+        '</div>'+
+        '<div class="p">'+eur(it.sum)+'</div>'+
+      '</div>';
+    }).join('');
 }
 function card(o, mode){
   var s = myStop(o);
@@ -669,9 +785,17 @@ function card(o, mode){
        '</div>';
 
   if(mode==='neu'){
-    h += '<div class="oc-bar">'+
-           '<button class="b b-no" onclick="sheetGrund(\''+o.id+'\')">Ablehnen</button>'+
-           '<button class="b b-ok" onclick="sheetZeit(\''+o.id+'\')">✓ Annehmen</button>'+
+    /* EIN Tipp = angenommen + Zeit gesagt. Kein zweiter Bildschirm. */
+    h += '<div class="qa-h">✓ Annehmen – in wie vielen Minuten fertig?</div>'+
+         '<div class="qa">'+
+           [10,15,20,30].map(function(m){
+             return '<button onclick="annehmen(\''+o.id+'\','+m+')">'+m+
+                    '<small>Min · '+uhr(Date.now()+m*60000)+'</small></button>';
+           }).join('')+
+         '</div>'+
+         '<div class="qa-foot">'+
+           '<button onclick="sheetZeit(\''+o.id+'\')">Wir brauchen länger</button>'+
+           '<button onclick="sheetGrund(\''+o.id+'\')">Geht heute nicht</button>'+
          '</div>';
   } else if(mode==='run'){
     var wartetAufAndere = o.status === 'neu';
@@ -691,17 +815,90 @@ function card(o, mode){
       }[o.status] || '…';
       h += '<div class="st go">'+txt+' · fertig um '+fertigUm(o)+' Uhr</div>';
     }
-    if(s && !s.fertig && (o.status==='bestaetigt' || o.status==='angenommen' || o.status==='am_restaurant')){
-      h += '<div class="oc-bar"><button class="b b-y" onclick="fertig(\''+o.id+'\')">🔔 Essen ist fertig</button></div>';
-    } else if(s && s.fertig){
-      h += '<div class="st go">✅ Als fertig gemeldet um '+uhr(s.fertig)+' Uhr</div>';
-    }
+    /* Der EINZIGE Knopf, der hier noch steht: das Essen ist fertig.
+       Damit ist die Bestellung für die Küche erledigt und verschwindet. */
+    h += '<div class="oc-bar"><button class="b b-ok" onclick="fertig(\''+o.id+'\')">'+
+         '✓ Essen ist fertig</button></div>';
   } else {
+    var sf = myStop(o);
     h += (o.status==='geliefert')
-       ? '<div class="st go">✅ Geliefert</div>'
-       : '<div class="st bad">✕ Abgelehnt'+(o.grund?' · '+esc(o.grund):'')+'</div>';
+       ? '<div class="st go">✅ Geliefert'+(sf&&sf.fertig?' · fertig gemacht um '+uhr(sf.fertig)+' Uhr':'')+'</div>'
+       : (o.status==='abgelehnt')
+       ? '<div class="st bad">✕ Abgelehnt'+(o.grund?' · '+esc(o.grund):'')+'</div>'
+       : '<div class="st go">✓ Fertig um '+uhr(sf.fertig)+' Uhr · wartet auf den Fahrer</div>';
   }
   return h + '</div>';
+}
+
+/* =====================================================================
+   UMSATZ  –  was ist bei DIESEM Lokal hereingekommen?
+   ---------------------------------------------------------------------
+   Gezählt wird nur, was wirklich beim Kunden angekommen ist (geliefert)
+   und nur der eigene Anteil (stopSum) – nicht die Liefergebühr, die
+   gehört Bestellux, und nicht das, was ein anderes Lokal in derselben
+   Sammelbestellung geliefert hat.
+   ===================================================================== */
+function tagStart(d){ var x = new Date(d); x.setHours(0,0,0,0); return x.getTime(); }
+function wocheStart(){
+  var x = new Date(); x.setHours(0,0,0,0);
+  var wt = (x.getDay() + 6) % 7;            /* Montag = 0 */
+  x.setDate(x.getDate() - wt);
+  return x.getTime();
+}
+function monatStart(){
+  var x = new Date(); x.setHours(0,0,0,0); x.setDate(1);
+  return x.getTime();
+}
+/* Liefert {umsatz, geliefert, angenommen, abgelehnt} ab einem Zeitpunkt. */
+function bilanz(ab){
+  var r = {umsatz:0, geliefert:0, angenommen:0, abgelehnt:0};
+  mine().forEach(function(o){
+    if((o.at||0) < ab) return;
+    var s = myStop(o); if(!s) return;
+    if(s.ok === 1){
+      r.angenommen++;
+      if(o.status === 'geliefert'){ r.geliefert++; r.umsatz += stopSum(o); }
+    } else if(s.ok === 0 || o.status === 'abgelehnt'){
+      r.abgelehnt++;
+    }
+  });
+  return r;
+}
+function renderGeld(){
+  var heute = bilanz(tagStart(Date.now()));
+  var woche = bilanz(wocheStart());
+  var monat = bilanz(monatStart());
+  var mn = ['Januar','Februar','März','April','Mai','Juni','Juli',
+            'August','September','Oktober','November','Dezember'][new Date().getMonth()];
+  var quote = (monat.angenommen + monat.abgelehnt) > 0
+    ? Math.round(monat.angenommen * 100 / (monat.angenommen + monat.abgelehnt)) : 100;
+
+  document.getElementById('list').innerHTML =
+    '<div class="money">'+
+      '<div class="lb">Umsatz heute</div>'+
+      '<div class="big">'+eur(heute.umsatz)+'</div>'+
+      '<div class="sm">'+heute.geliefert+' gelieferte Bestellung'+(heute.geliefert===1?'':'en')+
+        (heute.geliefert ? ' · Ø '+eur(heute.umsatz/heute.geliefert)+' pro Bestellung' : '')+'</div>'+
+    '</div>'+
+
+    '<div class="m2">'+
+      '<div class="mbox"><div class="lb">Diese Woche</div>'+
+        '<div class="v">'+eur(woche.umsatz)+'</div>'+
+        '<div class="s">'+woche.geliefert+' geliefert · seit Montag</div></div>'+
+      '<div class="mbox"><div class="lb">'+mn+'</div>'+
+        '<div class="v">'+eur(monat.umsatz)+'</div>'+
+        '<div class="s">'+monat.geliefert+' geliefert · seit dem 1.</div></div>'+
+    '</div>'+
+
+    '<div class="mrow">'+
+      '<div class="r">✅ <span>Angenommen (Monat)</span><b>'+monat.angenommen+'</b></div>'+
+      '<div class="r">📦 <span>Geliefert (Monat)</span><b>'+monat.geliefert+'</b></div>'+
+      '<div class="r">✕ <span>Abgelehnt (Monat)</span><b style="color:#FF9E9E">'+monat.abgelehnt+'</b></div>'+
+      '<div class="r">📈 <span>Annahme-Quote</span><b style="color:var(--green)">'+quote+' %</b></div>'+
+    '</div>'+
+
+    '<div class="mnote">Gezählt wird nur euer eigener Anteil an gelieferten Bestellungen.<br>'+
+      'Die Liefergebühr ist nicht enthalten – die gehört zur Lieferung.</div>';
 }
 
 var TAB = 'neu';
@@ -710,6 +907,7 @@ function go(t){
   document.getElementById('tbNeu').classList.toggle('on', t==='neu');
   document.getElementById('tbRun').classList.toggle('on', t==='run');
   document.getElementById('tbDone').classList.toggle('on', t==='done');
+  document.getElementById('tbGeld').classList.toggle('on', t==='geld');
   render();
 }
 function render(){
@@ -721,6 +919,8 @@ function render(){
   var br = document.getElementById('nRun');
   br.textContent = run.length; br.classList.toggle('hide', run.length===0);
 
+  if(TAB === 'geld'){ renderGeld(); return; }
+
   var arr = TAB==='neu' ? neu : (TAB==='run' ? run : done);
   var el = document.getElementById('list');
 
@@ -731,8 +931,8 @@ function render(){
           (isOpen(SHOP_STATE) ? '<br>Ihr seid geöffnet – es kann jederzeit klingeln.'
                               : '<br><b style="color:var(--yellow)">Ihr seid geschlossen.</b> Solange kann niemand bei euch bestellen.')
         : TAB==='run'
-        ? '<span class="ic">👨‍🍳</span>Gerade läuft nichts in der Küche.'
-        : '<span class="ic">📋</span>Heute noch keine abgeschlossene Bestellung.')+
+        ? '<span class="ic">👨‍🍳</span>Nichts in der Küche.<br>Alles abgearbeitet.'
+        : '<span class="ic">📋</span>Heute noch nichts fertig gemacht.')+
       '</div>';
     return;
   }
@@ -762,16 +962,24 @@ function ping(o){
 }
 function showAlert(o){
   var ov = document.getElementById('alertOv');
-  var s = myStop(o), n = (s && s.items ? s.items.length : 0);
+  var li = itemsList(o);
+  var teile = li.reduce(function(a, x){ return a + x.qty; }, 0);
+  /* Auch hier: EIN Tipp auf die Minutenzahl nimmt die Bestellung an. */
   ov.innerHTML = '<div class="box" onclick="event.stopPropagation()">'+
     '<div class="ring">🔔</div>'+
     '<h3>Neue Bestellung!</h3>'+
-    '<p>'+n+' Position'+(n===1?'':'en')+' · Lieferung nach '+esc(o.town||'-')+'</p>'+
-    '<div class="amt">'+eur(stopSum(o))+'</div>'+
-    '<p>dein Anteil · '+esc(o.id)+'</p>'+
-    '<div class="oc-bar" style="padding:0">'+
-      '<button class="b b-no" onclick="closeAlert()">Später</button>'+
-      '<button class="b b-ok" onclick="closeAlert();sheetZeit(\''+o.id+'\')">✓ Annehmen</button>'+
+    '<p>'+teile+' Stück · Lieferung nach '+esc(o.town||'-')+' · '+eur(stopSum(o))+'</p>'+
+    '<div class="zu">'+itemsHtml(o)+'</div>'+
+    '<div class="qa-h" style="padding:0 0 8px;text-align:left">✓ Annehmen – in wie vielen Minuten?</div>'+
+    '<div class="qa" style="padding:0 0 10px">'+
+      [10,15,20,30].map(function(m){
+        return '<button onclick="annehmen(\''+o.id+'\','+m+')">'+m+
+               '<small>Min</small></button>';
+      }).join('')+
+    '</div>'+
+    '<div class="qa-foot" style="padding:0">'+
+      '<button onclick="closeAlert()">Später ansehen</button>'+
+      '<button onclick="closeAlert();sheetGrund(\''+o.id+'\')">Geht heute nicht</button>'+
     '</div></div>';
   ov.classList.remove('hide');
 }

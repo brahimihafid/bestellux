@@ -178,6 +178,14 @@ body.online .sw::after{transform:translateX(28px);}
 .rw-items{margin-top:5px;font-size:12px;color:var(--tx2);line-height:1.5;}
 .rw-items i{font-style:normal;color:var(--yellow);font-weight:800;}
 .rw-note{color:var(--gold);font-size:11.5px;}
+/* Balken auf der Auftragskarte: das Lokal hat zugesagt. */
+.okban{margin:9px 0 2px;padding:9px 11px;border-radius:11px;font-size:13px;font-weight:800;
+  background:rgba(43,182,115,.13);border:1px solid rgba(43,182,115,.35);color:#2BB673;}
+.okban.jetzt{background:rgba(43,182,115,.22);border-color:#2BB673;color:#8BE0B7;font-size:13.5px;font-weight:900;}
+/* Pro Lokal: hat es zugesagt, und steht das Essen schon da? */
+.rw-ok{display:inline-block;margin-top:5px;padding:3px 9px;border-radius:8px;
+  font-size:11px;font-weight:900;background:rgba(43,182,115,.15);color:#2BB673;}
+.rw-ok.warte{background:rgba(255,184,0,.14);color:var(--gold);}
 .oc-bar{display:flex;gap:9px;padding:12px 14px 14px;}
 .b{border-radius:13px;padding:13px 10px;font-size:14.5px;font-weight:900;transition:transform .14s;}
 .b:active{transform:scale(0.97);}
@@ -768,7 +776,20 @@ function myActive(){
    'neu'        = liegt beim Restaurant, der Fahrer sieht ihn noch nicht
    'bestaetigt' = Küche hat OK gesagt -> jetzt darf ein Fahrer ihn nehmen */
 function openJobs(){
-  return bxLoad().filter(o=> o.status==='bestaetigt');
+  const ich = (ME && ME.name) ? ME.name : '';
+  return bxLoad().filter(o=>
+    o.status==='bestaetigt' &&
+    /* Wer selbst abgelehnt hat, sieht den Auftrag nicht mehr –
+       für die anderen Fahrer bleibt er offen. */
+    !((o.hidden||[]).indexOf(ich) >= 0)
+  );
+}
+/* Hat schon ein Lokal auf "Fertig" getippt? */
+function istFertig(o){
+  const st = (o && o.stops) || [];
+  if(!st.length) return false;
+  for(let i=0;i<st.length;i++) if(!st[i].fertig) return false;
+  return true;
 }
 /* Wann ist das Essen fertig? (aus prepEnd oder aus den Stops) */
 function prepEndOf(o){
@@ -776,7 +797,11 @@ function prepEndOf(o){
   if(o.prepEnd) return o.prepEnd;
   var st = o.stops||[], ende = 0;
   for(var i=0;i<st.length;i++){
-    if(st[i].okAt){
+    /* Hat das Lokal schon auf "Fertig" getippt, gilt dieser Zeitpunkt –
+       dann muss der Fahrer nicht mehr auf die Küchenzeit warten. */
+    if(st[i].fertig){
+      if(st[i].fertig > ende) ende = st[i].fertig;
+    }else if(st[i].okAt){
       var e = st[i].okAt + ((st[i].prep||15)*60000);
       if(e>ende) ende = e;
     }
@@ -821,9 +846,20 @@ function stopsHtml(o, withItems){
       const cnt = (s.items||[]).reduce((a,it)=>a+(it.qty||0),0);
       items = '<div class="rw-items">'+cnt+' Artikel</div>';
     }
+    /* Bei einer Sammelbestellung muss der Fahrer sehen, welches Lokal
+       schon fertig ist und wo er noch warten muss. */
+    let ok = '';
+    if(s.fertig){
+      ok = '<span class="rw-ok">✅ steht bereit</span>';
+    }else if(s.ok === 1){
+      const e = (s.okAt||0) + ((s.prep||15)*60000);
+      const d = new Date(e);
+      ok = '<span class="rw-ok warte">👨‍🍳 zugesagt · fertig um '+
+           ('0'+d.getHours()).slice(-2)+':'+('0'+d.getMinutes()).slice(-2)+'</span>';
+    }
     h += '<div class="rw">'+
       '<div class="rw-ic" style="background:'+esc(s.color||'#A0152C')+'">'+esc(s.initials||'?')+'</div>'+
-      '<div class="rw-tx"><b>'+esc(s.name)+'</b><span>📍 '+esc(s.address||s.town)+'</span>'+items+'</div>'+
+      '<div class="rw-tx"><b>'+esc(s.name)+'</b><span>📍 '+esc(s.address||s.town)+'</span>'+items+ok+'</div>'+
     '</div>';
   });
   const addr = [o.street, [o.plz,o.town].filter(Boolean).join(' ')].filter(Boolean).join(', ');
@@ -867,9 +903,14 @@ function renderJobs(jobs, act){
         '<span class="oc-earn-l">dein Verdienst</span>'+
         '<span class="oc-dist">🛣️ '+km(totalKm(o))+' · '+(o.stops||[]).length+' Stopp'+((o.stops||[]).length>1?'s':'')+'</span>'+
       '</div>'+
-      (fertigTxt(o) ? '<div style="margin:8px 0 2px;padding:8px 10px;border-radius:10px;'+
-         'background:rgba(43,182,115,.13);border:1px solid rgba(43,182,115,.35);'+
-         'color:#2BB673;font-weight:800;font-size:13px">👨‍🍳 Küche hat bestätigt · '+esc(fertigTxt(o))+'</div>' : '')+
+      /* Der Auftrag liegt hier nur, WEIL das Lokal ihn angenommen hat.
+         Das soll der Fahrer auch schwarz auf weiß sehen – und ob das
+         Essen schon fertig dasteht oder noch gekocht wird. */
+      (istFertig(o)
+        ? '<div class="okban jetzt">✅ Essen steht bereit · sofort abholen</div>'
+        : (fertigTxt(o)
+           ? '<div class="okban">👨‍🍳 Lokal hat angenommen · '+esc(fertigTxt(o))+'</div>'
+           : '<div class="okban">👨‍🍳 Lokal hat angenommen</div>'))+
       '<div class="oc-route">'+stopsHtml(o,false)+'</div>'+
       '<div class="oc-bar">'+
         '<button class="b b-ok" onclick="accept(\''+o.id+'\')">✓ Annehmen</button>'+

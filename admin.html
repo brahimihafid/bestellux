@@ -163,6 +163,7 @@ input,select{font-family:inherit;}
 .st.neu{background:rgba(255,184,0,.16);color:var(--yellow);}
 .st.lauf{background:rgba(61,139,242,.16);color:var(--blue);}
 .st.fertig{background:rgba(43,182,115,.16);color:var(--green);}
+.st.no{background:rgba(224,60,60,.16);color:#FF8A8A;}
 
 /* ============ STATS ============ */
 .bars{background:var(--card);border:1px solid var(--line);border-radius:17px;padding:16px 14px;margin-bottom:12px;}
@@ -175,6 +176,66 @@ input,select{font-family:inherit;}
 .bar b{width:74px;text-align:right;flex-shrink:0;font-size:12.5px;font-weight:900;}
 
 .empty{text-align:center;color:var(--tx3);font-size:13.5px;padding:34px 20px;font-weight:700;}
+
+/* ============ LOKALE / PROVISION ============ */
+.range{display:flex;gap:7px;margin-bottom:14px;flex-wrap:wrap;}
+.range button{
+  flex:1 1 0;min-width:78px;background:var(--card);border:1px solid var(--line);
+  border-radius:12px;padding:10px 6px;color:var(--tx2);font-size:12.5px;font-weight:800;
+}
+.range button.on{background:linear-gradient(140deg,var(--yellow),var(--yellow-dark));
+  border-color:var(--yellow);color:#241C00;}
+
+.rl{display:flex;flex-direction:column;gap:11px;}
+.rcard{background:var(--card);border:1px solid var(--line);border-radius:18px;
+  padding:15px 16px;box-shadow:0 6px 18px rgba(0,0,0,.22);}
+.rcard.top{border-color:rgba(255,184,0,.42);}
+.rc-h{display:flex;align-items:center;gap:11px;margin-bottom:13px;}
+.rc-av{width:42px;height:42px;border-radius:13px;flex-shrink:0;color:#fff;
+  display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:900;}
+.rc-n{flex:1;min-width:0;}
+.rc-n b{display:block;font-size:16px;font-weight:900;letter-spacing:-.2px;}
+.rc-n span{display:block;font-size:11.5px;color:var(--tx3);font-weight:700;}
+.rc-zu{font-size:10.5px;font-weight:900;border-radius:8px;padding:4px 9px;
+  text-transform:uppercase;letter-spacing:.4px;flex-shrink:0;}
+.rc-zu.auf{background:rgba(43,182,115,.16);color:var(--green);}
+.rc-zu.zu{background:rgba(255,255,255,.07);color:var(--tx3);}
+
+.rc-g{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px;}
+.rc-b{background:var(--bg2);border:1px solid rgba(255,255,255,.055);border-radius:12px;
+  padding:10px 9px;text-align:center;}
+.rc-b b{display:block;font-size:20px;font-weight:900;line-height:1.15;letter-spacing:-.4px;}
+.rc-b span{display:block;font-size:10px;color:var(--tx3);font-weight:900;
+  text-transform:uppercase;letter-spacing:.5px;margin-top:2px;}
+.rc-b.ok b{color:var(--green);} .rc-b.no b{color:#FF8A8A;} .rc-b.wa b{color:var(--blue);}
+
+.rc-m{display:flex;align-items:center;gap:10px;padding:11px 12px;border-radius:13px;
+  background:var(--bg2);border:1px solid rgba(255,255,255,.055);margin-bottom:9px;}
+.rc-m i{font-style:normal;font-size:12px;color:var(--tx3);font-weight:800;
+  text-transform:uppercase;letter-spacing:.5px;}
+.rc-m b{margin-left:auto;font-size:18px;font-weight:900;letter-spacing:-.4px;}
+
+.prov{display:flex;align-items:center;gap:10px;padding:12px;border-radius:14px;
+  background:linear-gradient(140deg,rgba(255,184,0,.14),rgba(255,184,0,.04));
+  border:1.5px solid rgba(255,184,0,.34);}
+.prov .lb{font-size:11.5px;color:var(--yellow);font-weight:900;
+  text-transform:uppercase;letter-spacing:.6px;}
+.prov .sm{font-size:11px;color:var(--tx3);font-weight:700;margin-top:1px;}
+.prov input{
+  width:66px;background:var(--bg);border:1.5px solid rgba(255,184,0,.45);border-radius:11px;
+  padding:9px 6px;color:var(--yellow);font-size:17px;font-weight:900;text-align:center;
+  outline:none;flex-shrink:0;-moz-appearance:textfield;
+}
+.prov input::-webkit-outer-spin-button,.prov input::-webkit-inner-spin-button{
+  -webkit-appearance:none;margin:0;}
+.prov input:focus{border-color:var(--yellow);}
+.prov .pc{font-size:16px;font-weight:900;color:var(--yellow);margin-left:-4px;}
+.prov .amt{margin-left:auto;text-align:right;flex-shrink:0;}
+.prov .amt b{display:block;font-size:22px;font-weight:900;color:var(--yellow);letter-spacing:-.6px;}
+.prov .amt span{display:block;font-size:10px;color:var(--tx3);font-weight:900;
+  text-transform:uppercase;letter-spacing:.5px;}
+.hint{font-size:11.5px;color:var(--tx3);font-weight:700;line-height:1.6;
+  margin:14px 2px 0;text-align:center;}
 
 /* ============ TABS ============ */
 .tabs{
@@ -267,6 +328,33 @@ input,select{font-family:inherit;}
       <div id="ordList" class="list"></div>
     </div>
 
+    <!-- TAB: Lokale -->
+    <div id="tab-Rest" class="hide">
+      <div class="sec-h"><h2>Lokale &amp; Provision</h2><em id="restNote">—</em></div>
+
+      <div class="range" id="restRange">
+        <button data-r="1"   onclick="setRange(1)">Heute</button>
+        <button data-r="7"   class="on" onclick="setRange(7)">7 Tage</button>
+        <button data-r="30"  onclick="setRange(30)">30 Tage</button>
+        <button data-r="999" onclick="setRange(999)">Alles</button>
+      </div>
+
+      <div class="kpis">
+        <div class="kpi y"><b id="pGes">0 €</b><span>meine Provision</span></div>
+        <div class="kpi"><b id="pWaren">0 €</b><span>Warenkorb gesamt</span></div>
+        <div class="kpi g"><b id="pGel">0</b><span>geliefert</span></div>
+        <div class="kpi"><b id="pAbg">0</b><span>abgelehnt</span></div>
+      </div>
+
+      <div id="restList" class="rl"></div>
+
+      <p class="hint">
+        Provision = Prozentsatz × Warenkorb der gelieferten Bestellungen.<br>
+        Die Liefergebühr ist nicht enthalten – die gehört komplett Bestellux.<br>
+        Der Prozentsatz gilt sofort für die Anzeige und wird für alle Geräte gespeichert.
+      </p>
+    </div>
+
     <!-- TAB: Statistik -->
     <div id="tab-Stats" class="hide">
       <div class="kpis">
@@ -286,6 +374,7 @@ input,select{font-family:inherit;}
     <button data-tab="Live"   class="on" onclick="go('Live')"><em>🛰️</em>Live</button>
     <button data-tab="Fahrer" onclick="go('Fahrer')"><em>🧑‍🍳</em>Fahrer<span id="bdgWait" class="bdg hide">0</span></button>
     <button data-tab="Orders" onclick="go('Orders')"><em>📦</em>Aufträge</button>
+    <button data-tab="Rest"   onclick="go('Rest')"><em>🍽️</em>Lokale</button>
     <button data-tab="Stats"  onclick="go('Stats')"><em>📊</em>Statistik</button>
   </div>
 </div>
@@ -367,12 +456,14 @@ function wtag(t){
 function payout(o){ return (Number(o.fee)||0) + (Number(o.tip)||0); }
 
 const ST_TXT = {
-  neu:'neu', angenommen:'angenommen', am_restaurant:'am Lokal',
+  neu:'beim Lokal', bestaetigt:'Küche kocht', abgelehnt:'abgelehnt',
+  angenommen:'angenommen', am_restaurant:'am Lokal',
   abgeholt:'abgeholt', unterwegs:'unterwegs', geliefert:'geliefert'
 };
 function stClass(s){
-  if(s === 'neu') return 'neu';
+  if(s === 'neu' || s === 'bestaetigt') return 'neu';
   if(s === 'geliefert') return 'fertig';
+  if(s === 'abgelehnt') return 'no';
   return 'lauf';
 }
 
@@ -415,7 +506,7 @@ function logout(){
 var TAB = 'Live';
 function go(t){
   TAB = t;
-  ['Live','Fahrer','Orders','Stats'].forEach(function(x){
+  ['Live','Fahrer','Orders','Rest','Stats'].forEach(function(x){
     var el = $('tab-'+x); if(el) el.classList.toggle('hide', x !== t);
   });
   var bs = document.querySelectorAll('.tabs button');
@@ -482,7 +573,8 @@ function mapDraw(){
 function jobOf(uid){
   for(var i=0;i<ORDERS.length;i++){
     var o = ORDERS[i];
-    if(o.status !== 'geliefert' && o.status !== 'neu' && o.driver && o.driver.uid === uid) return o;
+    if(o.status !== 'geliefert' && o.status !== 'neu' && o.status !== 'bestaetigt' &&
+       o.status !== 'abgelehnt' && o.driver && o.driver.uid === uid) return o;
   }
   return null;
 }
@@ -528,6 +620,160 @@ function setActive(uid, on){
   FB_DB.ref('drivers/'+uid+'/active').set(!!on)
     .then(function(){ toast(on ? '✓ '+nm+' ist aktiviert' : '⛔ '+nm+' ist gesperrt'); })
     .catch(function(){ toast('Keine Berechtigung dafür'); });
+}
+
+/* ============================================================
+   LOKALE  ·  ANNAHMEN, ABLEHNUNGEN, UMSATZ, PROVISION
+   ------------------------------------------------------------
+   Wie die Provision gerechnet wird:
+     Provision = Prozentsatz × Warenkorb der GELIEFERTEN Bestellungen
+   Der Warenkorb ist nur das Essen dieses Lokals (stops[i].items).
+   Die Liefergebühr steckt NICHT drin – die gehört ganz Bestellux.
+   Abgelehnte Bestellungen bringen keine Provision.
+
+   Der Prozentsatz steht in rates/<id>. Steht dort nichts, gelten 15 %.
+   Schreiben darf ihn nur die Zentrale (siehe firebase-rules.json).
+   Diese Seite ist die EINZIGE, die Provision anzeigt – die Lokale
+   sehen in ihrer App nur ihren eigenen Umsatz.
+   ============================================================ */
+const PROV_STD = 15;          /* Startwert für jedes Lokal */
+const BX_RATES = 'bx_rates';  /* Notfall-Kopie im Gerät, falls kein Netz */
+
+/* Dieselbe Liste wie in restaurant.html und in der Kunden-App.
+   Sie steht hier, damit auch Lokale ohne Bestellung eine Zeile bekommen. */
+const SHOPS = [
+  {id:'berlin-doener',     name:'Berlin Döner',     ini:'BD', color:'#D01E2C', town:'Langwedel'},
+  {id:'imbiss-berlin',     name:'Imbiss Langwedel', ini:'IL', color:'#C0392B', town:'Langwedel'},
+  {id:'pizza-hawaii',      name:'Pizza Hawaii',     ini:'PH', color:'#F0193C', town:'Verden'},
+  {id:'sushi-sakura',      name:'Sushi Sakura',     ini:'SS', color:'#2C2C2C', town:'Verden'},
+  {id:'getraenke-express', name:'Getränke Express', ini:'GE', color:'#1E6FB0', town:'Langwedel'},
+  {id:'mcd',               name:"McDonald's",       ini:'M',  color:'#D9A441', town:'Verden'},
+  {id:'burger-king',       name:'Burger King',      ini:'BK', color:'#8B4513', town:'Etelsen'}
+];
+
+var RATES = {};        /* {shopId: prozent} */
+var SHOPSTATE = {};    /* {shopId: {open, until}} – nur zur Anzeige offen/zu */
+var RANGE = 7;         /* wie viele Tage die Auswertung umfasst */
+
+try{ RATES = JSON.parse(localStorage.getItem(BX_RATES) || '{}') || {}; }catch(e){ RATES = {}; }
+
+function rateOf(id){
+  var r = RATES[id];
+  return (typeof r === 'number' && r >= 0 && r <= 100) ? r : PROV_STD;
+}
+function setRate(id, val){
+  var v = parseFloat(String(val).replace(',','.'));
+  if(!isFinite(v) || v < 0 || v > 100){ toast('Bitte eine Zahl zwischen 0 und 100'); render(); return; }
+  v = Math.round(v * 10) / 10;               /* eine Nachkommastelle reicht */
+  RATES[id] = v;
+  try{ localStorage.setItem(BX_RATES, JSON.stringify(RATES)); }catch(e){}
+  var nm = (SHOPS.filter(function(s){ return s.id===id; })[0]||{}).name || id;
+  if(FB_OK){
+    FB_DB.ref('rates/'+id).set(v)
+      .then(function(){ toast('✓ '+nm+': '+String(v).replace('.',',')+' % gespeichert'); })
+      .catch(function(){ toast('Gespeichert – aber nur auf diesem Gerät'); });
+  }else{
+    toast('Gespeichert – aber nur auf diesem Gerät');
+  }
+  render();
+}
+
+/* Was hat dieses Lokal an dieser Bestellung? */
+function stopOf(o, id){
+  var st = o.stops || [];
+  for(var i=0;i<st.length;i++) if(st[i].id === id) return st[i];
+  return null;
+}
+function warenkorb(s){
+  var t = 0, it = (s && s.items) || [];
+  for(var i=0;i<it.length;i++) t += (Number(it[i].qty)||0) * (Number(it[i].price)||0);
+  return t;
+}
+/* Zahlen für EIN Lokal im gewählten Zeitraum. */
+function restStats(id){
+  var von = (RANGE >= 999) ? 0 : tagStart(RANGE - 1);
+  var r = { ang:0, gel:0, abg:0, offen:0, waren:0 };
+  ORDERS.forEach(function(o){
+    if((o.at||0) < von) return;
+    var s = stopOf(o, id); if(!s) return;
+    if(s.ok === 1){
+      r.ang++;
+      if(o.status === 'geliefert'){ r.gel++; r.waren += warenkorb(s); }
+      else if(o.status !== 'abgelehnt'){ r.offen++; }
+    }else if(s.ok === 0){
+      r.abg++;                       /* dieses Lokal hat selbst abgelehnt */
+    }
+  });
+  r.satz = rateOf(id);
+  r.prov = r.waren * r.satz / 100;
+  return r;
+}
+function shopAuf(id){
+  var s = SHOPSTATE[id];
+  if(!s) return true;                                 /* kein Eintrag = geöffnet */
+  var st = !!s.open;
+  if(s.until && Date.now() >= s.until) st = !st;
+  return st;
+}
+function setRange(n){
+  RANGE = n;
+  var bs = document.querySelectorAll('#restRange button');
+  for(var i=0;i<bs.length;i++)
+    bs[i].classList.toggle('on', bs[i].getAttribute('data-r') === String(n));
+  render();
+}
+
+function renderRest(){
+  /* Tippt gerade jemand einen Prozentsatz ein, wird die Liste NICHT neu
+     gezeichnet – sonst springt der Cursor beim 20-Sekunden-Takt weg. */
+  var a = document.activeElement;
+  if(a && a.tagName === 'INPUT' && a.closest && a.closest('#restList')) return;
+
+  var rows = SHOPS.map(function(s){
+    var st = restStats(s.id); st.shop = s; return st;
+  });
+  /* Das Lokal, das mir am meisten bringt, steht oben. */
+  rows.sort(function(a,b){ return b.prov - a.prov || b.waren - a.waren; });
+
+  var gProv = 0, gWaren = 0, gGel = 0, gAbg = 0, gAng = 0;
+  rows.forEach(function(r){ gProv+=r.prov; gWaren+=r.waren; gGel+=r.gel; gAbg+=r.abg; gAng+=r.ang; });
+
+  $('pGes').textContent   = eur(gProv);
+  $('pWaren').textContent = eur(gWaren);
+  $('pGel').textContent   = gGel;
+  $('pAbg').textContent   = gAbg;
+  $('restNote').textContent = (RANGE>=999 ? 'seit dem Start' : 'letzte '+RANGE+' Tage')
+    + ' · ' + SHOPS.length + ' Lokale';
+
+  $('restList').innerHTML = rows.map(function(r, i){
+    var s = r.shop;
+    var quote = (r.ang + r.abg) > 0 ? Math.round(r.ang*100/(r.ang+r.abg)) : 100;
+    var auf = shopAuf(s.id);
+    return '<div class="rcard'+(i===0 && r.prov>0 ? ' top' : '')+'">'
+      + '<div class="rc-h">'
+      +   '<div class="rc-av" style="background:'+s.color+'">'+esc(s.ini)+'</div>'
+      +   '<div class="rc-n"><b>'+esc(s.name)+'</b><span>'+esc(s.town)
+      +     ' · Annahme-Quote '+quote+' %</span></div>'
+      +   '<span class="rc-zu '+(auf?'auf':'zu')+'">'+(auf?'geöffnet':'zu')+'</span>'
+      + '</div>'
+
+      + '<div class="rc-g">'
+      +   '<div class="rc-b ok"><b>'+r.ang+'</b><span>angenommen</span></div>'
+      +   '<div class="rc-b wa"><b>'+r.gel+'</b><span>geliefert</span></div>'
+      +   '<div class="rc-b no"><b>'+r.abg+'</b><span>abgelehnt</span></div>'
+      + '</div>'
+
+      + '<div class="rc-m"><i>Warenkorb (geliefert)</i><b>'+eur(r.waren)+'</b></div>'
+
+      + '<div class="prov">'
+      +   '<div><div class="lb">Provision</div><div class="sm">tippen zum Ändern</div></div>'
+      +   '<input type="number" step="0.5" min="0" max="100" value="'+r.satz+'" '
+      +     'onchange="setRate(\''+s.id+'\', this.value)" '
+      +     'onclick="this.select()"><span class="pc">%</span>'
+      +   '<div class="amt"><b>'+eur(r.prov)+'</b><span>mein Anteil</span></div>'
+      + '</div>'
+      + '</div>';
+  }).join('');
 }
 
 /* ============================================================
@@ -609,8 +855,13 @@ function render(){
   var aktiv  = DRIVERS.filter(function(d){ return d.active; });
   var online = aktiv.filter(function(d){ return d.online; });
   var warten = DRIVERS.filter(function(d){ return !d.active; });
-  var neu    = ORDERS.filter(function(o){ return o.status === 'neu'; });
-  var lauf   = ORDERS.filter(function(o){ return o.status !== 'neu' && o.status !== 'geliefert'; });
+  /* "offen" = wartet noch: beim Lokal (neu) oder Küche kocht und
+     es hat noch kein Fahrer übernommen (bestaetigt). */
+  var neu    = ORDERS.filter(function(o){ return o.status === 'neu' || o.status === 'bestaetigt'; });
+  var lauf   = ORDERS.filter(function(o){
+    return o.status !== 'neu' && o.status !== 'bestaetigt' &&
+           o.status !== 'geliefert' && o.status !== 'abgelehnt';
+  });
 
   $('kOn').textContent   = online.length;
   $('kNeu').textContent  = neu.length;
@@ -658,6 +909,7 @@ function render(){
     }).join('') : '<div class="empty">Noch keine Aufträge.</div>';
   }
 
+  if(TAB === 'Rest')  renderRest();
   if(TAB === 'Stats') renderStats();
 }
 
@@ -690,6 +942,20 @@ function start(){
     render();
   }, function(){ toast('Kein Zugriff auf die Aufträge'); });
 
+  /* Provisionssätze – auf jedem Gerät gleich. Fehlt einer, gelten 15 %. */
+  FB_DB.ref('rates').on('value', function(snap){
+    var v = snap.val() || {};
+    for(var k in v){ if(typeof v[k] === 'number') RATES[k] = v[k]; }
+    try{ localStorage.setItem(BX_RATES, JSON.stringify(RATES)); }catch(e){}
+    render();
+  }, function(){ /* kein Zugriff -> es gilt der lokale Stand */ });
+
+  /* Nur zur Anzeige: welches Lokal hat gerade offen? */
+  FB_DB.ref('shops').on('value', function(snap){
+    SHOPSTATE = snap.val() || {};
+    render();
+  }, function(){});
+
   /* „vor 3 Min“ soll mitlaufen, auch wenn nichts Neues kommt */
   setInterval(render, 20000);
 }
@@ -706,10 +972,15 @@ function onAuth(u){
   }
   var mail = (u.email||'').toLowerCase();
   if(ADMIN_EMAILS.indexOf(mail) < 0){
-    try{ FB_AUTH.signOut(); }catch(e){}
+    /* WICHTIG: hier NICHT abmelden!
+       Firebase teilt die Anmeldung auf der ganzen Domain. Ein signOut() hier
+       hat auch restaurant.html und fahrer.html in anderen Tabs rausgeworfen –
+       genau das war der Fehler "ich melde mich an und fliege sofort raus".
+       Wir zeigen nur den Hinweis; abgemeldet wird nur per Knopf. */
     $('login').classList.remove('hide');
     $('app').classList.add('hide');
-    authErr('Dieses Konto hat keinen Zugang zur Zentrale.');
+    authErr('Dieses Konto ('+mail+') hat keinen Zugang zur Zentrale. '+
+            'Wenn du dich als Zentrale anmelden willst, erst abmelden.');
     return;
   }
   ADMIN_MAIL = mail;

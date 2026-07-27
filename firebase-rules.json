@@ -65,6 +65,16 @@
       }
     },
 
+    "rates": {
+      ".read": "auth != null",
+
+      "$sid": {
+        ".write": "auth != null && (auth.token.email == 'bestellux1@gmail.com' || auth.token.email == 'ibrahimi.hafid22@gmail.com')",
+
+        ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 100"
+      }
+    },
+
     "$other": {
       ".read": false,
       ".write": false
