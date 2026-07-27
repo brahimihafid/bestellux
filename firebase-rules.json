@@ -12,7 +12,7 @@
         ".validate": "newData.hasChildren(['id','at','status']) && newData.child('id').isString() && newData.child('id').val().length < 40 && newData.child('at').isNumber() && newData.child('status').isString()",
 
         "status": {
-          ".validate": "newData.val() == 'neu' || newData.val() == 'angenommen' || newData.val() == 'am_restaurant' || newData.val() == 'abgeholt' || newData.val() == 'unterwegs' || newData.val() == 'geliefert'"
+          ".validate": "newData.val() == 'neu' || newData.val() == 'bestaetigt' || newData.val() == 'abgelehnt' || newData.val() == 'angenommen' || newData.val() == 'am_restaurant' || newData.val() == 'abgeholt' || newData.val() == 'unterwegs' || newData.val() == 'geliefert'"
         },
 
         "driver": {
@@ -46,6 +46,22 @@
           "acc": { ".validate": "newData.isNumber()" },
           "t":   { ".validate": "newData.isNumber()" }
         }
+      }
+    },
+
+    "shops": {
+      ".read": true,
+
+      "$sid": {
+        ".write": "auth != null",
+
+        ".validate": "newData.hasChildren(['open','t'])",
+
+        "open":  { ".validate": "newData.isBoolean()" },
+        "until": { ".validate": "newData.isNumber()" },
+        "t":     { ".validate": "newData.isNumber()" },
+        "by":    { ".validate": "newData.isString() && newData.val().length < 80" },
+        "name":  { ".validate": "newData.isString() && newData.val().length < 80" }
       }
     },
 

@@ -764,8 +764,32 @@ function myActive(){
   return bxLoad().find(o=> isMine(o) &&
     ['angenommen','am_restaurant','abgeholt','unterwegs'].indexOf(o.status)>=0) || null;
 }
+/* Ein Auftrag erscheint hier ERST, wenn das Restaurant ihn bestätigt hat.
+   'neu'        = liegt beim Restaurant, der Fahrer sieht ihn noch nicht
+   'bestaetigt' = Küche hat OK gesagt -> jetzt darf ein Fahrer ihn nehmen */
 function openJobs(){
-  return bxLoad().filter(o=> o.status==='neu');
+  return bxLoad().filter(o=> o.status==='bestaetigt');
+}
+/* Wann ist das Essen fertig? (aus prepEnd oder aus den Stops) */
+function prepEndOf(o){
+  if(!o) return 0;
+  if(o.prepEnd) return o.prepEnd;
+  var st = o.stops||[], ende = 0;
+  for(var i=0;i<st.length;i++){
+    if(st[i].okAt){
+      var e = st[i].okAt + ((st[i].prep||15)*60000);
+      if(e>ende) ende = e;
+    }
+  }
+  return ende;
+}
+function fertigTxt(o){
+  var e = prepEndOf(o); if(!e) return '';
+  var d = new Date(e);
+  var hh = ('0'+d.getHours()).slice(-2), mm = ('0'+d.getMinutes()).slice(-2);
+  var min = Math.round((e - Date.now())/60000);
+  if(min <= 0) return 'Essen ist fertig';
+  return 'fertig um '+hh+':'+mm+' ('+min+' Min)';
 }
 
 function render(){
@@ -843,6 +867,9 @@ function renderJobs(jobs, act){
         '<span class="oc-earn-l">dein Verdienst</span>'+
         '<span class="oc-dist">🛣️ '+km(totalKm(o))+' · '+(o.stops||[]).length+' Stopp'+((o.stops||[]).length>1?'s':'')+'</span>'+
       '</div>'+
+      (fertigTxt(o) ? '<div style="margin:8px 0 2px;padding:8px 10px;border-radius:10px;'+
+         'background:rgba(43,182,115,.13);border:1px solid rgba(43,182,115,.35);'+
+         'color:#2BB673;font-weight:800;font-size:13px">👨‍🍳 Küche hat bestätigt · '+esc(fertigTxt(o))+'</div>' : '')+
       '<div class="oc-route">'+stopsHtml(o,false)+'</div>'+
       '<div class="oc-bar">'+
         '<button class="b b-ok" onclick="accept(\''+o.id+'\')">✓ Annehmen</button>'+
@@ -861,7 +888,7 @@ function accept(id){
     try{
       FB_DB.ref('orders/'+id).transaction(function(x){
         if(!x) return x;
-        if(x.status!=='neu') return;            /* abbrechen */
+        if(x.status!=='bestaetigt') return;      /* abbrechen */
         x.status = 'angenommen';
         x.driver = { uid:(ME.uid||null), name:ME.name, ini:ME.ini, veh:ME.veh, phone:ME.phone, town:ME.town,
                      nearKm: distTowns(ME.town, (x.stops&&x.stops[0]?x.stops[0].town:x.town)) };
@@ -877,7 +904,7 @@ function accept(id){
     return;
   }
   const o = bxUpdate(id, x=>{
-    if(x.status!=='neu') return;
+    if(x.status!=='bestaetigt') return;
     x.status = 'angenommen';
     x.driver = { uid:(ME.uid||null), name:ME.name, ini:ME.ini, veh:ME.veh, phone:ME.phone, town:ME.town,
                  nearKm: distTowns(ME.town, (x.stops&&x.stops[0]?x.stops[0].town:x.town)) };
@@ -889,7 +916,7 @@ function accept(id){
 }
 function decline(id){
   const a = bxLoad(); const i = a.findIndex(o=>o.id===id);
-  if(i>=0){ a[i].hidden = (a[i].hidden||[]).concat([ME.name]); a[i].status='neu'; bxSave(a); }
+  if(i>=0){ a[i].hidden = (a[i].hidden||[]).concat([ME.name]); a[i].status='bestaetigt'; bxSave(a); }
   toast('Auftrag abgelehnt');
   render();
 }
@@ -926,6 +953,12 @@ function renderActive(o){
     '</div>'+
     '<div class="oc-route">'+stopsHtml(o,true)+'</div>'+
   '</div>';
+
+  if(i<=1 && fertigTxt(o)){
+    h += '<div style="margin:10px 0 0;padding:10px 12px;border-radius:12px;'+
+      'background:rgba(43,182,115,.13);border:1px solid rgba(43,182,115,.35);'+
+      'color:#2BB673;font-weight:800;font-size:14px">👨‍🍳 Essen '+esc(fertigTxt(o))+'</div>';
+  }
 
   h += '<div style="margin:14px 0 4px">' + STEPS.map((s,k)=>
     '<div class="step '+(k<i?'done':(k===i?'now':''))+'">'+
@@ -989,7 +1022,8 @@ function nextStep(id){
   }
 }
 function giveBack(id){
-  bxUpdate(id, x=>{ x.status='neu'; x.driver=null; x.hist=(x.hist||[]).concat([{s:'zurueck',t:Date.now()}]); });
+  /* zurück zu 'bestaetigt' – die Küche hat ja schon zugesagt, das gilt weiter */
+  bxUpdate(id, x=>{ x.status='bestaetigt'; x.driver=null; x.hist=(x.hist||[]).concat([{s:'zurueck',t:Date.now()}]); });
   toast('Auftrag zurückgegeben');
   go('Jobs');
 }
@@ -1076,13 +1110,17 @@ function demoOrder(){
   const sub = d.st.reduce((s,r)=> s + r.items.reduce((a,i)=>a+i.qty*i.price,0), 0);
   const fee = d.st.length>1 ? 3.90 : 2.90;
   const a = bxLoad();
+  /* Test-Auftrag: so tun, als hätte die Küche schon bestätigt (15 Min) */
+  const okAt = Date.now();
+  d.st.forEach(function(s){ s.ok = 1; s.prep = 15; s.okAt = okAt; });
   const o = {
     id:'BX-T'+String(Date.now()).slice(-8),
     at:Date.now(), town:d.town, street:d.street, plz:d.plz, extra:'', phone:'0176 20660723',
     coords:null, mapsUrl:'https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(d.street+', '+d.plz+' '+d.town+', Deutschland'),
     pay:d.pay, cash:d.cash, subtotal:sub, fee:fee, tip:d.tip, total:sub+fee+d.tip,
     vehicle:'E-Bike', km:0, etaLo:25, etaHi:40,
-    stops:d.st, status:'neu', driver:null, hist:[{s:'neu',t:Date.now()}], demo:true
+    stops:d.st, status:'bestaetigt', driver:null, prepEnd: okAt + 15*60000,
+    hist:[{s:'neu',t:okAt},{s:'bestaetigt',t:okAt}], demo:true
   };
   a.unshift(o); bxSave(a);
   toast('🧪 Test-Bestellung '+o.id);
