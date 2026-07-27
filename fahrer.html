@@ -1,0 +1,1017 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<title>Bestellux Fahrer</title>
+<meta name="theme-color" content="#12100B">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="apple-touch-icon" href="icon-180.png">
+<style>
+:root{
+  --yellow:#FFB800; --yellow-dark:#E09E00; --gold:#C9A24B;
+  --red:#A0152C; --red-dark:#7C0F21;
+  --bg:#12100B; --bg2:#1B1810; --card:#221E14; --card2:#2B2618;
+  --line:rgba(255,184,0,0.16);
+  --tx:#F6F1E4; --tx2:#B7AE99; --tx3:#7E7767;
+  --green:#2BB673; --green-dark:#1E8C57;
+  --blue:#3D8BF2;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html,body{margin:0;padding:0;}
+body{
+  background:var(--bg);color:var(--tx);
+  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;
+  font-size:15px;line-height:1.45;
+  padding-bottom:calc(74px + env(safe-area-inset-bottom));
+  overscroll-behavior-y:contain;
+}
+button{font-family:inherit;cursor:pointer;border:none;}
+input,select{font-family:inherit;}
+.hide{display:none !important;}
+
+/* ================= LOGIN ================= */
+#login{
+  position:fixed;inset:0;z-index:999;overflow-y:auto;
+  background:radial-gradient(120% 80% at 50% 0%,#2A2415 0%,var(--bg) 62%);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:26px 20px calc(30px + env(safe-area-inset-bottom));
+}
+.lg-logo{
+  width:84px;height:84px;border-radius:26px;margin-bottom:16px;
+  background:linear-gradient(140deg,var(--yellow),var(--yellow-dark) 60%,#C98600);
+  display:flex;align-items:center;justify-content:center;font-size:40px;
+  box-shadow:0 14px 34px rgba(255,184,0,0.28);
+  animation:lgFloat 3.4s ease-in-out infinite;
+}
+@keyframes lgFloat{0%,100%{transform:translateY(0);}50%{transform:translateY(-7px);}}
+.lg-title{font-size:26px;font-weight:900;letter-spacing:-0.4px;margin:0;}
+.lg-title b{color:var(--yellow);}
+.lg-sub{color:var(--tx2);font-size:13.5px;margin:5px 0 26px;text-align:center;}
+.lg-card{
+  width:100%;max-width:400px;background:var(--card);border:1px solid var(--line);
+  border-radius:22px;padding:20px 18px;box-shadow:0 18px 40px rgba(0,0,0,0.45);
+}
+.fld{margin-bottom:15px;}
+.fld label{display:block;font-size:12px;font-weight:800;color:var(--tx2);
+  text-transform:uppercase;letter-spacing:0.6px;margin-bottom:7px;}
+.fld input,.fld select{
+  width:100%;background:var(--bg2);border:1.5px solid var(--line);border-radius:13px;
+  padding:13px 14px;color:var(--tx);font-size:15.5px;font-weight:600;outline:none;
+  transition:border-color .16s;
+}
+.fld input:focus,.fld select:focus{border-color:var(--yellow);}
+.chips{display:flex;gap:8px;flex-wrap:wrap;}
+.chip{
+  flex:1 1 0;min-width:96px;background:var(--bg2);border:1.5px solid var(--line);
+  border-radius:13px;padding:12px 8px;color:var(--tx2);font-size:13.5px;font-weight:800;
+  text-align:center;transition:all .16s;
+}
+.chip.on{background:linear-gradient(140deg,var(--yellow),var(--yellow-dark));
+  border-color:var(--yellow);color:#241C00;box-shadow:0 6px 16px rgba(255,184,0,0.28);}
+.btn-main{
+  width:100%;background:linear-gradient(140deg,var(--yellow),var(--yellow-dark));
+  color:#241C00;font-size:16.5px;font-weight:900;border-radius:15px;padding:15px;
+  box-shadow:0 10px 26px rgba(255,184,0,0.30);transition:transform .14s;
+}
+.btn-main:active{transform:scale(0.975);}
+.lg-note{color:var(--tx3);font-size:11.5px;text-align:center;margin:14px 0 0;max-width:400px;}
+
+/* ================= TOPBAR ================= */
+.top{
+  position:sticky;top:0;z-index:60;
+  background:linear-gradient(180deg,rgba(27,24,16,0.98),rgba(18,16,11,0.94));
+  backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+  border-bottom:1px solid var(--line);
+  padding:calc(10px + env(safe-area-inset-top)) 14px 10px;
+  display:flex;align-items:center;gap:11px;
+}
+.av{
+  width:42px;height:42px;border-radius:14px;flex-shrink:0;
+  background:linear-gradient(140deg,var(--red),var(--red-dark));
+  display:flex;align-items:center;justify-content:center;
+  font-size:16px;font-weight:900;color:#fff;position:relative;
+  box-shadow:0 5px 14px rgba(160,21,44,0.4);
+}
+.av::after{content:"";position:absolute;right:-2px;bottom:-2px;width:13px;height:13px;
+  border-radius:50%;background:var(--tx3);border:2.5px solid var(--bg);}
+body.online .av::after{background:var(--green);box-shadow:0 0 0 0 rgba(43,182,115,0.6);
+  animation:pulseDot 1.9s ease-out infinite;}
+@keyframes pulseDot{0%{box-shadow:0 0 0 0 rgba(43,182,115,0.55);}100%{box-shadow:0 0 0 11px rgba(43,182,115,0);}}
+.top-tx{flex:1;min-width:0;}
+.top-tx b{display:block;font-size:15px;font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.top-tx span{display:block;font-size:11.5px;color:var(--tx3);font-weight:700;}
+body.online .top-tx span{color:var(--green);}
+.sw{
+  width:60px;height:32px;border-radius:20px;background:#3A3427;position:relative;
+  flex-shrink:0;transition:background .2s;border:1px solid rgba(255,255,255,0.06);
+}
+.sw::after{content:"";position:absolute;top:3px;left:3px;width:24px;height:24px;border-radius:50%;
+  background:#fff;transition:transform .22s cubic-bezier(.34,1.56,.64,1);
+  box-shadow:0 2px 6px rgba(0,0,0,0.35);}
+body.online .sw{background:linear-gradient(140deg,var(--green),var(--green-dark));}
+body.online .sw::after{transform:translateX(28px);}
+
+/* ================= WRAP / SECTIONS ================= */
+.wrap{padding:14px 13px 6px;max-width:560px;margin:0 auto;}
+.sec-h{display:flex;align-items:center;justify-content:space-between;margin:2px 0 11px;}
+.sec-h h2{font-size:17px;font-weight:900;margin:0;letter-spacing:-0.2px;}
+.count{
+  background:var(--red);color:#fff;font-size:11.5px;font-weight:900;
+  border-radius:20px;padding:3px 10px;min-width:24px;text-align:center;
+}
+.count.zero{background:#3A3427;color:var(--tx3);}
+
+/* ================= ORDER CARD ================= */
+.oc{
+  background:var(--card);border:1px solid var(--line);border-radius:20px;
+  margin-bottom:13px;overflow:hidden;position:relative;
+  box-shadow:0 8px 22px rgba(0,0,0,0.32);
+  animation:ocIn .34s cubic-bezier(.2,.8,.3,1) both;
+}
+@keyframes ocIn{from{opacity:0;transform:translateY(14px) scale(0.98);}to{opacity:1;transform:none;}}
+.oc.new::before{content:"";position:absolute;left:0;right:0;top:0;height:3px;
+  background:linear-gradient(90deg,var(--yellow),var(--red),var(--yellow));
+  background-size:200% 100%;animation:ocBar 2.2s linear infinite;}
+@keyframes ocBar{to{background-position:200% 0;}}
+.oc-top{display:flex;align-items:center;gap:10px;padding:14px 14px 0;}
+.oc-id{font-size:11.5px;font-weight:900;color:var(--tx3);letter-spacing:0.5px;}
+.oc-pay{
+  margin-left:auto;font-size:11.5px;font-weight:900;border-radius:9px;padding:4px 9px;
+  background:rgba(61,139,242,0.14);color:#8FBEFF;border:1px solid rgba(61,139,242,0.28);
+}
+.oc-pay.cash{background:rgba(43,182,115,0.14);color:#6FE0AE;border-color:rgba(43,182,115,0.3);}
+.oc-money{
+  padding:12px 14px 4px;display:flex;align-items:flex-end;gap:9px;
+}
+.oc-earn{font-size:30px;font-weight:900;line-height:1;
+  background:linear-gradient(120deg,var(--yellow),#FFE08A 50%,var(--yellow));
+  -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;}
+.oc-earn-l{font-size:11.5px;font-weight:800;color:var(--tx3);padding-bottom:3px;}
+.oc-dist{margin-left:auto;font-size:12.5px;font-weight:800;color:var(--tx2);padding-bottom:3px;}
+.oc-route{padding:12px 14px 2px;}
+.rw{display:flex;gap:11px;position:relative;padding-bottom:14px;}
+.rw:last-child{padding-bottom:2px;}
+.rw::before{content:"";position:absolute;left:15px;top:32px;bottom:-2px;width:2px;
+  background:repeating-linear-gradient(180deg,var(--line) 0 4px,transparent 4px 8px);}
+.rw:last-child::before{display:none;}
+.rw-ic{
+  width:32px;height:32px;border-radius:11px;flex-shrink:0;display:flex;
+  align-items:center;justify-content:center;font-size:12px;font-weight:900;color:#fff;
+}
+.rw-ic.dest{background:linear-gradient(140deg,var(--green),var(--green-dark));font-size:15px;}
+.rw-tx{min-width:0;flex:1;}
+.rw-tx b{display:block;font-size:14px;font-weight:800;line-height:1.28;}
+.rw-tx span{display:block;font-size:12px;color:var(--tx3);font-weight:600;line-height:1.35;}
+.rw-items{margin-top:5px;font-size:12px;color:var(--tx2);line-height:1.5;}
+.rw-items i{font-style:normal;color:var(--yellow);font-weight:800;}
+.rw-note{color:var(--gold);font-size:11.5px;}
+.oc-bar{display:flex;gap:9px;padding:12px 14px 14px;}
+.b{border-radius:13px;padding:13px 10px;font-size:14.5px;font-weight:900;transition:transform .14s;}
+.b:active{transform:scale(0.97);}
+.b-ok{flex:2;background:linear-gradient(140deg,var(--green),var(--green-dark));color:#fff;
+  box-shadow:0 8px 20px rgba(43,182,115,0.28);}
+.b-no{flex:1;background:var(--card2);color:var(--tx2);border:1px solid var(--line);}
+.b-gold{flex:1;background:linear-gradient(140deg,var(--yellow),var(--yellow-dark));color:#241C00;
+  box-shadow:0 8px 20px rgba(255,184,0,0.24);}
+.b-red{flex:1;background:linear-gradient(140deg,var(--red),var(--red-dark));color:#fff;}
+.b-gray{flex:1;background:var(--card2);color:var(--tx2);border:1px solid var(--line);}
+.b-wide{width:100%;}
+.timer{
+  height:4px;background:var(--card2);border-radius:4px;overflow:hidden;margin:0 14px;
+}
+.timer i{display:block;height:100%;background:linear-gradient(90deg,var(--yellow),var(--red));
+  border-radius:4px;transition:width 1s linear;}
+
+/* ================= ACTIVE ================= */
+.step{
+  display:flex;gap:11px;padding:11px 13px;border-radius:15px;margin-bottom:8px;
+  background:var(--card);border:1px solid transparent;transition:all .22s;
+}
+.step.done{opacity:0.5;}
+.step.now{border-color:var(--yellow);background:linear-gradient(140deg,#2E2716,#221E14);
+  box-shadow:0 8px 20px rgba(255,184,0,0.12);}
+.step-n{
+  width:28px;height:28px;border-radius:50%;flex-shrink:0;background:var(--card2);
+  color:var(--tx3);font-size:13px;font-weight:900;display:flex;align-items:center;justify-content:center;
+}
+.step.done .step-n{background:var(--green);color:#fff;}
+.step.now .step-n{background:linear-gradient(140deg,var(--yellow),var(--yellow-dark));color:#241C00;
+  animation:stepPulse 1.8s ease-in-out infinite;}
+@keyframes stepPulse{0%,100%{transform:scale(1);}50%{transform:scale(1.12);}}
+.step-tx b{display:block;font-size:14px;font-weight:800;}
+.step-tx span{display:block;font-size:11.5px;color:var(--tx3);font-weight:600;}
+.nav-row{display:flex;gap:9px;margin:11px 0 4px;}
+.nav-b{
+  flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;
+  background:var(--card);border:1px solid var(--line);border-radius:15px;
+  padding:12px 6px;color:var(--tx);font-size:11.5px;font-weight:800;text-decoration:none;
+  transition:transform .14s;
+}
+.nav-b:active{transform:scale(0.96);}
+.nav-b em{font-style:normal;font-size:19px;}
+.big-b{
+  width:100%;background:linear-gradient(140deg,var(--yellow),var(--yellow-dark));
+  color:#241C00;font-size:17px;font-weight:900;border-radius:17px;padding:17px;
+  box-shadow:0 12px 28px rgba(255,184,0,0.28);margin-top:12px;transition:transform .14s;
+}
+.big-b:active{transform:scale(0.98);}
+.big-b.green{background:linear-gradient(140deg,var(--green),var(--green-dark));color:#fff;
+  box-shadow:0 12px 28px rgba(43,182,115,0.3);}
+.cust{
+  background:var(--card);border:1px solid var(--line);border-radius:18px;padding:14px;margin-bottom:11px;
+}
+.cust h4{margin:0 0 8px;font-size:12px;font-weight:900;color:var(--tx3);
+  text-transform:uppercase;letter-spacing:0.7px;}
+.cust p{margin:0;font-size:15px;font-weight:800;line-height:1.45;}
+.cust small{display:block;color:var(--tx3);font-size:12px;font-weight:600;margin-top:3px;}
+.locked{color:var(--tx3);font-weight:700;font-size:13px;}
+
+/* ================= EARN ================= */
+.ea-hero{
+  background:linear-gradient(140deg,#332B17,#221E14);border:1px solid var(--line);
+  border-radius:22px;padding:20px 18px;text-align:center;margin-bottom:12px;
+  box-shadow:0 12px 30px rgba(0,0,0,0.35);
+}
+.ea-big{font-size:42px;font-weight:900;line-height:1;
+  background:linear-gradient(120deg,var(--yellow),#FFE8A6 50%,var(--yellow));
+  background-size:200% 100%;
+  -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;
+  animation:eaShine 4s linear infinite;}
+@keyframes eaShine{to{background-position:200% 0;}}
+.ea-l{font-size:12.5px;color:var(--tx2);font-weight:800;margin-top:5px;}
+.ea-grid{display:flex;gap:9px;}
+.ea-c{flex:1;background:var(--card);border:1px solid var(--line);border-radius:16px;
+  padding:14px 8px;text-align:center;}
+.ea-c b{display:block;font-size:21px;font-weight:900;}
+.ea-c span{display:block;font-size:11px;color:var(--tx3);font-weight:800;margin-top:2px;}
+.hist{margin-top:14px;}
+.hi{display:flex;align-items:center;gap:10px;padding:11px 13px;background:var(--card);
+  border:1px solid var(--line);border-radius:14px;margin-bottom:8px;}
+.hi-ic{width:32px;height:32px;border-radius:11px;background:rgba(43,182,115,0.15);
+  display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0;}
+.hi-tx{flex:1;min-width:0;}
+.hi-tx b{display:block;font-size:13.5px;font-weight:800;}
+.hi-tx span{display:block;font-size:11.5px;color:var(--tx3);font-weight:600;}
+.hi-eur{font-size:15px;font-weight:900;color:var(--yellow);}
+
+/* ================= PROFIL ================= */
+.pf-card{background:var(--card);border:1px solid var(--line);border-radius:20px;
+  padding:18px;margin-bottom:12px;}
+.pf-top{display:flex;align-items:center;gap:13px;margin-bottom:16px;}
+.pf-av{width:62px;height:62px;border-radius:20px;flex-shrink:0;
+  background:linear-gradient(140deg,var(--red),var(--red-dark));color:#fff;
+  display:flex;align-items:center;justify-content:center;font-size:23px;font-weight:900;
+  box-shadow:0 8px 20px rgba(160,21,44,0.35);}
+.pf-top b{display:block;font-size:19px;font-weight:900;}
+.pf-top span{display:block;font-size:12.5px;color:var(--tx3);font-weight:700;}
+
+/* ================= EMPTY ================= */
+.empty{text-align:center;padding:44px 20px;color:var(--tx3);}
+.empty .e-ic{font-size:52px;margin-bottom:12px;opacity:0.75;
+  display:inline-block;animation:eBob 3s ease-in-out infinite;}
+@keyframes eBob{0%,100%{transform:translateY(0);}50%{transform:translateY(-8px);}}
+.empty b{display:block;font-size:16px;font-weight:900;color:var(--tx2);margin-bottom:5px;}
+.empty p{margin:0;font-size:13px;line-height:1.5;}
+
+/* ================= NAV ================= */
+.nav{
+  position:fixed;left:0;right:0;bottom:0;z-index:70;display:flex;
+  background:rgba(27,24,16,0.97);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
+  border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom);
+}
+.nav button{
+  flex:1;background:none;color:var(--tx3);padding:9px 2px 10px;
+  display:flex;flex-direction:column;align-items:center;gap:3px;
+  font-size:10.5px;font-weight:800;position:relative;transition:color .16s;
+}
+.nav button em{font-style:normal;font-size:21px;line-height:1;}
+.nav button.on{color:var(--yellow);}
+.nav button.on em{animation:navPop .32s cubic-bezier(.34,1.56,.64,1);}
+@keyframes navPop{0%{transform:scale(1);}50%{transform:scale(1.25);}100%{transform:scale(1);}}
+.nav .bdg{
+  position:absolute;top:4px;left:50%;margin-left:5px;min-width:17px;height:17px;
+  border-radius:10px;background:var(--red);color:#fff;font-size:10px;font-weight:900;
+  display:flex;align-items:center;justify-content:center;padding:0 4px;
+  box-shadow:0 0 0 2px var(--bg);
+}
+
+/* ================= TOAST ================= */
+#toast{
+  position:fixed;left:50%;transform:translateX(-50%) translateY(-140%);
+  top:calc(12px + env(safe-area-inset-top));z-index:900;
+  background:linear-gradient(140deg,var(--yellow),var(--yellow-dark));color:#241C00;
+  font-size:14px;font-weight:900;padding:12px 20px;border-radius:14px;
+  box-shadow:0 12px 30px rgba(0,0,0,0.45);transition:transform .32s cubic-bezier(.2,.9,.3,1);
+  max-width:88vw;text-align:center;
+}
+#toast.on{transform:translateX(-50%) translateY(0);}
+
+/* ================= NEW-ORDER ALERT ================= */
+#alertOv{
+  position:fixed;inset:0;z-index:800;background:rgba(10,8,4,0.88);
+  backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);
+  display:flex;align-items:center;justify-content:center;padding:20px;
+}
+#alertOv .box{
+  width:100%;max-width:380px;background:var(--card);border:1.5px solid var(--yellow);
+  border-radius:26px;padding:24px 20px;text-align:center;
+  box-shadow:0 20px 60px rgba(255,184,0,0.22);
+  animation:alIn .34s cubic-bezier(.34,1.4,.64,1) both;
+}
+@keyframes alIn{from{opacity:0;transform:scale(0.86);}to{opacity:1;transform:scale(1);}}
+#alertOv .ring{width:74px;height:74px;border-radius:50%;margin:0 auto 14px;
+  background:linear-gradient(140deg,var(--yellow),var(--yellow-dark));
+  display:flex;align-items:center;justify-content:center;font-size:34px;
+  animation:ring .7s ease-in-out infinite;}
+@keyframes ring{0%,100%{transform:rotate(-9deg);}50%{transform:rotate(9deg);}}
+#alertOv h3{margin:0 0 4px;font-size:21px;font-weight:900;}
+#alertOv p{margin:0 0 18px;font-size:13.5px;color:var(--tx2);}
+#alertOv .amt{font-size:34px;font-weight:900;color:var(--yellow);margin-bottom:2px;}
+</style>
+<script src="https://www.gstatic.com/firebasejs/12.15.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/12.15.0/firebase-database-compat.js"></script>
+</head>
+<body>
+
+<!-- ========== LOGIN ========== -->
+<div id="login">
+  <div class="lg-logo">🛵</div>
+  <h1 class="lg-title"><b>Bestellux</b> Fahrer</h1>
+  <p class="lg-sub">Melde dich an und starte deine Schicht.</p>
+  <div class="lg-card">
+    <div class="fld">
+      <label>Dein Name</label>
+      <input id="inName" type="text" placeholder="z.&nbsp;B. Youssef" autocomplete="name">
+    </div>
+    <div class="fld">
+      <label>Handynummer</label>
+      <input id="inPhone" type="tel" placeholder="0176 1234567" autocomplete="tel">
+    </div>
+    <div class="fld">
+      <label>Fahrzeug</label>
+      <div class="chips" id="vehChips">
+        <button class="chip on" data-v="E-Bike">🚲 E-Bike</button>
+        <button class="chip" data-v="Auto">🚗 Auto</button>
+        <button class="chip" data-v="Roller">🛵 Roller</button>
+      </div>
+    </div>
+    <div class="fld">
+      <label>Ich starte in</label>
+      <div class="chips" id="townChips">
+        <button class="chip on" data-t="Langwedel">Langwedel</button>
+        <button class="chip" data-t="Etelsen">Etelsen</button>
+        <button class="chip" data-t="Verden">Verden</button>
+      </div>
+    </div>
+    <button class="btn-main" onclick="doLogin()">Schicht starten →</button>
+  </div>
+  <p class="lg-note">Demo-Version: alles läuft direkt auf diesem Gerät.<br>Bestellungen aus der Bestellux-App (gleicher Browser) kommen automatisch an.</p>
+</div>
+
+<!-- ========== APP ========== -->
+<div id="app" class="hide">
+
+  <div class="top">
+    <div class="av" id="tAv">–</div>
+    <div class="top-tx">
+      <b id="tName">Fahrer</b>
+      <span id="tState">Offline</span>
+    </div>
+    <button class="sw" id="tSw" onclick="toggleShift()" aria-label="Schicht"></button>
+  </div>
+
+  <!-- TAB: Aufträge -->
+  <div class="wrap tab" id="tabJobs">
+    <div class="sec-h">
+      <h2>Neue Aufträge</h2>
+      <span class="count zero" id="jobCount">0</span>
+    </div>
+    <div id="jobList"></div>
+  </div>
+
+  <!-- TAB: Aktiv -->
+  <div class="wrap tab hide" id="tabActive">
+    <div class="sec-h"><h2>Aktive Lieferung</h2></div>
+    <div id="activeBox"></div>
+  </div>
+
+  <!-- TAB: Verdienst -->
+  <div class="wrap tab hide" id="tabEarn">
+    <div class="sec-h"><h2>Mein Verdienst</h2></div>
+    <div id="earnBox"></div>
+  </div>
+
+  <!-- TAB: Profil -->
+  <div class="wrap tab hide" id="tabProf">
+    <div class="sec-h"><h2>Mein Profil</h2></div>
+    <div id="profBox"></div>
+  </div>
+
+  <div class="nav">
+    <button class="on" data-tab="Jobs"   onclick="go('Jobs')"><em>📋</em>Aufträge<span class="bdg hide" id="navBdg">0</span></button>
+    <button data-tab="Active" onclick="go('Active')"><em>🛵</em>Aktiv</button>
+    <button data-tab="Earn"   onclick="go('Earn')"><em>💶</em>Verdienst</button>
+    <button data-tab="Prof"   onclick="go('Prof')"><em>👤</em>Profil</button>
+  </div>
+</div>
+
+<div id="toast"></div>
+<div id="alertOv" class="hide" onclick="closeAlert()"></div>
+
+<script>
+/* =====================================================================
+   BESTELLUX FAHRER-APP
+   Bestellungen kommen aus der Firebase Realtime Database (Belgien,
+   europe-west1) – derselben Datenbank, in die die Kunden-App schreibt.
+   Deshalb landet eine Bestellung von bestellux.com direkt auf dem Handy
+   des Fahrers, egal wo er gerade ist.
+   Ohne Netz/Firebase faellt die App automatisch auf localStorage zurueck.
+   ===================================================================== */
+
+const BX_ORDERS = 'bx_orders';
+const BX_DRIVER = 'bx_driver';
+
+const FB_CONFIG = {
+  apiKey: "AIzaSyBsCEXpAKJwYI3Zg_8XHUE8CeIyjo7zX2c",
+  authDomain: "bestellux.firebaseapp.com",
+  databaseURL: "https://bestellux-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "bestellux",
+  storageBucket: "bestellux.firebasestorage.app",
+  messagingSenderId: "19751728202",
+  appId: "1:19751728202:web:a7daa8f4d57b01730ce2b3"
+};
+var FB_DB = null, FB_OK = false;
+try{
+  if(window.firebase && firebase.initializeApp){
+    if(!firebase.apps || !firebase.apps.length) firebase.initializeApp(FB_CONFIG);
+    FB_DB = firebase.database();
+    FB_OK = true;
+  }
+}catch(e){ FB_DB = null; FB_OK = false; }
+
+var FB_CACHE = [];   /* alle Auftraege, neueste zuerst */
+var FB_SNAP  = {};   /* id -> zuletzt bekannter Stand, damit wir nur Aenderungen senden */
+
+function bxLoad(){
+  if(FB_OK) return FB_CACHE;
+  try{ return JSON.parse(localStorage.getItem(BX_ORDERS)||'[]'); }catch(e){ return []; }
+}
+function bxSave(a){
+  if(a.length > 80) a.length = 80;
+  try{ localStorage.setItem(BX_ORDERS, JSON.stringify(a.slice(0,80))); }catch(e){}
+  if(!FB_OK) return;
+  try{
+    var up = {}, n = 0;
+    for(var i=0;i<a.length;i++){
+      var o = a[i]; if(!o || !o.id) continue;
+      var js = JSON.stringify(o);
+      if(FB_SNAP[o.id] !== js){ FB_SNAP[o.id] = js; up['orders/'+o.id] = o; n++; }
+    }
+    if(n) FB_DB.ref().update(up);
+  }catch(e){}
+}
+function bxUpdate(id, fn){
+  const a = bxLoad(); const i = a.findIndex(o=>o.id===id);
+  if(i<0) return null;
+  fn(a[i]); a[i].upd = Date.now(); bxSave(a); return a[i];
+}
+
+/* Firebase-Livestrom: jede Aenderung in der Datenbank landet sofort hier. */
+var fbPurged = false;
+function fbStart(){
+  if(!FB_OK) return;
+  FB_DB.ref('orders').on('value', function(snap){
+    var v = snap.val() || {}, arr = [];
+    for(var k in v){ if(v[k] && v[k].id) arr.push(v[k]); }
+    arr.sort(function(x,y){ return (y.at||0)-(x.at||0); });
+    FB_CACHE = arr;
+    FB_SNAP = {};
+    for(var i=0;i<arr.length;i++) FB_SNAP[arr[i].id] = JSON.stringify(arr[i]);
+    try{ localStorage.setItem(BX_ORDERS, JSON.stringify(arr.slice(0,80))); }catch(e){}
+    if(!fbPurged){ fbPurged = true; fbPurge(arr); }
+    if(ME) watch();
+  }, function(){ /* kein Zugriff -> App laeuft lokal weiter */ });
+}
+/* Alte Auftraege (aelter als 5 Tage) aufraeumen, damit die Datenbank klein bleibt. */
+function fbPurge(arr){
+  try{
+    var grenze = Date.now() - 5*24*60*60*1000, del = {}, n = 0;
+    for(var i=0;i<arr.length;i++){
+      if((arr[i].at||0) < grenze){ del['orders/'+arr[i].id] = null; n++; }
+    }
+    if(n) FB_DB.ref().update(del);
+  }catch(e){}
+}
+
+const DIST = {
+  'Verden-Verden':1.4,'Verden-Langwedel':7.4,'Verden-Etelsen':9.6,
+  'Langwedel-Verden':7.4,'Langwedel-Langwedel':1.1,'Langwedel-Etelsen':3.1,
+  'Etelsen-Verden':9.6,'Etelsen-Langwedel':3.1,'Etelsen-Etelsen':1.1
+};
+function distTowns(a,b){ return DIST[a+'-'+b] !== undefined ? DIST[a+'-'+b] : 6; }
+
+const eur = n => (Number(n)||0).toFixed(2).replace('.',',')+' €';
+const km  = n => (Number(n)||0).toFixed(1).replace('.',',')+' km';
+const esc = s => String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+const STEPS = [
+  {k:'angenommen',   t:'Auftrag angenommen', s:'Fahr los zum Restaurant',        b:'Ich bin am Restaurant'},
+  {k:'am_restaurant',t:'Am Restaurant',       s:'Warte auf das Essen',            b:'Essen abgeholt'},
+  {k:'abgeholt',     t:'Essen abgeholt',      s:'Alles eingesammelt',             b:'Losfahren zum Kunden'},
+  {k:'unterwegs',    t:'Unterwegs zum Kunden',s:'Fahr zur Lieferadresse',         b:'Geliefert ✓'},
+  {k:'geliefert',    t:'Geliefert',           s:'Auftrag abgeschlossen',          b:''}
+];
+function stepIdx(st){ const i = STEPS.findIndex(x=>x.k===st); return i<0?-1:i; }
+
+/* ---------- Fahrer-Profil ---------- */
+let ME = null;
+try{ ME = JSON.parse(localStorage.getItem(BX_DRIVER)||'null'); }catch(e){ ME = null; }
+function saveMe(){ try{ localStorage.setItem(BX_DRIVER, JSON.stringify(ME)); }catch(e){} }
+function initials(n){
+  const p = String(n||'').trim().split(/\s+/).filter(Boolean);
+  if(!p.length) return 'FX';
+  return (p[0][0]+(p[1]?p[1][0]:'')).toUpperCase();
+}
+
+/* ---------- Login ---------- */
+let pickVeh = 'E-Bike', pickTown = 'Langwedel';
+document.getElementById('vehChips').addEventListener('click', e=>{
+  const b = e.target.closest('.chip'); if(!b) return;
+  [].forEach.call(b.parentNode.children, c=>c.classList.remove('on'));
+  b.classList.add('on'); pickVeh = b.dataset.v;
+});
+document.getElementById('townChips').addEventListener('click', e=>{
+  const b = e.target.closest('.chip'); if(!b) return;
+  [].forEach.call(b.parentNode.children, c=>c.classList.remove('on'));
+  b.classList.add('on'); pickTown = b.dataset.t;
+});
+function doLogin(){
+  const n = document.getElementById('inName').value.trim();
+  if(n.length < 2){ toast('Bitte trag deinen Namen ein'); return; }
+  ME = {
+    name:n, phone:document.getElementById('inPhone').value.trim(),
+    veh:pickVeh, town:pickTown, ini:initials(n),
+    online:true, since:Date.now()
+  };
+  saveMe(); startApp();
+}
+function logout(){
+  if(ME){ ME.online=false; saveMe(); }
+  localStorage.removeItem(BX_DRIVER);
+  location.reload();
+}
+
+/* ---------- App-Start ---------- */
+function startApp(){
+  document.getElementById('login').classList.add('hide');
+  document.getElementById('app').classList.remove('hide');
+  document.getElementById('tAv').textContent  = ME.ini;
+  document.getElementById('tName').textContent = ME.name;
+  document.body.classList.toggle('online', !!ME.online);
+  document.getElementById('tState').textContent = ME.online ? '● Online · '+ME.veh+' · '+ME.town : 'Offline';
+  render();
+}
+function toggleShift(){
+  ME.online = !ME.online; saveMe();
+  document.body.classList.toggle('online', ME.online);
+  document.getElementById('tState').textContent = ME.online ? '● Online · '+ME.veh+' · '+ME.town : 'Offline';
+  toast(ME.online ? '🟢 Du bist online' : '⚪ Schicht beendet');
+  render();
+}
+
+/* ---------- Tabs ---------- */
+let TAB = 'Jobs';
+function go(t){
+  TAB = t;
+  ['Jobs','Active','Earn','Prof'].forEach(k=>{
+    document.getElementById('tab'+(k==='Prof'?'Prof':k)).classList.toggle('hide', k!==t);
+  });
+  [].forEach.call(document.querySelectorAll('.nav button'), b=>b.classList.toggle('on', b.dataset.tab===t));
+  render();
+  window.scrollTo(0,0);
+}
+
+/* ---------- Toast ---------- */
+let toastT=null;
+function toast(msg){
+  const el = document.getElementById('toast');
+  el.textContent = msg; el.classList.add('on');
+  clearTimeout(toastT); toastT = setTimeout(()=>el.classList.remove('on'), 2600);
+}
+
+/* ---------- Verdienst-Regel (Demo) ---------- */
+function payout(o){ return (Number(o.fee)||0) + (Number(o.tip)||0); }
+
+/* ---------- Wie weit bin ich vom Restaurant? ---------- */
+function myDistToPickup(o){
+  const first = (o.stops&&o.stops[0]) ? o.stops[0].town : o.town;
+  return distTowns(ME.town, first);
+}
+function totalKm(o){
+  let d = myDistToPickup(o);
+  const st = o.stops||[];
+  for(let i=0;i<st.length-1;i++) d += distTowns(st[i].town, st[i+1].town);
+  d += distTowns(st.length?st[st.length-1].town:ME.town, o.town);
+  return d;
+}
+
+/* =====================================================================
+   RENDER
+   ===================================================================== */
+function myActive(){
+  return bxLoad().find(o=> o.driver && o.driver.name===ME.name &&
+    ['angenommen','am_restaurant','abgeholt','unterwegs'].indexOf(o.status)>=0) || null;
+}
+function openJobs(){
+  return bxLoad().filter(o=> o.status==='neu');
+}
+
+function render(){
+  const act = myActive();
+  const jobs = openJobs();
+  const n = jobs.length;
+  const c = document.getElementById('jobCount');
+  c.textContent = n; c.classList.toggle('zero', n===0);
+  const bdg = document.getElementById('navBdg');
+  bdg.textContent = n; bdg.classList.toggle('hide', n===0);
+
+  if(TAB==='Jobs')   renderJobs(jobs, act);
+  if(TAB==='Active') renderActive(act);
+  if(TAB==='Earn')   renderEarn();
+  if(TAB==='Prof')   renderProf();
+}
+
+/* ---------- Aufträge ---------- */
+function stopsHtml(o, withItems){
+  const st = o.stops||[];
+  let h = '';
+  st.forEach(s=>{
+    let items = '';
+    if(withItems){
+      items = '<div class="rw-items">' + (s.items||[]).map(it=>
+        '<i>'+it.qty+'×</i> '+esc(it.name) + (it.note?'<br><span class="rw-note">↳ '+esc(it.note)+'</span>':'')
+      ).join('<br>') + '</div>';
+    } else {
+      const cnt = (s.items||[]).reduce((a,it)=>a+(it.qty||0),0);
+      items = '<div class="rw-items">'+cnt+' Artikel</div>';
+    }
+    h += '<div class="rw">'+
+      '<div class="rw-ic" style="background:'+esc(s.color||'#A0152C')+'">'+esc(s.initials||'?')+'</div>'+
+      '<div class="rw-tx"><b>'+esc(s.name)+'</b><span>📍 '+esc(s.address||s.town)+'</span>'+items+'</div>'+
+    '</div>';
+  });
+  const addr = [o.street, [o.plz,o.town].filter(Boolean).join(' ')].filter(Boolean).join(', ');
+  h += '<div class="rw">'+
+    '<div class="rw-ic dest">🏠</div>'+
+    '<div class="rw-tx"><b>Kunde</b><span>📍 '+esc(addr||o.town)+'</span></div>'+
+  '</div>';
+  return h;
+}
+
+function renderJobs(jobs, act){
+  const box = document.getElementById('jobList');
+
+  if(!ME.online){
+    box.innerHTML = '<div class="empty"><div class="e-ic">😴</div><b>Du bist offline</b>'+
+      '<p>Schalte oben rechts auf Online,<br>dann bekommst du neue Aufträge.</p></div>';
+    return;
+  }
+  if(act){
+    box.innerHTML = '<div class="empty"><div class="e-ic">🛵</div><b>Du lieferst gerade</b>'+
+      '<p>Schließ erst '+esc(act.id)+' ab,<br>dann kommen neue Aufträge.</p></div>'+
+      '<button class="big-b" onclick="go(\'Active\')">Zur aktiven Lieferung →</button>';
+    return;
+  }
+  if(!jobs.length){
+    box.innerHTML = '<div class="empty"><div class="e-ic">📭</div><b>Gerade keine Aufträge</b>'+
+      '<p>Sobald ein Kunde bestellt,<br>klingelt es hier sofort.</p></div>'+
+      '<button class="b b-gray b-wide" onclick="demoOrder()">🧪 Test-Bestellung erzeugen</button>';
+    return;
+  }
+
+  box.innerHTML = jobs.map(o=>{
+    const cash = o.pay==='Bargeld';
+    return '<div class="oc new">'+
+      '<div class="oc-top">'+
+        '<span class="oc-id">'+esc(o.id)+'</span>'+
+        '<span class="oc-pay '+(cash?'cash':'')+'">'+(cash?'💵 Bargeld '+eur(o.total):'💳 Karte')+'</span>'+
+      '</div>'+
+      '<div class="oc-money">'+
+        '<span class="oc-earn">'+eur(payout(o))+'</span>'+
+        '<span class="oc-earn-l">dein Verdienst</span>'+
+        '<span class="oc-dist">🛣️ '+km(totalKm(o))+' · '+(o.stops||[]).length+' Stopp'+((o.stops||[]).length>1?'s':'')+'</span>'+
+      '</div>'+
+      '<div class="oc-route">'+stopsHtml(o,false)+'</div>'+
+      '<div class="oc-bar">'+
+        '<button class="b b-ok" onclick="accept(\''+o.id+'\')">✓ Annehmen</button>'+
+        '<button class="b b-no" onclick="decline(\''+o.id+'\')">Ablehnen</button>'+
+      '</div>'+
+    '</div>';
+  }).join('');
+}
+
+/* ---------- Annehmen / Ablehnen ---------- */
+function accept(id){
+  if(myActive()){ toast('Du hast schon eine Lieferung'); return; }
+  /* Firebase-Transaktion: wenn zwei Fahrer gleichzeitig tippen,
+     bekommt nur einer den Auftrag – der andere sieht "schon weg". */
+  if(FB_OK){
+    try{
+      FB_DB.ref('orders/'+id).transaction(function(x){
+        if(!x) return x;
+        if(x.status!=='neu') return;            /* abbrechen */
+        x.status = 'angenommen';
+        x.driver = { name:ME.name, ini:ME.ini, veh:ME.veh, phone:ME.phone, town:ME.town,
+                     nearKm: distTowns(ME.town, (x.stops&&x.stops[0]?x.stops[0].town:x.town)) };
+        x.hist = (x.hist||[]).concat([{s:'angenommen', t:Date.now()}]);
+        x.upd = Date.now();
+        return x;
+      }, function(err, committed){
+        if(err || !committed){ toast('Der Auftrag ist schon weg'); render(); return; }
+        toast('✓ Auftrag '+id+' angenommen');
+        go('Active');
+      });
+    }catch(e){ toast('Verbindungsproblem – bitte nochmal'); render(); }
+    return;
+  }
+  const o = bxUpdate(id, x=>{
+    if(x.status!=='neu') return;
+    x.status = 'angenommen';
+    x.driver = { name:ME.name, ini:ME.ini, veh:ME.veh, phone:ME.phone, town:ME.town,
+                 nearKm: distTowns(ME.town, (x.stops&&x.stops[0]?x.stops[0].town:x.town)) };
+    x.hist = (x.hist||[]).concat([{s:'angenommen', t:Date.now()}]);
+  });
+  if(!o || o.status!=='angenommen'){ toast('Der Auftrag ist schon weg'); render(); return; }
+  toast('✓ Auftrag '+id+' angenommen');
+  go('Active');
+}
+function decline(id){
+  const a = bxLoad(); const i = a.findIndex(o=>o.id===id);
+  if(i>=0){ a[i].hidden = (a[i].hidden||[]).concat([ME.name]); a[i].status='neu'; bxSave(a); }
+  toast('Auftrag abgelehnt');
+  render();
+}
+
+/* ---------- Aktive Lieferung ---------- */
+function renderActive(o){
+  const box = document.getElementById('activeBox');
+  if(!o){
+    box.innerHTML = '<div class="empty"><div class="e-ic">🧭</div><b>Keine aktive Lieferung</b>'+
+      '<p>Nimm einen Auftrag an,<br>dann siehst du hier die Schritte.</p></div>'+
+      '<button class="big-b" onclick="go(\'Jobs\')">Zu den Aufträgen →</button>';
+    return;
+  }
+  const i = stepIdx(o.status);
+  const cur = STEPS[i];
+  const picked = i >= 2;              // ab „abgeholt“ Kundendaten freigeben
+  const addr = [o.street, [o.plz,o.town].filter(Boolean).join(' ')].filter(Boolean).join(', ');
+  const target = i<=1
+    ? ((o.stops&&o.stops[0]) ? (o.stops[0].address || (o.stops[0].name+', '+o.stops[0].town)) : o.town)
+    : (addr || o.town);
+  const mapsUrl = (i>=2 && o.mapsUrl) ? o.mapsUrl
+    : 'https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(target+', Deutschland');
+
+  let h = '<div class="oc" style="animation:none">'+
+    '<div class="oc-top">'+
+      '<span class="oc-id">'+esc(o.id)+'</span>'+
+      '<span class="oc-pay '+(o.pay==='Bargeld'?'cash':'')+'">'+
+        (o.pay==='Bargeld'?'💵 kassieren '+eur(o.total):'💳 schon bezahlt')+'</span>'+
+    '</div>'+
+    '<div class="oc-money">'+
+      '<span class="oc-earn">'+eur(payout(o))+'</span>'+
+      '<span class="oc-earn-l">dein Verdienst</span>'+
+      '<span class="oc-dist">🛣️ '+km(totalKm(o))+'</span>'+
+    '</div>'+
+    '<div class="oc-route">'+stopsHtml(o,true)+'</div>'+
+  '</div>';
+
+  h += '<div style="margin:14px 0 4px">' + STEPS.map((s,k)=>
+    '<div class="step '+(k<i?'done':(k===i?'now':''))+'">'+
+      '<div class="step-n">'+(k<i?'✓':(k+1))+'</div>'+
+      '<div class="step-tx"><b>'+s.t+'</b><span>'+s.s+'</span></div>'+
+    '</div>').join('') + '</div>';
+
+  h += '<div class="nav-row">'+
+    '<a class="nav-b" href="'+esc(mapsUrl)+'" target="_blank" rel="noopener"><em>🗺️</em>Navigation</a>'+
+    (picked && o.phone
+      ? '<a class="nav-b" href="tel:'+esc(o.phone.replace(/\s/g,''))+'"><em>📞</em>Anrufen</a>'+
+        '<a class="nav-b" href="https://wa.me/'+esc(waNum(o.phone))+'" target="_blank" rel="noopener"><em>💬</em>WhatsApp</a>'
+      : '<button class="nav-b" onclick="toast(\'Kundendaten nach dem Abholen\')"><em>🔒</em>Kunde</button>')+
+  '</div>';
+
+  h += '<div class="cust">'+
+    '<h4>Lieferadresse</h4>'+
+    (picked
+      ? '<p>📍 '+esc(addr||o.town)+'</p>'+
+        (o.extra?'<small>'+esc(o.extra)+'</small>':'')+
+        '<small>📞 '+esc(o.phone||'–')+'</small>'
+      : '<p class="locked">🔒 Wird nach dem Abholen freigegeben</p><small>Ort: '+esc(o.town)+'</small>')+
+  '</div>';
+
+  if(o.pay==='Bargeld'){
+    let cashLine = 'Kunde zahlt bar: <b>'+eur(o.total)+'</b>';
+    if(typeof o.cash === 'number') cashLine += '<br><small>zahlt mit '+o.cash+' € → Wechselgeld '+eur(o.cash-o.total)+'</small>';
+    else if(o.cash==='passend')    cashLine += '<br><small>zahlt passend</small>';
+    h += '<div class="cust"><h4>Kasse</h4><p>'+cashLine+'</p></div>';
+  }
+
+  if(cur && cur.b){
+    h += '<button class="big-b '+(i===3?'green':'')+'" onclick="nextStep(\''+o.id+'\')">'+cur.b+'</button>';
+  }
+  h += '<button class="b b-gray b-wide" style="margin-top:9px" onclick="giveBack(\''+o.id+'\')">Auftrag zurückgeben</button>';
+
+  box.innerHTML = h;
+}
+function waNum(p){
+  let d = String(p||'').replace(/[^0-9+]/g,'');
+  if(d.indexOf('+')===0) d = d.slice(1);
+  if(d.indexOf('00')===0) d = d.slice(2);
+  if(d.indexOf('0')===0)  d = '49'+d.slice(1);
+  return d;
+}
+function nextStep(id){
+  const o = bxLoad().find(x=>x.id===id); if(!o) return;
+  const i = stepIdx(o.status);
+  const nx = STEPS[i+1]; if(!nx) return;
+  bxUpdate(id, x=>{
+    x.status = nx.k;
+    x.hist = (x.hist||[]).concat([{s:nx.k, t:Date.now()}]);
+    if(nx.k==='geliefert') x.doneAt = Date.now();
+  });
+  if(nx.k==='geliefert'){
+    toast('🎉 Geliefert! +'+eur(payout(o)));
+    go('Earn');
+  } else {
+    toast('Status: '+nx.t);
+    render();
+  }
+}
+function giveBack(id){
+  bxUpdate(id, x=>{ x.status='neu'; x.driver=null; x.hist=(x.hist||[]).concat([{s:'zurueck',t:Date.now()}]); });
+  toast('Auftrag zurückgegeben');
+  go('Jobs');
+}
+
+/* ---------- Verdienst ---------- */
+function renderEarn(){
+  const all = bxLoad().filter(o=> o.status==='geliefert' && o.driver && o.driver.name===ME.name);
+  const d0 = new Date(); d0.setHours(0,0,0,0);
+  const today = all.filter(o=> (o.doneAt||o.at) >= d0.getTime());
+  const sum = a => a.reduce((s,o)=>s+payout(o),0);
+  const tips = a => a.reduce((s,o)=>s+(Number(o.tip)||0),0);
+
+  let h = '<div class="ea-hero">'+
+      '<div class="ea-big">'+eur(sum(today))+'</div>'+
+      '<div class="ea-l">heute verdient</div>'+
+    '</div>'+
+    '<div class="ea-grid">'+
+      '<div class="ea-c"><b>'+today.length+'</b><span>Lieferungen</span></div>'+
+      '<div class="ea-c"><b>'+eur(tips(today))+'</b><span>Trinkgeld</span></div>'+
+      '<div class="ea-c"><b>'+eur(sum(all))+'</b><span>gesamt</span></div>'+
+    '</div>';
+
+  if(!all.length){
+    h += '<div class="empty"><div class="e-ic">💶</div><b>Noch nichts geliefert</b>'+
+         '<p>Jede abgeschlossene Lieferung<br>erscheint hier sofort.</p></div>';
+  } else {
+    h += '<div class="hist"><div class="sec-h"><h2 style="font-size:14px">Letzte Lieferungen</h2></div>'+
+      all.slice(0,25).map(o=>{
+        const t = new Date(o.doneAt||o.at);
+        const hh = t.getHours().toString().padStart(2,'0')+':'+t.getMinutes().toString().padStart(2,'0');
+        const names = (o.stops||[]).map(s=>s.name).join(' + ') || o.town;
+        return '<div class="hi"><div class="hi-ic">✓</div>'+
+          '<div class="hi-tx"><b>'+esc(names)+'</b><span>'+esc(o.id)+' · '+hh+' Uhr · '+esc(o.town)+'</span></div>'+
+          '<span class="hi-eur">'+eur(payout(o))+'</span></div>';
+      }).join('') + '</div>';
+  }
+  document.getElementById('earnBox').innerHTML = h;
+}
+
+/* ---------- Profil ---------- */
+function renderProf(){
+  const all = bxLoad().filter(o=> o.status==='geliefert' && o.driver && o.driver.name===ME.name);
+  document.getElementById('profBox').innerHTML =
+    '<div class="pf-card">'+
+      '<div class="pf-top">'+
+        '<div class="pf-av">'+esc(ME.ini)+'</div>'+
+        '<div><b>'+esc(ME.name)+'</b><span>'+esc(ME.phone||'ohne Nummer')+'</span>'+
+        '<span>'+(ME.online?'🟢 Online':'⚪ Offline')+' · '+all.length+' Lieferungen</span></div>'+
+      '</div>'+
+      '<div class="fld"><label>Fahrzeug</label>'+
+        '<select id="pfVeh" onchange="setVeh(this.value)">'+
+        ['E-Bike','Auto','Roller'].map(v=>'<option'+(ME.veh===v?' selected':'')+'>'+v+'</option>').join('')+
+        '</select></div>'+
+      '<div class="fld"><label>Ich bin gerade in</label>'+
+        '<select id="pfTown" onchange="setTown(this.value)">'+
+        ['Langwedel','Etelsen','Verden'].map(t=>'<option'+(ME.town===t?' selected':'')+'>'+t+'</option>').join('')+
+        '</select>'+
+        '<p style="margin:7px 0 0;font-size:11.5px;color:var(--tx3);line-height:1.5">'+
+        'Der Kunde sieht, dass ein Fahrer aus deinem Ort das Essen abholt.</p></div>'+
+    '</div>'+
+    '<button class="b b-gray b-wide" style="margin-bottom:9px" onclick="demoOrder()">🧪 Test-Bestellung erzeugen</button>'+
+    '<button class="b b-red b-wide" onclick="logout()">Abmelden</button>';
+}
+function setVeh(v){ ME.veh=v; saveMe(); startApp(); go('Prof'); toast('Fahrzeug: '+v); }
+function setTown(t){ ME.town=t; saveMe(); startApp(); go('Prof'); toast('Standort: '+t); }
+
+/* ---------- Test-Bestellung ---------- */
+const DEMO = [
+  { st:[{id:'berlin-doener',name:'Berlin Döner',initials:'BD',color:'#D01E2C',town:'Langwedel',
+        address:'Große Straße 54, 27299 Langwedel',
+        items:[{qty:2,name:'Drehspieß-Pita',price:7.50,note:'ohne Zwiebeln'},{qty:1,name:'Pommes',price:3.00,note:''}]}],
+    town:'Etelsen', street:'Bahnhofstraße 12', plz:'27299', pay:'Bargeld', cash:30, tip:1.5 },
+  { st:[{id:'pizza-hawaii',name:'Pizza Hawaii',initials:'PH',color:'#E09E00',town:'Verden',
+        address:'Große Straße 8, 27283 Verden',
+        items:[{qty:1,name:'Pizza Salami (groß)',price:11.50,note:''},{qty:1,name:'Tiramisu',price:4.00,note:''}]},
+       {id:'getraenke-express',name:'Getränke Express',initials:'GE',color:'#3D8BF2',town:'Verden',
+        address:'Lindhooper Straße 30, 27283 Verden',
+        items:[{qty:6,name:'Wasser 0,5 l',price:1.20,note:''}]}],
+    town:'Verden', street:'Nordertorstraße 5', plz:'27283', pay:'Karte', cash:null, tip:2 }
+];
+let demoN = 0;
+function demoOrder(){
+  const d = DEMO[demoN % DEMO.length]; demoN++;
+  const sub = d.st.reduce((s,r)=> s + r.items.reduce((a,i)=>a+i.qty*i.price,0), 0);
+  const fee = d.st.length>1 ? 3.90 : 2.90;
+  const a = bxLoad();
+  const o = {
+    id:'BX-T'+String(Date.now()).slice(-8),
+    at:Date.now(), town:d.town, street:d.street, plz:d.plz, extra:'', phone:'0176 20660723',
+    coords:null, mapsUrl:'https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(d.street+', '+d.plz+' '+d.town+', Deutschland'),
+    pay:d.pay, cash:d.cash, subtotal:sub, fee:fee, tip:d.tip, total:sub+fee+d.tip,
+    vehicle:'E-Bike', km:0, etaLo:25, etaHi:40,
+    stops:d.st, status:'neu', driver:null, hist:[{s:'neu',t:Date.now()}], demo:true
+  };
+  a.unshift(o); bxSave(a);
+  toast('🧪 Test-Bestellung '+o.id);
+  go('Jobs');
+  ping(o);
+}
+
+/* ---------- Alarm bei neuer Bestellung ---------- */
+function ping(o){
+  try{ if(navigator.vibrate) navigator.vibrate([120,70,120]); }catch(e){}
+  try{
+    const C = window.AudioContext || window.webkitAudioContext;
+    if(C){
+      const ctx = new C();
+      [0,0.22].forEach(d=>{
+        const g = ctx.createGain(), os = ctx.createOscillator();
+        os.type='sine'; os.frequency.value = d?1180:880;
+        g.gain.setValueAtTime(0.0001, ctx.currentTime+d);
+        g.gain.exponentialRampToValueAtTime(0.28, ctx.currentTime+d+0.03);
+        g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime+d+0.19);
+        os.connect(g); g.connect(ctx.destination);
+        os.start(ctx.currentTime+d); os.stop(ctx.currentTime+d+0.21);
+      });
+      setTimeout(()=>{ try{ ctx.close(); }catch(e){} }, 900);
+    }
+  }catch(e){}
+  if(o) showAlert(o);
+}
+function showAlert(o){
+  const names = (o.stops||[]).map(s=>s.name).join(' + ') || o.town;
+  const ov = document.getElementById('alertOv');
+  ov.innerHTML = '<div class="box" onclick="event.stopPropagation()">'+
+    '<div class="ring">🔔</div>'+
+    '<h3>Neue Bestellung!</h3>'+
+    '<p>'+esc(names)+' → '+esc(o.town)+'</p>'+
+    '<div class="amt">'+eur(payout(o))+'</div>'+
+    '<p>dein Verdienst · '+km(totalKm(o))+'</p>'+
+    '<div class="oc-bar" style="padding:0">'+
+      '<button class="b b-ok" onclick="closeAlert();accept(\''+o.id+'\')">✓ Annehmen</button>'+
+      '<button class="b b-no" onclick="closeAlert()">Später</button>'+
+    '</div></div>';
+  ov.classList.remove('hide');
+}
+function closeAlert(){ document.getElementById('alertOv').classList.add('hide'); }
+
+/* ---------- Live: neue Bestellungen erkennen ---------- */
+let seen = null;
+function watch(){
+  const jobs = openJobs();
+  const ids = jobs.map(o=>o.id).join('|');
+  if(seen === null){ seen = ids; render(); return; }
+  if(ids !== seen){
+    const fresh = jobs.filter(o=> seen.indexOf(o.id) < 0);
+    seen = ids;
+    render();
+    if(fresh.length && ME && ME.online && !myActive()){
+      if(document.getElementById('alertOv').classList.contains('hide')) ping(fresh[0]);
+      else render();
+    }
+  } else {
+    render();
+  }
+}
+window.addEventListener('storage', e=>{ if(e.key===BX_ORDERS && ME) watch(); });
+setInterval(()=>{ if(ME) watch(); }, FB_OK ? 8000 : 1800);
+
+/* ---------- Start ---------- */
+fbStart();
+if(ME && ME.name){ startApp(); seen = FB_OK ? null : openJobs().map(o=>o.id).join('|'); }
+</script>
+</body>
+</html>

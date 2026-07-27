@@ -359,6 +359,28 @@
               padding:9px 12px;font-size:12px;color:#5d7a80;font-weight:700;margin-bottom:14px;line-height:1.4;}
   .route-note.real{background:#E8F5E9;color:#1B5E20;}
   .driver-card{display:flex;align-items:center;gap:12px;background:var(--bg);border-radius:14px;padding:11px 13px;margin-bottom:14px;}
+  /* ---------- Live-Status vom Fahrer ---------- */
+  .live-box{background:var(--bg);border:1.5px solid rgba(201,162,75,0.35);border-radius:16px;
+    padding:13px 14px;margin-bottom:14px;display:none;}
+  .live-box.on{display:block;animation:liveIn .35s cubic-bezier(.2,.8,.3,1) both;}
+  @keyframes liveIn{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:none;}}
+  .live-head{display:flex;align-items:center;gap:9px;margin-bottom:11px;}
+  .live-dot{width:10px;height:10px;border-radius:50%;background:#2BB673;flex-shrink:0;
+    box-shadow:0 0 0 0 rgba(43,182,115,0.55);animation:liveDot 1.9s ease-out infinite;}
+  @keyframes liveDot{0%{box-shadow:0 0 0 0 rgba(43,182,115,0.55);}100%{box-shadow:0 0 0 9px rgba(43,182,115,0);}}
+  .live-head b{font-size:14px;font-weight:900;color:var(--red);}
+  .live-steps{display:flex;gap:4px;}
+  .live-s{flex:1;text-align:center;}
+  .live-s i{display:block;height:5px;border-radius:4px;background:#E4DED0;margin-bottom:6px;
+    transition:background .3s;}
+  .live-s.done i{background:linear-gradient(90deg,var(--yellow),var(--gold));}
+  .live-s.now i{background:linear-gradient(90deg,var(--yellow),var(--red));
+    background-size:200% 100%;animation:liveBar 1.6s linear infinite;}
+  @keyframes liveBar{to{background-position:200% 0;}}
+  .live-s span{display:block;font-size:9.5px;font-weight:800;color:#9A9284;line-height:1.25;}
+  .live-s.done span,.live-s.now span{color:var(--red-dark);}
+  .live-msg{margin-top:10px;font-size:12.5px;color:var(--gray);line-height:1.45;}
+  .live-msg b{color:var(--dark);}
   .driver-avatar{width:44px;height:44px;border-radius:50%;background:var(--dark);color:var(--yellow);display:flex;align-items:center;justify-content:center;font-weight:800;flex-shrink:0;}
   .driver-info b{font-size:14px;}
   .driver-info div{font-size:12px;color:var(--gray);}
@@ -426,6 +448,8 @@
     .hero-title{font-size:52px;}
   }
 </style>
+<script src="https://www.gstatic.com/firebasejs/12.15.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/12.15.0/firebase-database-compat.js"></script>
 </head>
 <body>
 
@@ -687,6 +711,11 @@
           <div id="driverMeta">Sobald ein Fahrer bestätigt, bekommst du Name und genaue Zeit per WhatsApp.</div>
         </div>
       </div>
+      <div class="live-box" id="liveBox">
+        <div class="live-head"><span class="live-dot"></span><b>Live-Status</b></div>
+        <div class="live-steps" id="liveSteps"></div>
+        <div class="live-msg" id="liveMsg"></div>
+      </div>
       <div class="wa-bubble" id="waBubble"></div>
       <a class="wa-btn" id="waLink" href="#" target="_blank" rel="noopener">📲 Bestellung per WhatsApp senden</a>
       <p class="demo-note">Die Zeit ist eine Schätzung aus echter Straßenroute und Küchenzeit. Verbindlich wird sie, sobald der Fahrer per WhatsApp bestätigt (0176 2066 0723).</p>
@@ -735,6 +764,7 @@
       <div class="acc-row"><div class="acc-icon">✉️</div><span>hallo@bestellux.de</span></div>
       <div class="acc-row"><div class="acc-icon">📍</div><span>Liefergebiet: Langwedel, Etelsen, Verden</span></div>
       <div class="acc-row"><div class="acc-icon">📄</div><span>Impressum &amp; Datenschutz</span></div>
+      <div class="acc-row"><div class="acc-icon">🛵</div><a href="fahrer.html">Fahrer-App (nur für Kuriere)</a></div>
     </div>
   </div>
 </div>
@@ -968,6 +998,118 @@ const REST_PREP = {
 const DEFAULT_PREP = [12, 20];
 
 const WHATSAPP_NUMBER = '4917620660723';
+
+/* ============ Live-Bruecke zur Fahrer-App (fahrer.html) ============
+   Die Bestellung geht in die Firebase Realtime Database (Belgien,
+   europe-west1). Die Fahrer-App liest dieselbe Datenbank – dadurch
+   sieht der Fahrer die Bestellung auf seinem eigenen Handy.
+   Fällt Firebase aus (kein Netz, CDN blockiert), schaltet die Seite
+   automatisch auf localStorage zurück und funktioniert weiter. */
+const BX_ORDERS = 'bx_orders';
+
+const FB_CONFIG = {
+  apiKey: "AIzaSyBsCEXpAKJwYI3Zg_8XHUE8CeIyjo7zX2c",
+  authDomain: "bestellux.firebaseapp.com",
+  databaseURL: "https://bestellux-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "bestellux",
+  storageBucket: "bestellux.firebasestorage.app",
+  messagingSenderId: "19751728202",
+  appId: "1:19751728202:web:a7daa8f4d57b01730ce2b3"
+};
+var FB_DB = null, FB_OK = false;
+try{
+  if(window.firebase && firebase.initializeApp){
+    if(!firebase.apps || !firebase.apps.length) firebase.initializeApp(FB_CONFIG);
+    FB_DB = firebase.database();
+    FB_OK = true;
+  }
+}catch(e){ FB_DB = null; FB_OK = false; }
+
+function bxLoad(){ try{ return JSON.parse(localStorage.getItem(BX_ORDERS)||'[]'); }catch(e){ return []; } }
+function bxSave(a){ try{ localStorage.setItem(BX_ORDERS, JSON.stringify(a.slice(0,80))); }catch(e){} }
+/* Die Kunden-App schreibt nur ihre EIGENE neue Bestellung – nie alte mit. */
+function bxPush(o){
+  const a = bxLoad(); a.unshift(o); bxSave(a);
+  if(FB_OK){ try{ FB_DB.ref('orders/'+o.id).set(o); }catch(e){} }
+}
+var LIVE_O = null;          /* aktueller Stand der eigenen Bestellung aus Firebase */
+function bxGet(id){
+  if(LIVE_O && LIVE_O.id===id) return LIVE_O;
+  return bxLoad().find(o=>o.id===id)||null;
+}
+
+const LIVE_STEPS = [
+  {k:'neu',          t:'Bestellt'},
+  {k:'angenommen',   t:'Fahrer da'},
+  {k:'am_restaurant',t:'Am Lokal'},
+  {k:'abgeholt',     t:'Abgeholt'},
+  {k:'unterwegs',    t:'Unterwegs'},
+  {k:'geliefert',    t:'Geliefert'}
+];
+let liveId = null, liveTimer = null, liveLast = '';
+
+var liveRef = null;
+function liveWatch(id){
+  liveId = id; liveLast = ''; LIVE_O = null;
+  if(liveTimer) clearInterval(liveTimer);
+  if(liveRef){ try{ liveRef.off(); }catch(e){} liveRef = null; }
+  /* Firebase: nur die EIGENE Bestellung abonnieren – nicht alle. */
+  if(FB_OK){
+    try{
+      liveRef = FB_DB.ref('orders/'+id);
+      liveRef.on('value', function(snap){
+        var v = snap.val();
+        if(v){ LIVE_O = v; liveRender(); }
+      });
+    }catch(e){ liveRef = null; }
+  }
+  liveRender();
+  liveTimer = setInterval(liveRender, 2000);
+}
+function liveRender(){
+  const box = document.getElementById('liveBox');
+  if(!box || !liveId) return;
+  const o = bxGet(liveId);
+  if(!o){ box.classList.remove('on'); return; }
+  const key = o.status + '|' + (o.driver?o.driver.name:'');
+  if(key === liveLast) return;
+  liveLast = key;
+  box.classList.add('on');
+
+  let i = 0;
+  for(let k=0;k<LIVE_STEPS.length;k++) if(LIVE_STEPS[k].k===o.status) i=k;
+  document.getElementById('liveSteps').innerHTML = LIVE_STEPS.map(function(s,k){
+    return '<div class="live-s '+(k<i?'done':(k===i?'now':''))+'"><i></i><span>'+s.t+'</span></div>';
+  }).join('');
+
+  const d = o.driver;
+  const msgEl = document.getElementById('liveMsg');
+  const av  = document.getElementById('driverInitial');
+  const nm  = document.getElementById('driverName');
+  const mt  = document.getElementById('driverMeta');
+  const restName = (o.stops && o.stops[0]) ? o.stops[0].name : '';
+
+  if(!d){
+    if(msgEl) msgEl.innerHTML = 'Wir suchen gerade einen Fahrer in deiner Nähe.';
+    return;
+  }
+  const veh = d.veh==='Auto' ? '🚗 Auto' : (d.veh==='Roller' ? '🛵 Roller' : '🚲 E-Bike');
+  if(av) av.textContent = d.ini || '🛵';
+  if(nm) nm.textContent = d.name;
+  if(mt) mt.textContent = restName
+       ? (veh + ' · aus ' + (d.town||'-') + ' · ' + (d.nearKm!=null?d.nearKm.toFixed(1).replace('.',','):'?') + ' km bis ' + restName)
+       : (veh + ' · aus ' + (d.town||'-'));
+
+  const txt = {
+    'angenommen'   : '<b>'+d.name+'</b> hat deine Bestellung angenommen und fährt jetzt zu '+(restName||'dem Restaurant')+'.',
+    'am_restaurant': '<b>'+d.name+'</b> ist am '+(restName||'Restaurant')+' und wartet auf dein Essen.',
+    'abgeholt'     : '<b>'+d.name+'</b> hat dein Essen abgeholt.',
+    'unterwegs'    : '<b>'+d.name+'</b> ist unterwegs zu dir. Bitte halte dein Telefon bereit.',
+    'geliefert'    : '✅ Geliefert von <b>'+d.name+'</b>. Guten Appetit!'
+  }[o.status] || 'Deine Bestellung wurde aufgenommen.';
+  if(msgEl) msgEl.innerHTML = txt;
+}
+window.addEventListener('storage', function(e){ if(e.key===BX_ORDERS) liveRender(); });
 const EXTRA_REST_FEE = 1;
 
 /* ============ State ============
@@ -2058,6 +2200,31 @@ function finalizePlaceOrder(){
            + (destCoords ? '🗺️ *Route öffnen* (GPS genau):\n' : '🗺️ *Route öffnen* (manuell eingegeben):\n')
            + mapsUrl;
 
+  /* --- Bestellung an die Fahrer-App uebergeben (Firebase Realtime DB) --- */
+  const bxId = 'BX-' + String(Date.now()).slice(-9);
+  const bxStops = ids.map(function(id){
+    const r = RESTAURANTS.find(function(x){ return x.id===id; });
+    const its = Object.keys(cart.items[id]).map(function(key){
+      const it = cart.items[id][key];
+      return { qty:it.qty, name:it.name, price:it.price, note:it.note||'' };
+    });
+    return { id:r.id, name:r.name, initials:r.initials, color:r.color, town:r.town,
+             address:(REST_ADDRESS[r.id] || (r.name+', '+r.town)), items:its };
+  });
+  try{
+    bxPush({
+      id:bxId, at:orderAt,
+      town:destTown, street:addr.street||'', plz:addr.plz||'', extra:addr.extra||'', phone:addr.phone||'',
+      coords:destCoords||null, mapsUrl:mapsUrl,
+      pay:payMethod, cash:(cart.cash!==undefined?cart.cash:null),
+      subtotal:subtotal, fee:(fee||0), tip:tip, total:total,
+      vehicle:vehicle, km:farthest, etaLo:est.lo, etaHi:est.hi,
+      stops:bxStops, status:'neu', driver:null,
+      hist:[{s:'neu', t:orderAt}]
+    });
+    liveWatch(bxId);
+  }catch(e){}
+
   /* --- Zeitblock: ehrlich als Spanne, mit der Quelle der Zahl dahinter --- */
   function buildMsg(){
     const routeLine = est.real
@@ -2572,7 +2739,27 @@ en: {
   "Bestellux – Essen schnell geliefert in Langwedel, Etelsen & Verden": "Bestellux – food delivered fast in Langwedel, Etelsen & Verden",
   "🛵 <b>Bestellux</b> – auch in <b>Etelsen &amp; Langwedel</b>": "🛵 <b>Bestellux</b> – also in <b>Etelsen &amp; Langwedel</b>",
   "🛍️ <b>Bestellux</b>: mehrere Restaurants, <b>eine Lieferung</b>": "🛍️ <b>Bestellux</b>: several restaurants, <b>one delivery</b>",
-  "🎁 5 Lieferungen bei <b>Bestellux</b> – die <b>6. ohne Liefergebühr</b>": "🎁 5 deliveries with <b>Bestellux</b> – the <b>6th with no delivery fee</b>"
+  "🎁 5 Lieferungen bei <b>Bestellux</b> – die <b>6. ohne Liefergebühr</b>": "🎁 5 deliveries with <b>Bestellux</b> – the <b>6th with no delivery fee</b>",
+  "Live-Status": "Live status",
+  "Bestellt": "Ordered",
+  "Fahrer da": "Driver found",
+  "Am Lokal": "At restaurant",
+  "Abgeholt": "Picked up",
+  "Unterwegs": "On the way",
+  "Geliefert": "Delivered",
+  "Wir suchen gerade einen Fahrer in deiner Nähe.": "We are looking for a driver near you.",
+  "Deine Bestellung wurde aufgenommen.": "Your order has been received.",
+  "<b>{0}</b> hat deine Bestellung angenommen und fährt jetzt zu {1}.": "<b>{0}</b> accepted your order and is on the way to {1}.",
+  "<b>{0}</b> ist am {1} und wartet auf dein Essen.": "<b>{0}</b> is at {1} waiting for your food.",
+  "<b>{0}</b> hat dein Essen abgeholt.": "<b>{0}</b> has picked up your food.",
+  "<b>{0}</b> ist unterwegs zu dir. Bitte halte dein Telefon bereit.": "<b>{0}</b> is on the way to you. Please keep your phone nearby.",
+  "✅ Geliefert von <b>{0}</b>. Guten Appetit!": "✅ Delivered by <b>{0}</b>. Enjoy your meal!",
+  "{0} · aus {1} · {2} km bis {3}": "{0} · from {1} · {2} km to {3}",
+  "{0} · aus {1}": "{0} · from {1}",
+  "🚲 E-Bike": "🚲 E-bike",
+  "🛵 Roller": "🛵 Scooter",
+  "🚗 Auto": "🚗 Car",
+  "Fahrer-App (nur für Kuriere)": "Driver app (couriers only)"
 },
 ar: {
   "📲 Bestellux zum Startbildschirm hinzufügen für schnelleren Zugriff": "📲 أضف Bestellux إلى الشاشة الرئيسية للوصول السريع",
@@ -2922,7 +3109,27 @@ ar: {
   "Bestellux – Essen schnell geliefert in Langwedel, Etelsen & Verden": "Bestellux – طعام يصلك بسرعة في Langwedel و Etelsen و Verden",
   "🛵 <b>Bestellux</b> – auch in <b>Etelsen &amp; Langwedel</b>": "🛵 <b>Bestellux</b> – أيضاً في <b>Etelsen و Langwedel</b>",
   "🛍️ <b>Bestellux</b>: mehrere Restaurants, <b>eine Lieferung</b>": "🛍️ <b>Bestellux</b>: عدة مطاعم، <b>توصيلة واحدة</b>",
-  "🎁 5 Lieferungen bei <b>Bestellux</b> – die <b>6. ohne Liefergebühr</b>": "🎁 5 توصيلات مع <b>Bestellux</b> – والـ<b>6 بدون رسوم توصيل</b>"
+  "🎁 5 Lieferungen bei <b>Bestellux</b> – die <b>6. ohne Liefergebühr</b>": "🎁 5 توصيلات مع <b>Bestellux</b> – والـ<b>6 بدون رسوم توصيل</b>",
+  "Live-Status": "الحالة المباشرة",
+  "Bestellt": "تم الطلب",
+  "Fahrer da": "تم تعيين سائق",
+  "Am Lokal": "عند المطعم",
+  "Abgeholt": "تم الاستلام",
+  "Unterwegs": "في الطريق",
+  "Geliefert": "تم التوصيل",
+  "Wir suchen gerade einen Fahrer in deiner Nähe.": "نبحث الآن عن سائق قريب منك.",
+  "Deine Bestellung wurde aufgenommen.": "تم استلام طلبك.",
+  "<b>{0}</b> hat deine Bestellung angenommen und fährt jetzt zu {1}.": "<b>{0}</b> قبل طلبك وهو الآن في طريقه إلى {1}.",
+  "<b>{0}</b> ist am {1} und wartet auf dein Essen.": "<b>{0}</b> في {1} وينتظر طعامك.",
+  "<b>{0}</b> hat dein Essen abgeholt.": "<b>{0}</b> استلم طعامك.",
+  "<b>{0}</b> ist unterwegs zu dir. Bitte halte dein Telefon bereit.": "<b>{0}</b> في طريقه إليك. يرجى إبقاء هاتفك قريباً.",
+  "✅ Geliefert von <b>{0}</b>. Guten Appetit!": "✅ تم التوصيل بواسطة <b>{0}</b>. بالهناء والشفاء!",
+  "{0} · aus {1} · {2} km bis {3}": "{0} · من {1} · {2} كم إلى {3}",
+  "{0} · aus {1}": "{0} · من {1}",
+  "🚲 E-Bike": "🚲 دراجة كهربائية",
+  "🛵 Roller": "🛵 سكوتر",
+  "🚗 Auto": "🚗 سيارة",
+  "Fahrer-App (nur für Kuriere)": "تطبيق السائق (للمندوبين فقط)"
 }
 };
 /* ===== I18N DICT END ===== */
