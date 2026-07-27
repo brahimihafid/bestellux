@@ -237,6 +237,34 @@ input,select{font-family:inherit;}
 .hint{font-size:11.5px;color:var(--tx3);font-weight:700;line-height:1.6;
   margin:14px 2px 0;text-align:center;}
 
+/* ============ MEIN VERDIENST ==========================================
+   Die eine Zahl, die Bestellux wirklich interessiert: was bleibt bei mir.
+   Ganz oben, groß, und darunter aufgeschlüsselt, woher sie kommt –
+   Provision von den Lokalen plus die Liefergebühren.
+   Diese Seite ist die EINZIGE, die das zeigt. Die Lokale sehen nur
+   ihren eigenen Umsatz, nie meine Provision.
+   ==================================================================== */
+.vd{background:linear-gradient(150deg,#2A2415,#1D1A11);
+  border:1px solid rgba(255,184,0,.34);border-radius:20px;
+  padding:18px 17px 15px;margin-bottom:12px;}
+.vd-lb{font-size:11.5px;font-weight:900;color:var(--yellow);
+  text-transform:uppercase;letter-spacing:.9px;}
+.vd-big{font-size:40px;font-weight:900;color:var(--yellow);
+  letter-spacing:-1.8px;line-height:1.1;margin:5px 0 3px;}
+.vd-sub{font-size:12.5px;color:var(--tx2);font-weight:700;}
+.vd-g{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:14px;}
+.vd-c{background:rgba(0,0,0,.26);border:1px solid rgba(255,255,255,.06);
+  border-radius:13px;padding:11px 12px;}
+.vd-c b{display:block;font-size:19px;font-weight:900;letter-spacing:-.5px;}
+.vd-c span{display:block;font-size:10.5px;color:var(--tx3);font-weight:900;
+  text-transform:uppercase;letter-spacing:.5px;margin-top:3px;}
+.vd-c.p b{color:var(--yellow);}
+.vd-c.f b{color:var(--green);}
+.vd-pro{display:flex;align-items:center;gap:9px;margin-top:10px;
+  padding:10px 12px;border-radius:12px;background:rgba(0,0,0,.26);
+  font-size:12.5px;font-weight:800;color:var(--tx2);}
+.vd-pro b{margin-left:auto;font-size:16px;font-weight:900;color:var(--tx);}
+
 /* ============ TABS ============ */
 .tabs{
   position:fixed;left:0;right:0;bottom:0;z-index:70;display:flex;
@@ -339,6 +367,18 @@ input,select{font-family:inherit;}
         <button data-r="999" onclick="setRange(999)">Alles</button>
       </div>
 
+      <!-- Das Erste, was ich hier sehe: was habe ich verdient. -->
+      <div class="vd">
+        <div class="vd-lb">💰 Mein Verdienst</div>
+        <div class="vd-big" id="vdBig">0 €</div>
+        <div class="vd-sub" id="vdSub">noch keine gelieferte Bestellung</div>
+        <div class="vd-g">
+          <div class="vd-c p"><b id="vdProv">0 €</b><span>Provision von den Lokalen</span></div>
+          <div class="vd-c f"><b id="vdFee">0 €</b><span>Liefergebühren</span></div>
+        </div>
+        <div class="vd-pro">Ø pro Bestellung<b id="vdAvg">0 €</b></div>
+      </div>
+
       <div class="kpis">
         <div class="kpi y"><b id="pGes">0 €</b><span>meine Provision</span></div>
         <div class="kpi"><b id="pWaren">0 €</b><span>Warenkorb gesamt</span></div>
@@ -349,8 +389,9 @@ input,select{font-family:inherit;}
       <div id="restList" class="rl"></div>
 
       <p class="hint">
-        Provision = Prozentsatz × Warenkorb der gelieferten Bestellungen.<br>
-        Die Liefergebühr ist nicht enthalten – die gehört komplett Bestellux.<br>
+        Beispiel: Essen für 20,00 € + 4,00 € Liefergebühr.<br>
+        Bei 15 % sind das 3,00 € Provision + 4,00 € Liefergebühr = <b>7,00 € für mich</b>.<br>
+        Gezählt wird nur, was geliefert wurde. Abgelehnte Bestellungen bringen nichts.<br>
         Der Prozentsatz gilt sofort für die Anzeige und wird für alle Geräte gespeichert.
       </p>
     </div>
@@ -737,6 +778,35 @@ function renderRest(){
 
   var gProv = 0, gWaren = 0, gGel = 0, gAbg = 0, gAng = 0;
   rows.forEach(function(r){ gProv+=r.prov; gWaren+=r.waren; gGel+=r.gel; gAbg+=r.abg; gAng+=r.ang; });
+
+  /* ------------------------------------------------------------------
+     MEIN VERDIENST
+     Zwei Töpfe, und beide gehören Bestellux:
+       1. Provision – der Prozentsatz vom Warenkorb jedes Lokals.
+       2. Liefergebühr – die zahlt der Kunde fürs Bringen, davon geht
+          nichts an das Lokal.
+     Gezählt wird immer nur, was auch wirklich GELIEFERT wurde.
+     Eine Bestellung mit zwei Lokalen hat trotzdem nur EINE
+     Liefergebühr – darum je Bestellung zählen, nicht je Lokal.
+     ------------------------------------------------------------------ */
+  var vonZ = (RANGE >= 999) ? 0 : tagStart(RANGE - 1);
+  var gFee = 0, gBest = 0;
+  ORDERS.forEach(function(o){
+    if((o.at||0) < vonZ) return;
+    if(o.status !== 'geliefert') return;
+    gBest++;
+    gFee += (Number(o.fee) || 0);
+  });
+  var gesamt = gProv + gFee;
+
+  $('vdBig').textContent  = eur(gesamt);
+  $('vdProv').textContent = eur(gProv);
+  $('vdFee').textContent  = eur(gFee);
+  $('vdAvg').textContent  = eur(gBest ? gesamt / gBest : 0);
+  $('vdSub').textContent  = gBest
+    ? ('aus ' + gBest + (gBest === 1 ? ' gelieferten Bestellung' : ' gelieferten Bestellungen')
+       + ' · ' + (RANGE >= 999 ? 'seit dem Start' : 'letzte ' + RANGE + ' Tage'))
+    : 'noch keine gelieferte Bestellung';
 
   $('pGes').textContent   = eur(gProv);
   $('pWaren').textContent = eur(gWaren);
