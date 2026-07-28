@@ -96,8 +96,18 @@ input,select{font-family:inherit;}
   backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
   border-bottom:1px solid var(--line);
   padding:calc(10px + env(safe-area-inset-top)) 14px 10px;
-  display:flex;align-items:center;gap:11px;
+  display:block;
 }
+/* Bestellux-Zeile über dem Namen des Fahrers: Logo und Plattformname oben,
+   der Fahrer selbst darunter. */
+.top-row{display:flex;align-items:center;gap:11px;}
+.bxbar{display:flex;align-items:center;gap:8px;margin-bottom:10px;}
+.bxbar-lg{width:26px;height:26px;border-radius:9px;flex:0 0 auto;display:block;
+  box-shadow:0 2px 8px rgba(0,0,0,.45);}
+.bxbar-tx{font-size:14.5px;font-weight:900;letter-spacing:-0.3px;color:var(--gold);}
+.bxbar-tx b{color:var(--yellow);font-weight:900;}
+.bxbar-tag{font-size:10px;font-weight:900;letter-spacing:.9px;text-transform:uppercase;
+  color:var(--tx3);border:1px solid var(--line);border-radius:999px;padding:3px 9px;}
 .av{
   width:42px;height:42px;border-radius:14px;flex-shrink:0;
   background:linear-gradient(140deg,var(--red),var(--red-dark));
@@ -390,7 +400,9 @@ body.online .sw::after{transform:translateX(28px);}
 
 <!-- ========== LOGIN ========== -->
 <div id="login">
-  <div class="lg-logo">🛵</div>
+  <div class="lg-logo"><img src="icon-192.png" alt="Bestellux"
+       style="width:72px;height:72px;border-radius:22px;display:block;
+              box-shadow:0 8px 26px rgba(0,0,0,.55)"></div>
   <h1 class="lg-title"><b>Bestellux</b> Fahrer</h1>
 
   <!-- ===== Stufe 1: Anmelden ===== -->
@@ -462,12 +474,19 @@ body.online .sw::after{transform:translateX(28px);}
 <div id="app" class="hide">
 
   <div class="top">
-    <div class="av" id="tAv">–</div>
-    <div class="top-tx">
-      <b id="tName">Fahrer</b>
-      <span id="tState">Offline</span>
+    <div class="bxbar">
+      <img class="bxbar-lg" src="icon-192.png" alt="Bestellux">
+      <div class="bxbar-tx">Bestell<b>ux</b></div>
+      <div class="bxbar-tag">Fahrer</div>
     </div>
-    <button class="sw" id="tSw" onclick="toggleShift()" aria-label="Schicht"></button>
+    <div class="top-row">
+      <div class="av" id="tAv">–</div>
+      <div class="top-tx">
+        <b id="tName">Fahrer</b>
+        <span id="tState">Offline</span>
+      </div>
+      <button class="sw" id="tSw" onclick="toggleShift()" aria-label="Schicht"></button>
+    </div>
   </div>
 
   <!-- TAB: Aufträge -->
@@ -797,7 +816,7 @@ function toast(msg){
 /* Steht unten im Profil. Damit sieht man auf dem Handy sofort, ob wirklich
    die neue Fassung läuft – oder ob das Telefon noch eine alte Datei zeigt.
    Bei jedem Hochladen mit der Zahl in sw.js gleichziehen. */
-const APP_VERSION = 'v18 · Fahrer bekommt die Hälfte der Liefergebühr';
+const APP_VERSION = 'v19 · Logo, Bewerbungen, Tag-für-Tag';
 
 const FAHRER_ANTEIL = 0.50;                 /* die Hälfte der Liefergebühr */
 function fahrerLohn(o){

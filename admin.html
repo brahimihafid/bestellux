@@ -76,10 +76,21 @@ input,select{font-family:inherit;}
   backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
   border-bottom:1px solid var(--line);
   padding:calc(10px + env(safe-area-inset-top)) 14px 10px;
-  display:flex;align-items:center;gap:11px;
+  display:block;
 }
+/* Bestellux-Zeile über allem – dieselbe Zeile wie in der Fahrer- und der
+   Restaurant-App, damit die drei Apps als eine Familie zu erkennen sind. */
+.top-row{display:flex;align-items:center;gap:11px;}
+.bxbar{display:flex;align-items:center;gap:8px;margin-bottom:10px;}
+.bxbar-lg{width:26px;height:26px;border-radius:9px;flex:0 0 auto;display:block;
+  box-shadow:0 2px 8px rgba(0,0,0,.45);}
+.bxbar-tx{font-size:14.5px;font-weight:900;letter-spacing:-0.3px;color:var(--gold);}
+.bxbar-tx b{color:var(--yellow);font-weight:900;}
+.bxbar-tag{font-size:10px;font-weight:900;letter-spacing:.9px;text-transform:uppercase;
+  color:var(--tx3);border:1px solid var(--line);border-radius:999px;padding:3px 9px;}
+.top .mark img{width:100%;height:100%;display:block;object-fit:cover;}
 .top .mark{
-  width:40px;height:40px;border-radius:13px;flex-shrink:0;
+  width:40px;height:40px;border-radius:13px;flex-shrink:0;overflow:hidden;
   background:linear-gradient(140deg,var(--yellow),var(--yellow-dark));
   display:flex;align-items:center;justify-content:center;font-size:19px;
 }
@@ -215,6 +226,47 @@ input,select{font-family:inherit;}
   text-transform:uppercase;letter-spacing:.5px;}
 .rc-m b{margin-left:auto;font-size:18px;font-weight:900;letter-spacing:-.4px;}
 
+/* Was ein einzelnes Lokal mir bringt – Provision und Lieferung getrennt,
+   darunter die Summe aus beidem. */
+.rc-sum{margin-top:10px;padding:11px 12px;border-radius:13px;background:var(--bg2);
+  border:1px solid rgba(255,255,255,.055);}
+.rs-r{display:flex;align-items:center;gap:10px;padding:4px 0;}
+.rs-r i{font-style:normal;font-size:12.5px;color:var(--tx2);font-weight:800;}
+.rs-r b{margin-left:auto;font-size:14.5px;font-weight:900;}
+.rs-r.tot{margin-top:5px;padding-top:9px;border-top:1px dashed rgba(255,255,255,.13);}
+.rs-r.tot i{color:var(--tx);}
+.rs-r.tot b{font-size:18px;color:var(--yellow);letter-spacing:-.4px;}
+
+/* Tag für Tag */
+.dl{display:flex;flex-direction:column;gap:9px;}
+.dcard{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:12px 13px;}
+.dc-h{display:flex;align-items:baseline;gap:9px;}
+.dc-h b{font-size:14.5px;font-weight:900;}
+.dc-h span{font-size:11.5px;color:var(--tx3);font-weight:700;}
+.dc-h u{margin-left:auto;text-decoration:none;font-size:17px;font-weight:900;
+  color:var(--yellow);letter-spacing:-.4px;}
+.dc-g{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px;}
+.dc-b{border-radius:12px;padding:9px 11px;background:var(--bg2);
+  border:1px solid rgba(255,255,255,.055);}
+.dc-b b{display:block;font-size:15px;font-weight:900;letter-spacing:-.3px;}
+.dc-b span{display:block;font-size:11px;color:var(--tx3);font-weight:800;margin-top:1px;}
+.dc-b.p b{color:var(--yellow);}
+.dc-b.f b{color:var(--blue);}
+.dc-none{background:var(--card);border:1px solid var(--line);border-radius:16px;
+  padding:18px 14px;text-align:center;color:var(--tx3);font-size:13px;font-weight:700;}
+
+/* Bewerbungen */
+.dcard.erl{opacity:.55;}
+.bw-t{margin:9px 0 0;font-size:13px;color:var(--tx2);font-weight:600;line-height:1.55;
+  background:var(--bg2);border-radius:11px;padding:9px 11px;}
+.bw-a{display:flex;flex-wrap:wrap;gap:7px;margin-top:10px;}
+.bw-b{flex:1 1 auto;text-align:center;border-radius:11px;padding:10px 9px;
+  font-size:12.5px;font-weight:900;border:1px solid var(--line);background:var(--bg2);
+  color:var(--tx);text-decoration:none;}
+.bw-b.tel{color:var(--yellow);}
+.bw-b.wa{color:#25D366;border-color:rgba(37,211,102,.35);}
+.bw-b.ok{color:var(--tx2);}
+
 .prov{display:flex;align-items:center;gap:10px;padding:12px;border-radius:14px;
   background:linear-gradient(140deg,rgba(255,184,0,.14),rgba(255,184,0,.04));
   border:1.5px solid rgba(255,184,0,.34);}
@@ -298,7 +350,9 @@ input,select{font-family:inherit;}
 
 <!-- ================= LOGIN ================= -->
 <div id="login">
-  <div class="lg-logo">🛡️</div>
+  <div class="lg-logo"><img src="icon-192.png" alt="Bestellux"
+       style="width:72px;height:72px;border-radius:22px;display:block;
+              box-shadow:0 8px 26px rgba(0,0,0,.55)"></div>
   <h1 class="lg-title">Bestellux <b>Zentrale</b></h1>
   <p class="lg-sub">Nur für die Betriebsleitung</p>
 
@@ -321,12 +375,19 @@ input,select{font-family:inherit;}
 <div id="app" class="hide">
 
   <div class="top">
-    <div class="mark">🛡️</div>
-    <div class="top-tx">
-      <b>Zentrale</b>
-      <span id="topMail">—</span>
+    <div class="bxbar">
+      <img class="bxbar-lg" src="icon-192.png" alt="Bestellux">
+      <div class="bxbar-tx">Bestell<b>ux</b></div>
+      <div class="bxbar-tag">Zentrale</div>
     </div>
-    <button class="top-out" onclick="logout()">Abmelden</button>
+    <div class="top-row">
+      <div class="mark"><img src="icon-192.png" alt=""></div>
+      <div class="top-tx">
+        <b>Zentrale</b>
+        <span id="topMail">—</span>
+      </div>
+      <button class="top-out" onclick="logout()">Abmelden</button>
+    </div>
   </div>
 
   <div class="wrap">
@@ -393,6 +454,10 @@ input,select{font-family:inherit;}
 
       <div id="restList" class="rl"></div>
 
+      <!-- Tag für Tag: an welchem Tag kam wie viel herein? -->
+      <div class="sec-h"><h2>Tag für Tag</h2><em id="tagNote">—</em></div>
+      <div id="tagList" class="dl"></div>
+
       <p class="hint">
         Beispiel: Essen für 20,00 € + 4,00 € Liefergebühr.<br>
         Bei 15 % sind das 3,00 € Provision + 4,00 € Liefergebühr − 2,00 € Fahreranteil
@@ -402,6 +467,17 @@ input,select{font-family:inherit;}
         Sein Trinkgeld gehört zu 100 % ihm und steht hier gar nicht drin.<br>
         Gezählt wird nur, was geliefert wurde. Abgelehnte Bestellungen bringen nichts.<br>
         Der Prozentsatz gilt sofort für die Anzeige und wird für alle Geräte gespeichert.
+      </p>
+    </div>
+
+    <!-- TAB: Bewerbungen -->
+    <div id="tab-Bew" class="hide">
+      <div class="sec-h"><h2>Bewerbungen</h2><em id="bewNote">—</em></div>
+      <div id="bewList" class="dl"></div>
+      <p class="hint">
+        Wer sich auf der Kundenseite unter „Bei uns arbeiten“ einträgt, landet hier.<br>
+        Ein Tipp auf die Nummer ruft an, ein Tipp auf WhatsApp öffnet den Chat.<br>
+        „Erledigt“ schiebt die Bewerbung nach unten – gelöscht wird nichts.
       </p>
     </div>
 
@@ -425,6 +501,7 @@ input,select{font-family:inherit;}
     <button data-tab="Fahrer" onclick="go('Fahrer')"><em>🧑‍🍳</em>Fahrer<span id="bdgWait" class="bdg hide">0</span></button>
     <button data-tab="Orders" onclick="go('Orders')"><em>📦</em>Aufträge</button>
     <button data-tab="Rest"   onclick="go('Rest')"><em>🍽️</em>Lokale</button>
+    <button data-tab="Bew"    onclick="go('Bew')"><em>📨</em>Bewerbung<span id="bdgBew" class="bdg hide">0</span></button>
     <button data-tab="Stats"  onclick="go('Stats')"><em>📊</em>Statistik</button>
   </div>
 </div>
@@ -574,7 +651,7 @@ function logout(){
 var TAB = 'Live';
 function go(t){
   TAB = t;
-  ['Live','Fahrer','Orders','Rest','Stats'].forEach(function(x){
+  ['Live','Fahrer','Orders','Rest','Bew','Stats'].forEach(function(x){
     var el = $('tab-'+x); if(el) el.classList.toggle('hide', x !== t);
   });
   var bs = document.querySelectorAll('.tabs button');
@@ -760,15 +837,40 @@ function warenkorb(s){
   return t;
 }
 /* Zahlen für EIN Lokal im gewählten Zeitraum. */
+/* =====================================================================
+   ZWEI TÖPFE JE BESTELLUNG
+   ---------------------------------------------------------------------
+   ordProv(o) – was mir die Lokale dieser Bestellung an Provision bringen.
+   bxFee(o)   – was mir von der Liefergebühr bleibt, also die Gebühr
+                minus dem, was der Fahrer davon bekommt.
+   Wichtig: eine Bestellung hat nur EINE Liefergebühr, auch wenn zwei
+   Lokale darin stecken. Wenn ich die Gebühr einem einzelnen Lokal
+   zuordnen will, muss ich sie darum durch die Zahl der Lokale teilen –
+   sonst zähle ich dasselbe Geld zweimal.
+   ===================================================================== */
+function ordProv(o){
+  var t = 0;
+  (o.stops||[]).forEach(function(s){
+    if(s.ok === 1) t += warenkorb(s) * rateOf(s.id) / 100;
+  });
+  return t;
+}
+function bxFee(o){ return (Number(o.fee)||0) - fahrerLohn(o); }
+
 function restStats(id){
   var von = (RANGE >= 999) ? 0 : tagStart(RANGE - 1);
-  var r = { ang:0, gel:0, abg:0, offen:0, waren:0 };
+  var r = { ang:0, gel:0, abg:0, offen:0, waren:0, fee:0 };
   ORDERS.forEach(function(o){
     if((o.at||0) < von) return;
     var s = stopOf(o, id); if(!s) return;
     if(s.ok === 1){
       r.ang++;
-      if(o.status === 'geliefert'){ r.gel++; r.waren += warenkorb(s); }
+      if(o.status === 'geliefert'){
+        r.gel++; r.waren += warenkorb(s);
+        /* Anteil dieses Lokals an meinem Gewinn aus der Liefergebühr */
+        var n = (o.stops||[]).length || 1;
+        r.fee += bxFee(o) / n;
+      }
       else if(o.status !== 'abgelehnt'){ r.offen++; }
     }else if(s.ok === 0){
       r.abg++;                       /* dieses Lokal hat selbst abgelehnt */
@@ -776,7 +878,33 @@ function restStats(id){
   });
   r.satz = rateOf(id);
   r.prov = r.waren * r.satz / 100;
+  r.gesamt = r.prov + r.fee;         /* Provision + Lieferung = was mir dieses Lokal bringt */
   return r;
+}
+
+/* Tag für Tag: was ist an welchem Tag hereingekommen? */
+function tageListe(){
+  var von = (RANGE >= 999) ? 0 : tagStart(RANGE - 1);
+  var map = {};
+  ORDERS.forEach(function(o){
+    if(o.status !== 'geliefert') return;
+    if((o.at||0) < von) return;
+    var d = new Date(o.at||0); d.setHours(0,0,0,0);
+    var k = d.getTime();
+    if(!map[k]) map[k] = { t:k, n:0, prov:0, fee:0 };
+    map[k].n++;
+    map[k].prov += ordProv(o);
+    map[k].fee  += bxFee(o);
+  });
+  return Object.keys(map).map(function(k){ return map[k]; })
+              .sort(function(a,b){ return b.t - a.t; });
+}
+var WT = ['Sonntag','Montag','Dienstag','Mittwoch','Donnerstag','Freitag','Samstag'];
+function tagName(ms){
+  var d = new Date(ms), h = tagStart(0);
+  if(ms === h) return 'Heute';
+  if(ms === tagStart(1)) return 'Gestern';
+  return WT[d.getDay()] + ', ' + ('0'+d.getDate()).slice(-2) + '.' + ('0'+(d.getMonth()+1)).slice(-2) + '.';
 }
 function shopAuf(id){
   var s = SHOPSTATE[id];
@@ -803,7 +931,7 @@ function renderRest(){
     var st = restStats(s.id); st.shop = s; return st;
   });
   /* Das Lokal, das mir am meisten bringt, steht oben. */
-  rows.sort(function(a,b){ return b.prov - a.prov || b.waren - a.waren; });
+  rows.sort(function(a,b){ return b.gesamt - a.gesamt || b.waren - a.waren; });
 
   var gProv = 0, gWaren = 0, gGel = 0, gAbg = 0, gAng = 0;
   rows.forEach(function(r){ gProv+=r.prov; gWaren+=r.waren; gGel+=r.gel; gAbg+=r.abg; gAng+=r.ang; });
@@ -879,8 +1007,36 @@ function renderRest(){
       +     'onclick="this.select()"><span class="pc">%</span>'
       +   '<div class="amt"><b>'+eur(r.prov)+'</b><span>mein Anteil</span></div>'
       + '</div>'
+
+      /* Was mir DIESES Lokal unterm Strich bringt: die Provision und der
+         Teil der Liefergebühr, der auf seine Bestellungen entfällt. */
+      + '<div class="rc-sum">'
+      +   '<div class="rs-r"><i>Provision</i><b>'+eur(r.prov)+'</b></div>'
+      +   '<div class="rs-r"><i>Lieferung (mein Teil)</i><b>'+eur(r.fee)+'</b></div>'
+      +   '<div class="rs-r tot"><i>Bringt mir zusammen</i><b>'+eur(r.gesamt)+'</b></div>'
+      + '</div>'
       + '</div>';
   }).join('');
+
+  /* ---------- Tag für Tag ---------- */
+  var tage = tageListe();
+  var gT = 0; tage.forEach(function(d){ gT += d.prov + d.fee; });
+  $('tagNote').textContent = tage.length
+    ? tage.length + (tage.length===1 ? ' Tag' : ' Tage') + ' · zusammen ' + eur(gT)
+    : 'noch nichts geliefert';
+  $('tagList').innerHTML = tage.length
+    ? tage.map(function(d){
+        return '<div class="dcard">'
+          + '<div class="dc-h"><b>'+esc(tagName(d.t))+'</b>'
+          +   '<span>'+d.n+(d.n===1?' Lieferung':' Lieferungen')+'</span>'
+          +   '<u>'+eur(d.prov + d.fee)+'</u></div>'
+          + '<div class="dc-g">'
+          +   '<div class="dc-b p"><b>'+eur(d.prov)+'</b><span>Provision</span></div>'
+          +   '<div class="dc-b f"><b>'+eur(d.fee)+'</b><span>Lieferung</span></div>'
+          + '</div>'
+          + '</div>';
+      }).join('')
+    : '<div class="dc-none">Für diesen Zeitraum ist noch keine Bestellung ausgeliefert worden.</div>';
 }
 
 /* ============================================================
@@ -1016,8 +1172,64 @@ function render(){
     }).join('') : '<div class="empty">Noch keine Aufträge.</div>';
   }
 
+  /* Rote Zahl am Reiter: wie viele Bewerbungen habe ich noch nicht angefasst? */
+  var offen = BEWERB.filter(function(b){ return b.status !== 'erledigt'; }).length;
+  var bb = $('bdgBew');
+  if(bb){ bb.textContent = offen; bb.classList.toggle('hide', offen === 0); }
+
   if(TAB === 'Rest')  renderRest();
+  if(TAB === 'Bew')   renderBew();
   if(TAB === 'Stats') renderStats();
+}
+
+/* =====================================================================
+   BEWERBUNGEN
+   ---------------------------------------------------------------------
+   Kommen von der Kundenseite (Zweig "bewerbungen"). Hier steht nur, was
+   ich zum Anrufen brauche: Name, Nummer, Ort, Fahrzeug. Nichts wird
+   gelöscht – „Erledigt“ setzt nur eine Markierung, damit die Liste
+   übersichtlich bleibt.
+   ===================================================================== */
+var BEWERB = [];
+function bewSetzen(id, st){
+  BEWERB.forEach(function(b){ if(b.id === id) b.status = st; });
+  if(FB_OK){ try{ FB_DB.ref('bewerbungen/'+id+'/status').set(st); }catch(e){} }
+  toast(st === 'erledigt' ? 'Als erledigt markiert' : 'Wieder als offen markiert');
+  render();
+}
+function renderBew(){
+  var a = BEWERB.slice().sort(function(x,y){
+    var ex = x.status === 'erledigt' ? 1 : 0, ey = y.status === 'erledigt' ? 1 : 0;
+    if(ex !== ey) return ex - ey;                 /* Offene zuerst */
+    return (y.at||0) - (x.at||0);
+  });
+  var offen = a.filter(function(b){ return b.status !== 'erledigt'; }).length;
+  $('bewNote').textContent = a.length
+    ? a.length + (a.length===1?' Bewerbung':' Bewerbungen') + ' · ' + offen + ' offen'
+    : 'noch keine';
+
+  $('bewList').innerHTML = a.length ? a.map(function(b){
+    var tel = String(b.tel||'').replace(/\s/g,'');
+    var wa  = tel.replace(/\D/g,'').replace(/^0/, '49');
+    var erl = b.status === 'erledigt';
+    return '<div class="dcard'+(erl?' erl':'')+'">'
+      + '<div class="dc-h"><b>'+esc(b.name||'—')+'</b>'
+      +   '<span>'+esc(b.ort||'—')+' · '+esc(b.fzg||'—')+'</span>'
+      +   '<u>'+datum(b.at)+'</u></div>'
+      + (b.text ? '<p class="bw-t">'+esc(b.text)+'</p>' : '')
+      + '<div class="bw-a">'
+      +   '<a class="bw-b tel" href="tel:'+esc(tel)+'">📞 '+esc(b.tel||'')+'</a>'
+      +   '<a class="bw-b wa" href="https://wa.me/'+esc(wa)+'" target="_blank" rel="noopener">💬 WhatsApp</a>'
+      +   '<button class="bw-b ok" onclick="bewSetzen(\''+esc(b.id)+'\',\''+(erl?'neu':'erledigt')+'\')">'
+      +     (erl ? '↩︎ Wieder offen' : '✓ Erledigt') + '</button>'
+      + '</div>'
+      + '</div>';
+  }).join('') : '<div class="dc-none">Noch hat sich niemand beworben.</div>';
+}
+function datum(ms){
+  if(!ms) return '—';
+  var d = new Date(ms);
+  return ('0'+d.getDate()).slice(-2)+'.'+('0'+(d.getMonth()+1)).slice(-2)+'. · '+uhr(ms)+' Uhr';
 }
 
 /* ============================================================
@@ -1056,6 +1268,14 @@ function start(){
     try{ localStorage.setItem(BX_RATES, JSON.stringify(RATES)); }catch(e){}
     render();
   }, function(){ /* kein Zugriff -> es gilt der lokale Stand */ });
+
+  /* Bewerbungen von der Kundenseite */
+  FB_DB.ref('bewerbungen').on('value', function(snap){
+    var v = snap.val() || {}, a = [];
+    for(var k in v){ if(v[k] && v[k].id) a.push(v[k]); }
+    BEWERB = a;
+    render();
+  }, function(){ /* kein Zugriff -> Liste bleibt leer */ });
 
   /* Nur zur Anzeige: welches Lokal hat gerade offen? */
   FB_DB.ref('shops').on('value', function(snap){

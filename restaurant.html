@@ -89,6 +89,19 @@ header{
   backdrop-filter:blur(14px);border-bottom:1px solid var(--line);
   padding:calc(10px + env(safe-area-inset-top)) 15px 11px;
 }
+/* Bestellux-Zeile ganz oben: Logo und Name der Plattform stehen über dem
+   Namen des Lokals. So sieht jeder auf einen Blick, in welcher App er ist –
+   und das Lokal behält trotzdem sein eigenes Schild darunter. */
+.bxbar{display:flex;align-items:center;gap:8px;margin-bottom:11px;}
+.bxbar-lg{width:27px;height:27px;border-radius:9px;flex:0 0 auto;display:block;
+  box-shadow:0 2px 8px rgba(0,0,0,.45);}
+.bxbar-tx{font-size:15px;font-weight:900;letter-spacing:-0.3px;color:var(--gold);}
+.bxbar-tx b{color:var(--yellow);font-weight:900;}
+.bxbar-tag{font-size:10px;font-weight:900;letter-spacing:.9px;text-transform:uppercase;
+  color:var(--tx3);border:1px solid var(--line);border-radius:999px;padding:3px 9px;}
+.bxbar-sw{margin-left:auto;background:var(--card2);border:1px solid var(--line);
+  border-radius:999px;padding:6px 11px;color:var(--yellow);font-size:11.5px;font-weight:900;}
+
 .hd-row{display:flex;align-items:center;gap:11px;}
 .hd-av{
   width:42px;height:42px;border-radius:13px;flex:0 0 auto;
@@ -207,6 +220,17 @@ main{padding:13px 15px 30px;}
 .empty{text-align:center;color:var(--tx3);font-size:13.5px;padding:46px 20px;font-weight:700;}
 .empty .ic{font-size:40px;display:block;margin-bottom:10px;opacity:.6;}
 
+/* Überschrift zwischen den beiden Blöcken auf dem ersten Bildschirm:
+   oben das Neue, unten das, was schon in der Küche steht. */
+.lst-h{margin:4px 2px 9px;font-size:13px;font-weight:900;color:var(--tx2);
+  letter-spacing:.2px;display:flex;flex-direction:column;gap:3px;}
+.lst-h small{font-size:11.5px;font-weight:700;color:var(--tx3);letter-spacing:0;}
+.lst-h.kueche{margin-top:20px;padding-top:15px;border-top:1px solid var(--line);color:var(--green);}
+
+/* Der Fertig-Knopf ist der einzige Knopf auf der Küchenkarte – also darf
+   er auch aussehen wie der einzige: über die ganze Breite, gut zu treffen. */
+.oc-bar .b-fertig{padding:16px 8px;font-size:16px;}
+
 /* ===== EIN-TIPP-ANNAHME =================================================
    Das Lokal soll NICHT erst "Annehmen" und dann die Zeit tippen.
    Ein einziger Tipp auf "15 Min" heißt: angenommen UND Zeit gesetzt.
@@ -304,7 +328,11 @@ main{padding:13px 15px 30px;}
 
 <!-- ========== LOGIN ========== -->
 <div id="login">
-  <div class="lg-logo">🍽️</div>
+  <!-- Das echte Logo statt eines Emojis: die Anmeldeseite ist das Erste,
+       was ein neues Lokal von Bestellux sieht. -->
+  <div class="lg-logo"><img src="icon-192.png" alt="Bestellux"
+       style="width:72px;height:72px;border-radius:22px;display:block;
+              box-shadow:0 8px 26px rgba(0,0,0,.55)"></div>
   <h1 class="lg-title"><b>Bestellux</b> Restaurant</h1>
 
   <!-- Stufe 1: Anmelden -->
@@ -344,11 +372,35 @@ main{padding:13px 15px 30px;}
     </div>
     <button class="lnk" onclick="logout()">Abmelden</button>
   </div>
+
+  <!-- Stufe 4: keine Verbindung zum Server.
+       Früher ist die Seite in diesem Fall einfach ins zuletzt geöffnete
+       Lokal gesprungen – ohne Anmeldung. Das war ein offenes Tor: wer das
+       Handy in die Hand bekam, war drin. Jetzt geht ohne Verbindung gar
+       nichts, denn nur der Server kann die Anmeldung prüfen. -->
+  <div id="lgOff" class="hide">
+    <p class="lg-sub">Keine Verbindung zum Server.</p>
+    <div class="lg-card">
+      <div class="lg-err" style="margin-top:0">Anmeldung gerade nicht möglich.</div>
+      <p style="font-size:12.5px;color:var(--tx2);font-weight:700;margin:14px 0 0;line-height:1.6">
+        Prüfe WLAN oder mobile Daten und lade die Seite neu.<br>
+        Ohne Verbindung kann niemand angemeldet werden – das schützt eure Bestellungen.</p>
+      <button class="btn-main" style="margin-top:14px" onclick="location.reload()">Neu laden</button>
+    </div>
+  </div>
 </div>
 
 <!-- ========== APP ========== -->
 <div id="app" class="hide">
   <header>
+    <!-- Bestellux oben, das Lokal darunter. "Lokal wechseln" erscheint nur
+         für den Betreiber – ein normales Lokal hat nichts zu wechseln. -->
+    <div class="bxbar">
+      <img class="bxbar-lg" src="icon-192.png" alt="Bestellux">
+      <div class="bxbar-tx">Bestell<b>ux</b></div>
+      <div class="bxbar-tag">Restaurant</div>
+      <button class="bxbar-sw hide" id="bxSwitch" onclick="pickList()">Lokal wechseln</button>
+    </div>
     <div class="hd-row">
       <div class="hd-av" id="hdAv">BD</div>
       <div class="hd-txt">
@@ -828,7 +880,7 @@ function card(o, mode){
     }
     /* Der EINZIGE Knopf, der hier noch steht: das Essen ist fertig.
        Damit ist die Bestellung für die Küche erledigt und verschwindet. */
-    h += '<div class="oc-bar"><button class="b b-ok" onclick="fertig(\''+o.id+'\')">'+
+    h += '<div class="oc-bar"><button class="b b-ok b-fertig" onclick="fertig(\''+o.id+'\')">'+
          '✓ Essen ist fertig</button></div>';
   } else {
     var sf = myStop(o);
@@ -932,16 +984,47 @@ function render(){
 
   if(TAB === 'geld'){ renderGeld(); return; }
 
-  var arr = TAB==='neu' ? neu : (TAB==='run' ? run : done);
   var el = document.getElementById('list');
+
+  /* =====================================================================
+     ZWEI TIPPS – MEHR NICHT
+     ---------------------------------------------------------------------
+     Früher musste die Küche nach dem Annehmen erst auf den Reiter "Küche"
+     wechseln, um "Essen ist fertig" zu drücken. Das war ein Umweg, den
+     niemand im Stress findet.
+     Jetzt stehen auf dem ERSTEN Bildschirm beide Sachen untereinander:
+       oben  – was neu hereingekommen ist   -> Tipp 1: Minuten wählen
+       unten – was gerade gekocht wird      -> Tipp 2: "Essen ist fertig"
+     Die Bestellung rutscht nach dem Annehmen einfach nach unten und ist
+     nach "Fertig" verschwunden. Der Reiter "Küche" bleibt trotzdem, für
+     den, der nur die Küche sehen will.
+     ===================================================================== */
+  if(TAB === 'neu'){
+    var h = '';
+    if(neu.length){
+      if(run.length) h += '<div class="lst-h">🔔 Neu hereingekommen</div>';
+      h += neu.map(function(o){ return card(o, 'neu'); }).join('');
+    } else {
+      h += '<div class="empty"><span class="ic">🔔</span>Keine neue Bestellung.'+
+        (isOpen(SHOP_STATE) ? '<br>Ihr seid geöffnet – es kann jederzeit klingeln.'
+                            : '<br><b style="color:var(--yellow)">Ihr seid geschlossen.</b> Solange kann niemand bei euch bestellen.')+
+        '</div>';
+    }
+    if(run.length){
+      h += '<div class="lst-h kueche">👨‍🍳 In der Küche · '+run.length+
+           (run.length===1?' Bestellung' : ' Bestellungen')+
+           '<small>Wenn das Essen fertig ist: unten auf den grünen Knopf tippen.</small></div>'+
+           run.map(function(o){ return card(o, 'run'); }).join('');
+    }
+    el.innerHTML = h;
+    return;
+  }
+
+  var arr = TAB==='run' ? run : done;
 
   if(!arr.length){
     el.innerHTML = '<div class="empty">'+
-      (TAB==='neu'
-        ? '<span class="ic">🔔</span>Keine neue Bestellung.'+
-          (isOpen(SHOP_STATE) ? '<br>Ihr seid geöffnet – es kann jederzeit klingeln.'
-                              : '<br><b style="color:var(--yellow)">Ihr seid geschlossen.</b> Solange kann niemand bei euch bestellen.')
-        : TAB==='run'
+      (TAB==='run'
         ? '<span class="ic">👨‍🍳</span>Nichts in der Küche.<br>Alles abgearbeitet.'
         : '<span class="ic">📋</span>Heute noch nichts fertig gemacht.')+
       '</div>';
@@ -1020,7 +1103,7 @@ setInterval(function(){ if(SHOP_ID) watch(); }, FB_OK ? 8000 : 1800);
    ANMELDUNG
    ===================================================================== */
 function stage(id){
-  ['lgAuth','lgPick','lgNo'].forEach(function(k){
+  ['lgAuth','lgPick','lgNo','lgOff'].forEach(function(k){
     var el = document.getElementById(k); if(el) el.classList.toggle('hide', k!==id);
   });
   document.getElementById('login').classList.remove('hide');
@@ -1082,6 +1165,11 @@ function startShop(id){
   document.getElementById('hdAv').style.background = SHOP.color;
   document.getElementById('hdName').textContent = SHOP.name;
 
+  /* Nur der Betreiber darf zwischen den Lokalen springen. Ein Lokal sieht
+     den Knopf gar nicht – für das gibt es nichts zu wechseln. */
+  var sw = document.getElementById('bxSwitch');
+  if(sw) sw.classList.toggle('hide', ADMINS.indexOf(AUTH_MAIL) < 0);
+
   /* Öffnungszustand live mitlesen – auch wenn ihn ein Kollege am anderen
      Gerät umstellt, springt diese Seite sofort mit. */
   if(shopRef){ try{ shopRef.off(); }catch(e){} shopRef = null; }
@@ -1121,16 +1209,14 @@ function onAuth(u){
   stage('lgNo');
 }
 
-/* ---------- Start ---------- */
+/* ---------- Start ----------
+   Ohne Firebase gibt es keine Anmeldung – und damit auch keinen Zugang.
+   Vorher ist die Seite hier ins zuletzt geöffnete Lokal gesprungen; das
+   war eine Hintertür an der Anmeldung vorbei und ist jetzt zu. */
 if(FB_OK && FB_AUTH){
   FB_AUTH.onAuthStateChanged(onAuth);
 } else {
-  /* Notfall ohne Firebase: lokal weiterarbeiten, damit nichts blockiert. */
-  var lp = null;
-  try{ lp = localStorage.getItem('bx_shop_pick'); }catch(e){}
-  if(lp) startShop(lp); else pickList();
-  var n = document.querySelector('#lgPick .lg-sub');
-  if(n) n.innerHTML = '⚠️ Offline-Modus: keine Verbindung zum Server.<br>Bestellungen kommen nur aus diesem Gerät.';
+  stage('lgOff');
 }
 </script>
 </body>

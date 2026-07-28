@@ -242,7 +242,13 @@
   .overlay.show .modal{transform:translateY(0);opacity:1;}
   .modal::before{content:'';position:sticky;top:0;display:block;width:40px;height:4px;background:#e6e2d8;border-radius:3px;margin:10px auto 0;}
   .modal-close{position:absolute;top:16px;right:16px;background:var(--bg);border:none;width:34px;height:34px;border-radius:50%;font-size:17px;font-weight:700;color:var(--gray);z-index:6;}
+  /* Auf Arabisch laeuft die Schrift von rechts nach links. Bleibt der
+     Schliessen-Knopf rechts oben stehen, deckt er den Anfang der
+     Ueberschrift zu – darum wandert er im RTL-Fall nach links. */
+  html[dir="rtl"] .modal-close{right:auto;left:16px;}
   .modal-head{padding:14px 24px 14px;border-bottom:1px solid var(--line);position:sticky;top:0;background:#fff;z-index:5;}
+  .modal-head h3{padding-right:44px;}
+  html[dir="rtl"] .modal-head h3{padding-right:0;padding-left:44px;}
   .modal-head h3{margin:0 0 4px;font-size:19px;font-weight:800;}
   .modal-head p{margin:0;color:var(--gray);font-size:13px;}
   .modal-body{padding:18px 22px 26px;}
@@ -792,7 +798,65 @@
       <div class="acc-row"><div class="acc-icon">✉️</div><a href="mailto:bestellux1@gmail.com">bestellux1@gmail.com</a></div>
       <div class="acc-row"><div class="acc-icon">📍</div><span>Liefergebiet: Langwedel, Etelsen, Verden</span></div>
       <div class="acc-row"><div class="acc-icon">📄</div><span>Impressum &amp; Datenschutz</span></div>
+      <div class="acc-row"><div class="acc-icon">🧑‍🍳</div><a href="#" onclick="closeModal('accOverlay');openBewerbung();return false;">Bei uns arbeiten – jetzt bewerben</a></div>
       <div class="acc-row"><div class="acc-icon">🛵</div><a href="fahrer.html">Fahrer-App (nur für Kuriere)</a></div>
+    </div>
+  </div>
+</div>
+
+<!-- =====================================================================
+     BEWERBUNG
+     Wer bei Bestellux fahren möchte, füllt hier vier Felder aus. Die
+     Bewerbung landet direkt in der Zentrale – ohne Umweg über ein
+     Postfach, das erst noch eingerichtet werden muss.
+     ===================================================================== -->
+<div class="overlay" id="bewOverlay">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('bewOverlay')">✕</button>
+    <div class="modal-head">
+      <h3>Bei Bestellux arbeiten</h3>
+      <p>Fahrer/in gesucht – in Langwedel, Etelsen und Verden</p>
+    </div>
+    <div class="modal-body">
+      <div id="bewForm">
+        <p style="font-size:13px;color:var(--gray);line-height:1.6;margin:0 0 4px;">
+          Du kennst die Gegend und hast ein Auto, einen Roller oder ein E-Bike?
+          Trag dich hier ein – wir melden uns bei dir.
+        </p>
+        <div class="field-label">Dein Name</div>
+        <input class="rekla-input" id="bewName" type="text" placeholder="Vor- und Nachname" autocomplete="name">
+        <div class="field-label">Handynummer</div>
+        <input class="rekla-input" id="bewTel" type="tel" placeholder="0176 1234567" autocomplete="tel">
+        <div class="field-label">Wo wohnst du?</div>
+        <div class="rekla-reasons" id="bewOrte">
+          <div class="rekla-reason" onclick="bewPick(this,'ort','Langwedel')">Langwedel</div>
+          <div class="rekla-reason" onclick="bewPick(this,'ort','Etelsen')">Etelsen</div>
+          <div class="rekla-reason" onclick="bewPick(this,'ort','Verden')">Verden</div>
+          <div class="rekla-reason" onclick="bewPick(this,'ort','woanders')">woanders</div>
+        </div>
+        <div class="field-label">Womit möchtest du fahren?</div>
+        <div class="rekla-reasons" id="bewFzg">
+          <div class="rekla-reason" onclick="bewPick(this,'fzg','Auto')">🚗 Auto</div>
+          <div class="rekla-reason" onclick="bewPick(this,'fzg','Roller')">🛵 Roller</div>
+          <div class="rekla-reason" onclick="bewPick(this,'fzg','E-Bike')">🚲 E-Bike</div>
+          <div class="rekla-reason" onclick="bewPick(this,'fzg','habe noch nichts')">noch nichts</div>
+        </div>
+        <div class="field-label">Willst du uns noch etwas sagen? (optional)</div>
+        <textarea class="rekla-textarea" id="bewText" placeholder="z. B. wann du Zeit hast"></textarea>
+        <button class="wa-btn" style="margin-top:14px" onclick="bewSenden()">Bewerbung abschicken</button>
+        <div id="bewErr" style="display:none;margin-top:10px;font-size:12.5px;font-weight:700;color:#C1121F;text-align:center"></div>
+        <p class="demo-note">
+          Deine Angaben gehen nur an Bestellux und werden nur für diese Bewerbung benutzt.
+        </p>
+      </div>
+      <div id="bewOk" style="display:none;text-align:center;padding:18px 4px;">
+        <div style="font-size:44px;line-height:1">✅</div>
+        <h4 style="margin:10px 0 6px;font-size:17px;font-weight:900;">Danke, angekommen!</h4>
+        <p style="font-size:13.5px;color:var(--gray);line-height:1.6;margin:0;">
+          Wir schauen uns deine Bewerbung an und melden uns bei dir.
+        </p>
+        <button class="wa-btn" style="margin-top:16px" onclick="closeModal('bewOverlay')">Schließen</button>
+      </div>
     </div>
   </div>
 </div>
@@ -1818,6 +1882,60 @@ shopsWatch();      /* ab jetzt live: macht ein Lokal zu, wird die Karte sofort g
 function openModal(id){ document.getElementById(id).classList.add('show'); }
 function closeModal(id){ document.getElementById(id).classList.remove('show'); }
 function openAccount(){ openModal('accOverlay'); }
+
+/* =====================================================================
+   BEWERBUNG
+   ---------------------------------------------------------------------
+   Die Bewerbung wird in die Datenbank geschrieben, Zweig "bewerbungen".
+   Die Zentrale liest sie dort im Reiter "Bewerbungen" und ruft direkt an.
+   Absichtlich kein E-Mail-Postfach: ein Postfach, das keiner öffnet, ist
+   schlimmer als gar keins.
+   ===================================================================== */
+var BEW = { ort:'', fzg:'' };
+function bewPick(el, feld, wert){
+  var box = el.parentNode;
+  for(var i=0;i<box.children.length;i++) box.children[i].classList.remove('active');
+  el.classList.add('active');
+  BEW[feld] = wert;
+}
+function openBewerbung(){
+  BEW = { ort:'', fzg:'' };
+  ['bewName','bewTel','bewText'].forEach(function(id){ var e=document.getElementById(id); if(e) e.value=''; });
+  document.querySelectorAll('#bewOrte .rekla-reason, #bewFzg .rekla-reason')
+          .forEach(function(e){ e.classList.remove('active'); });
+  document.getElementById('bewErr').style.display = 'none';
+  document.getElementById('bewForm').style.display = '';
+  document.getElementById('bewOk').style.display   = 'none';
+  openModal('bewOverlay');
+}
+function bewFehler(m){
+  var e = document.getElementById('bewErr');
+  e.textContent = m; e.style.display = 'block';
+}
+function bewSenden(){
+  var name = (document.getElementById('bewName').value||'').trim();
+  var tel  = (document.getElementById('bewTel').value||'').trim();
+  var txt  = (document.getElementById('bewText').value||'').trim();
+  if(name.length < 2)                 return bewFehler('Bitte trag deinen Namen ein.');
+  if(tel.replace(/\D/g,'').length < 6) return bewFehler('Bitte trag eine Handynummer ein, unter der wir dich erreichen.');
+  if(!BEW.ort)                        return bewFehler('Bitte wähle aus, wo du wohnst.');
+  if(!BEW.fzg)                        return bewFehler('Bitte wähle aus, womit du fahren möchtest.');
+  document.getElementById('bewErr').style.display = 'none';
+
+  var id = 'BW-' + Date.now().toString(36).toUpperCase();
+  var b = { id:id, at:Date.now(), name:name, tel:tel, ort:BEW.ort, fzg:BEW.fzg,
+            text:txt.slice(0,600), status:'neu' };
+
+  /* Immer erst ins Gerät – dann ist nichts verloren, wenn das Netz zickt. */
+  try{
+    var a = JSON.parse(localStorage.getItem('bx_bew') || '[]');
+    a.push(b); localStorage.setItem('bx_bew', JSON.stringify(a));
+  }catch(e){}
+  if(FB_OK){ try{ FB_DB.ref('bewerbungen/'+id).set(b); }catch(e){} }
+
+  document.getElementById('bewForm').style.display = 'none';
+  document.getElementById('bewOk').style.display   = '';
+}
 
 function openRestaurant(id){
   const r = RESTAURANTS.find(x=>x.id===id);
@@ -3003,7 +3121,28 @@ en: {
   "🚲 E-Bike": "🚲 E-bike",
   "🛵 Roller": "🛵 Scooter",
   "🚗 Auto": "🚗 Car",
-  "Fahrer-App (nur für Kuriere)": "Driver app (couriers only)"
+  "Fahrer-App (nur für Kuriere)": "Driver app (couriers only)",
+  "Bei uns arbeiten – jetzt bewerben": "Work with us – apply now",
+  "Bei Bestellux arbeiten": "Work at Bestellux",
+  "Fahrer/in gesucht – in Langwedel, Etelsen und Verden": "Drivers wanted – in Langwedel, Etelsen and Verden",
+  "Du kennst die Gegend und hast ein Auto, einen Roller oder ein E-Bike? Trag dich hier ein – wir melden uns bei dir.": "You know the area and have a car, a scooter or an e-bike? Sign up here – we will get back to you.",
+  "Dein Name": "Your name",
+  "Vor- und Nachname": "First and last name",
+  "Handynummer": "Mobile number",
+  "Wo wohnst du?": "Where do you live?",
+  "woanders": "somewhere else",
+  "Womit möchtest du fahren?": "What would you like to drive?",
+  "noch nichts": "nothing yet",
+  "Willst du uns noch etwas sagen? (optional)": "Anything else you want to tell us? (optional)",
+  "z. B. wann du Zeit hast": "e.g. when you have time",
+  "Bewerbung abschicken": "Send application",
+  "Deine Angaben gehen nur an Bestellux und werden nur für diese Bewerbung benutzt.": "Your details go only to Bestellux and are used only for this application.",
+  "Danke, angekommen!": "Thank you, we got it!",
+  "Wir schauen uns deine Bewerbung an und melden uns bei dir.": "We will look at your application and get back to you.",
+  "Bitte trag deinen Namen ein.": "Please enter your name.",
+  "Bitte trag eine Handynummer ein, unter der wir dich erreichen.": "Please enter a mobile number where we can reach you.",
+  "Bitte wähle aus, wo du wohnst.": "Please choose where you live.",
+  "Bitte wähle aus, womit du fahren möchtest.": "Please choose what you would like to drive."
 },
 ar: {
   "📲 Bestellux zum Startbildschirm hinzufügen für schnelleren Zugriff": "📲 أضف Bestellux إلى الشاشة الرئيسية للوصول السريع",
@@ -3381,7 +3520,28 @@ ar: {
   "🚲 E-Bike": "🚲 دراجة كهربائية",
   "🛵 Roller": "🛵 سكوتر",
   "🚗 Auto": "🚗 سيارة",
-  "Fahrer-App (nur für Kuriere)": "تطبيق السائق (للمندوبين فقط)"
+  "Fahrer-App (nur für Kuriere)": "تطبيق السائق (للمندوبين فقط)",
+  "Bei uns arbeiten – jetzt bewerben": "اشتغل معنا – قدّم طلبك الآن",
+  "Bei Bestellux arbeiten": "العمل في Bestellux",
+  "Fahrer/in gesucht – in Langwedel, Etelsen und Verden": "مطلوب سائقون – في Langwedel و Etelsen و Verden",
+  "Du kennst die Gegend und hast ein Auto, einen Roller oder ein E-Bike? Trag dich hier ein – wir melden uns bei dir.": "تعرف المنطقة ولديك سيارة أو سكوتر أو دراجة كهربائية؟ سجّل هنا وسنتواصل معك.",
+  "Dein Name": "اسمك",
+  "Vor- und Nachname": "الاسم الأول واسم العائلة",
+  "Handynummer": "رقم الهاتف",
+  "Wo wohnst du?": "أين تسكن؟",
+  "woanders": "مكان آخر",
+  "Womit möchtest du fahren?": "بماذا تريد أن تعمل؟",
+  "noch nichts": "لا شيء بعد",
+  "Willst du uns noch etwas sagen? (optional)": "هل تريد إخبارنا بشيء آخر؟ (اختياري)",
+  "z. B. wann du Zeit hast": "مثلاً متى يكون لديك وقت",
+  "Bewerbung abschicken": "إرسال الطلب",
+  "Deine Angaben gehen nur an Bestellux und werden nur für diese Bewerbung benutzt.": "بياناتك تصل إلى Bestellux فقط وتُستخدم لهذا الطلب فقط.",
+  "Danke, angekommen!": "شكراً، وصلنا طلبك!",
+  "Wir schauen uns deine Bewerbung an und melden uns bei dir.": "سنطّلع على طلبك ونتواصل معك.",
+  "Bitte trag deinen Namen ein.": "الرجاء إدخال اسمك.",
+  "Bitte trag eine Handynummer ein, unter der wir dich erreichen.": "الرجاء إدخال رقم هاتف نستطيع الوصول إليك عليه.",
+  "Bitte wähle aus, wo du wohnst.": "الرجاء اختيار مكان سكنك.",
+  "Bitte wähle aus, womit du fahren möchtest.": "الرجاء اختيار وسيلة العمل."
 }
 };
 /* ===== I18N DICT END ===== */

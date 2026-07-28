@@ -75,6 +75,25 @@
       }
     },
 
+    "bewerbungen": {
+      ".read": "auth != null && (auth.token.email == 'bestellux1@gmail.com' || auth.token.email == 'ibrahimi.hafid22@gmail.com')",
+
+      "$bid": {
+        ".write": "(!data.exists() && newData.exists()) || (auth != null && (auth.token.email == 'bestellux1@gmail.com' || auth.token.email == 'ibrahimi.hafid22@gmail.com'))",
+
+        ".validate": "newData.hasChildren(['id','at','name','tel']) && newData.child('id').isString() && newData.child('id').val().length < 40 && newData.child('at').isNumber() && newData.child('name').isString() && newData.child('name').val().length < 80 && newData.child('tel').isString() && newData.child('tel').val().length < 40",
+
+        "ort":  { ".validate": "newData.isString() && newData.val().length < 40" },
+        "fzg":  { ".validate": "newData.isString() && newData.val().length < 40" },
+        "text": { ".validate": "newData.isString() && newData.val().length < 700" },
+
+        "status": {
+          ".write": "auth != null && (auth.token.email == 'bestellux1@gmail.com' || auth.token.email == 'ibrahimi.hafid22@gmail.com')",
+          ".validate": "newData.val() == 'neu' || newData.val() == 'erledigt'"
+        }
+      }
+    },
+
     "$other": {
       ".read": false,
       ".write": false
