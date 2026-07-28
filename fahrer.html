@@ -794,6 +794,11 @@ function toast(msg){
    Wird der Anteil geändert, dann HIER und in der Zentrale (admin.html)
    an derselben Stelle – sonst rechnen die beiden Apps verschieden.
    ===================================================================== */
+/* Steht unten im Profil. Damit sieht man auf dem Handy sofort, ob wirklich
+   die neue Fassung läuft – oder ob das Telefon noch eine alte Datei zeigt.
+   Bei jedem Hochladen mit der Zahl in sw.js gleichziehen. */
+const APP_VERSION = 'v18 · Fahrer bekommt die Hälfte der Liefergebühr';
+
 const FAHRER_ANTEIL = 0.50;                 /* die Hälfte der Liefergebühr */
 function fahrerLohn(o){
   /* Auf den Cent gerundet, damit Fahrer und Zentrale nie 1 Cent
@@ -1269,7 +1274,11 @@ function renderProf(){
         'Der Kunde sieht, dass ein Fahrer aus deinem Ort das Essen abholt.</p></div>'+
     '</div>'+
     '<button class="b b-gray b-wide" style="margin-bottom:9px" onclick="demoOrder()">🧪 Test-Bestellung erzeugen</button>'+
-    '<button class="b b-red b-wide" onclick="logout()">Abmelden</button>';
+    '<button class="b b-red b-wide" onclick="logout()">Abmelden</button>'+
+    /* Versionsstempel: wer wissen will, ob das Handy die neue Fassung
+       geladen hat, schaut hier nach – ganz unten, stört niemanden. */
+    '<div id="pfVer" style="margin:14px 0 4px;text-align:center;font-size:11px;'+
+      'color:var(--tx3);line-height:1.6">Bestellux Fahrer · '+esc(APP_VERSION)+'</div>';
 }
 function setVeh(v){ ME.veh=v; saveMe(); startApp(); go('Prof'); toast('Fahrzeug: '+v); }
 function setTown(t){ ME.town=t; saveMe(); startApp(); go('Prof'); toast('Standort: '+t); }

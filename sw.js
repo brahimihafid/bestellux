@@ -3,7 +3,7 @@
    last-loaded page open instantly even on a flaky connection. It does not
    do anything with orders — those still go straight to WhatsApp. */
 
-const CACHE_NAME = 'bestellux-v17';
+const CACHE_NAME = 'bestellux-v18';
 const CORE_FILES = ['./', './index.html', './fahrer.html', './restaurant.html', './admin.html', './manifest.json', './icon-192.png', './icon-512.png'];
 
 self.addEventListener('install', (event) => {

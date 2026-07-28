@@ -846,8 +846,8 @@ function card(o, mode){
    ---------------------------------------------------------------------
    Gezählt wird nur, was wirklich beim Kunden angekommen ist (geliefert)
    und nur der eigene Anteil (stopSum) – nicht die Liefergebühr, die
-   gehört Bestellux, und nicht das, was ein anderes Lokal in derselben
-   Sammelbestellung geliefert hat.
+   gehört nicht dem Lokal, und nicht das, was ein anderes Lokal in
+   derselben Sammelbestellung geliefert hat.
    ===================================================================== */
 function tagStart(d){ var x = new Date(d); x.setHours(0,0,0,0); return x.getTime(); }
 function wocheStart(){

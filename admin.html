@@ -696,7 +696,9 @@ function setActive(uid, on){
    Wie die Provision gerechnet wird:
      Provision = Prozentsatz × Warenkorb der GELIEFERTEN Bestellungen
    Der Warenkorb ist nur das Essen dieses Lokals (stops[i].items).
-   Die Liefergebühr steckt NICHT drin – die gehört ganz Bestellux.
+   Die Liefergebühr steckt NICHT drin – die wird getrennt gerechnet und
+   danach halbiert: die Hälfte für den Fahrer, die Hälfte für Bestellux
+   (siehe FAHRER_ANTEIL weiter oben).
    Abgelehnte Bestellungen bringen keine Provision.
 
    Der Prozentsatz steht in rates/<id>. Steht dort nichts, gelten 15 %.
