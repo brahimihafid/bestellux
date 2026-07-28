@@ -160,7 +160,10 @@ body.online .sw::after{transform:translateX(28px);}
   background:linear-gradient(120deg,var(--yellow),#FFE08A 50%,var(--yellow));
   -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;}
 .oc-earn-l{font-size:11.5px;font-weight:800;color:var(--tx3);padding-bottom:3px;}
-.oc-dist{margin-left:auto;font-size:12.5px;font-weight:800;color:var(--tx2);padding-bottom:3px;}
+.oc-dist{margin-left:auto;font-size:12.5px;font-weight:800;color:var(--tx2);padding-bottom:3px;
+  white-space:nowrap;}
+/* Eigene Zeile: woraus besteht der Betrag? Fester Lohn + Trinkgeld. */
+.oc-split{padding:2px 14px 0;font-size:11.5px;font-weight:800;color:var(--gold);}
 .oc-route{padding:12px 14px 2px;}
 .rw{display:flex;gap:11px;position:relative;padding-bottom:14px;}
 .rw:last-child{padding-bottom:2px;}
@@ -175,13 +178,39 @@ body.online .sw::after{transform:translateX(28px);}
 .rw-tx{min-width:0;flex:1;}
 .rw-tx b{display:block;font-size:14px;font-weight:800;line-height:1.28;}
 .rw-tx span{display:block;font-size:12px;color:var(--tx3);font-weight:600;line-height:1.35;}
+/* Der Fahrer muss auf einen Blick lesen: WO hole ich ab, und WOHIN bringe
+   ich es. Darum steht über jeder Zeile eine kleine Überschrift, und der
+   Ort steht direkt neben dem Namen des Lokals. */
+.rw-lb{display:block;font-size:10.5px;font-weight:900;letter-spacing:.8px;
+  text-transform:uppercase;margin:0 0 5px 43px;}
+.rw-lb.pick{color:var(--gold);}
+.rw-lb.zi{color:var(--green);}
+.rw-lb i{font-style:normal;color:var(--tx3);letter-spacing:.4px;}
+/* Der Ort steht NEBEN dem Namen, nicht darunter – darum inline.
+   (.rw-tx span ist sonst ein Block, das würde ihn umbrechen.) */
+.rw-tx b .rw-tn{display:inline;font-size:13px;font-weight:700;color:var(--tx3);}
 .rw-items{margin-top:5px;font-size:12px;color:var(--tx2);line-height:1.5;}
 .rw-items i{font-style:normal;color:var(--yellow);font-weight:800;}
 .rw-note{color:var(--gold);font-size:11.5px;}
 /* Balken auf der Auftragskarte: das Lokal hat zugesagt. */
-.okban{margin:9px 0 2px;padding:9px 11px;border-radius:11px;font-size:13px;font-weight:800;
+.okban{margin:9px 14px 2px;padding:9px 11px;border-radius:11px;font-size:13px;font-weight:800;
   background:rgba(43,182,115,.13);border:1px solid rgba(43,182,115,.35);color:#2BB673;}
 .okban.jetzt{background:rgba(43,182,115,.22);border-color:#2BB673;color:#8BE0B7;font-size:13.5px;font-weight:900;}
+/* =====================================================================
+   GESPERRTE KARTE – ein Fahrer aus dem Ort hat 30 Sekunden Vorsprung
+   ---------------------------------------------------------------------
+   Die Karte bleibt sichtbar und voll lesbar, sie wird nur ruhiger:
+   kein blinkender Balken oben, etwas blasser. Der gelbe Balken sagt in
+   Worten, warum der Knopf noch nicht geht – und wie viele Sekunden noch.
+   ===================================================================== */
+.oc.gesperrt{opacity:.74;}
+.oc.gesperrt::before{display:none;}
+.lockban{margin:9px 14px 2px;padding:9px 11px;border-radius:11px;font-size:13px;font-weight:800;
+  background:rgba(255,184,0,.12);border:1px solid rgba(255,184,0,.38);color:var(--gold);line-height:1.45;}
+.lockban b{font-weight:900;color:#FFD980;}
+/* Der Knopf ist noch tot – das muss man SEHEN, nicht erst beim Tippen merken. */
+.b.b-wait{background:var(--line);color:var(--tx3);}
+.b.b-wait:active{transform:none;}
 /* Pro Lokal: hat es zugesagt, und steht das Essen schon da? */
 .rw-ok{display:inline-block;margin-top:5px;padding:3px 9px;border-radius:8px;
   font-size:11px;font-weight:900;background:rgba(43,182,115,.15);color:#2BB673;}
@@ -265,6 +294,10 @@ body.online .sw::after{transform:translateX(28px);}
   padding:14px 8px;text-align:center;}
 .ea-c b{display:block;font-size:21px;font-weight:900;}
 .ea-c span{display:block;font-size:11px;color:var(--tx3);font-weight:800;margin-top:2px;}
+/* Kurze Erklärung, wie der Verdienst entsteht – fester Lohn + Trinkgeld. */
+.ea-note{margin-top:10px;padding:11px 13px;border-radius:14px;background:var(--card);
+  border:1px solid var(--line);font-size:12.5px;line-height:1.55;color:var(--tx2);font-weight:600;}
+.ea-note b{color:var(--tx);font-weight:900;}
 .hist{margin-top:14px;}
 .hi{display:flex;align-items:center;gap:10px;padding:11px 13px;background:var(--card);
   border:1px solid var(--line);border-radius:14px;margin-bottom:8px;}
@@ -749,8 +782,35 @@ function toast(msg){
   clearTimeout(toastT); toastT = setTimeout(()=>el.classList.remove('on'), 2600);
 }
 
-/* ---------- Verdienst-Regel (Demo) ---------- */
-function payout(o){ return (Number(o.fee)||0) + (Number(o.tip)||0); }
+/* =====================================================================
+   WAS BEKOMMT DER FAHRER?
+   ---------------------------------------------------------------------
+   Die Liefergebühr wird geteilt: die HÄLFTE geht an den Fahrer, die
+   andere Hälfte bleibt bei Bestellux.
+     4,00 € Liefergebühr  ->  2,00 € Fahrer / 2,00 € Bestellux
+     5,00 € Liefergebühr  ->  2,50 € Fahrer / 2,50 € Bestellux
+   Das Trinkgeld gehört zusätzlich zu 100 % dem Fahrer – davon geht
+   nichts ab, es war nie das Geld von Bestellux.
+   Wird der Anteil geändert, dann HIER und in der Zentrale (admin.html)
+   an derselben Stelle – sonst rechnen die beiden Apps verschieden.
+   ===================================================================== */
+const FAHRER_ANTEIL = 0.50;                 /* die Hälfte der Liefergebühr */
+function fahrerLohn(o){
+  /* Auf den Cent gerundet, damit Fahrer und Zentrale nie 1 Cent
+     auseinanderliegen. */
+  return Math.round((Number(o.fee)||0) * FAHRER_ANTEIL * 100) / 100;
+}
+function payout(o){ return fahrerLohn(o) + (Number(o.tip)||0); }
+
+/* Kleine Zeile unter dem Betrag: woraus besteht er? Der Fahrer soll sehen,
+   dass sein Anteil an der Lieferung und sein Trinkgeld zwei getrennte
+   Dinge sind. */
+function payoutTxt(o){
+  const t = Number(o.tip) || 0;
+  return t > 0
+    ? (eur(fahrerLohn(o)) + ' Lieferung + ' + eur(t) + ' Trinkgeld')
+    : (eur(fahrerLohn(o)) + ' für die Lieferung');
+}
 
 /* ---------- Wie weit bin ich vom Restaurant? ---------- */
 function myDistToPickup(o){
@@ -784,6 +844,38 @@ function openJobs(){
     !((o.hidden||[]).indexOf(ich) >= 0)
   );
 }
+
+/* =====================================================================
+   WER DARF ZUERST? – 30 Sekunden Vorsprung für den, der nah dran ist
+   ---------------------------------------------------------------------
+   Der Auftrag ist ab der ersten Sekunde für die Fahrer frei, die im
+   GLEICHEN ORT wie das Lokal sind. Alle anderen sehen ihn zwar sofort,
+   dürfen ihn aber erst nach 30 Sekunden annehmen. Ist nach 30 Sekunden
+   niemand aus dem Ort da, bekommt ihn wieder der Schnellste.
+   So fährt niemand quer durch die Gegend, während einer um die Ecke
+   steht – und trotzdem bleibt kein Auftrag liegen.
+   Der Ort kommt aus dem Profil des Fahrers ("Ich bin gerade in"), nicht
+   aus dem GPS. Wer die Stadt wechselt, stellt das oben im Profil um.
+   ===================================================================== */
+const VORSPRUNG_SEK = 30;
+const NAH_KM = 2.0;      /* gleicher Ort = 1,1–1,4 km laut Tabelle */
+
+/* Seit wann ist der Auftrag frei? Das ist der Moment, in dem das letzte
+   Lokal zugesagt hat – der steht im Verlauf als "bestaetigt". */
+function freiSeit(o){
+  const h = ((o && o.hist) || []).filter(x => x.s === 'bestaetigt');
+  return h.length ? h[h.length-1].t : ((o && o.at) || 0);
+}
+function binIchNah(o){ return myDistToPickup(o) <= NAH_KM; }
+/* Wie viele Sekunden muss ICH noch warten? 0 = ich darf sofort. */
+function wartetNoch(o){
+  if(binIchNah(o)) return 0;
+  const rest = VORSPRUNG_SEK*1000 - (Date.now() - freiSeit(o));
+  return rest > 0 ? Math.ceil(rest/1000) : 0;
+}
+/* Die Aufträge, die ich JETZT annehmen darf. */
+function freieJobs(){ return openJobs().filter(o => wartetNoch(o) === 0); }
+
 /* Hat schon ein Lokal auf "Fertig" getippt? */
 function istFertig(o){
   const st = (o && o.stops) || [];
@@ -833,10 +925,20 @@ function render(){
 }
 
 /* ---------- Aufträge ---------- */
+/* =====================================================================
+   DIE ROUTE AUF DER KARTE
+   ---------------------------------------------------------------------
+   Der Fahrer soll nichts raten müssen. Über jeder Zeile steht in Worten,
+   was sie ist: "Abholen bei" für das Lokal, "Liefern nach" für den
+   Kunden. Beim Lokal stehen Name UND Ort direkt nebeneinander
+   (z. B. "Berlin Döner · Langwedel") und darunter die genaue Adresse.
+   Bei einer Sammelbestellung steht zusätzlich "Stopp 1 von 2".
+   ===================================================================== */
 function stopsHtml(o, withItems){
   const st = o.stops||[];
+  const mehr = st.length > 1;
   let h = '';
-  st.forEach(s=>{
+  st.forEach((s,i)=>{
     let items = '';
     if(withItems){
       items = '<div class="rw-items">' + (s.items||[]).map(it=>
@@ -857,15 +959,28 @@ function stopsHtml(o, withItems){
       ok = '<span class="rw-ok warte">👨‍🍳 zugesagt · fertig um '+
            ('0'+d.getHours()).slice(-2)+':'+('0'+d.getMinutes()).slice(-2)+'</span>';
     }
-    h += '<div class="rw">'+
+    /* Die Adresse ohne "Deutschland" am Ende – das weiß der Fahrer selbst.
+       Steht in der Adresse nur der Name des Lokals, zeigen wir den Ort. */
+    const ort = s.town || '';
+    let adr = String(s.address || '').replace(/,\s*(Deutschland|Germany)\s*$/i, '').trim();
+    if(!adr || adr.toLowerCase() === ((s.name||'') + ', ' + ort).toLowerCase()) adr = ort;
+
+    h += '<div class="rw-lb pick">🍽️ Abholen bei'+
+         (mehr ? ' <i>· Stopp '+(i+1)+' von '+st.length+'</i>' : '')+'</div>'+
+      '<div class="rw">'+
       '<div class="rw-ic" style="background:'+esc(s.color||'#A0152C')+'">'+esc(s.initials||'?')+'</div>'+
-      '<div class="rw-tx"><b>'+esc(s.name)+'</b><span>📍 '+esc(s.address||s.town)+'</span>'+items+ok+'</div>'+
+      '<div class="rw-tx"><b>'+esc(s.name)+
+        (ort ? ' <span class="rw-tn">· '+esc(ort)+'</span>' : '')+'</b>'+
+        '<span>📍 '+esc(adr||ort)+'</span>'+items+ok+'</div>'+
     '</div>';
   });
   const addr = [o.street, [o.plz,o.town].filter(Boolean).join(' ')].filter(Boolean).join(', ');
-  h += '<div class="rw">'+
+  h += '<div class="rw-lb zi">🏁 Liefern nach</div>'+
+    '<div class="rw">'+
     '<div class="rw-ic dest">🏠</div>'+
-    '<div class="rw-tx"><b>Kunde</b><span>📍 '+esc(addr||o.town)+'</span></div>'+
+    '<div class="rw-tx"><b>Kunde'+
+      (o.town ? ' <span class="rw-tn">· '+esc(o.town)+'</span>' : '')+'</b>'+
+      '<span>📍 '+esc(addr||o.town)+'</span></div>'+
   '</div>';
   return h;
 }
@@ -891,9 +1006,15 @@ function renderJobs(jobs, act){
     return;
   }
 
+  /* Aufträge, die ich sofort nehmen darf, stehen oben. Die, bei denen ein
+     Fahrer vor Ort noch Vorsprung hat, rutschen nach unten. */
+  jobs = jobs.slice().sort((a,b)=> wartetNoch(a) - wartetNoch(b));
+
   box.innerHTML = jobs.map(o=>{
     const cash = o.pay==='Bargeld';
-    return '<div class="oc new">'+
+    const warte = wartetNoch(o);
+    const ort = (o.stops && o.stops[0]) ? (o.stops[0].town||'') : (o.town||'');
+    return '<div class="oc new'+(warte>0?' gesperrt':'')+'">'+
       '<div class="oc-top">'+
         '<span class="oc-id">'+esc(o.id)+'</span>'+
         '<span class="oc-pay '+(cash?'cash':'')+'">'+(cash?'💵 Bargeld '+eur(o.total):'💳 Karte')+'</span>'+
@@ -903,6 +1024,14 @@ function renderJobs(jobs, act){
         '<span class="oc-earn-l">dein Verdienst</span>'+
         '<span class="oc-dist">🛣️ '+km(totalKm(o))+' · '+(o.stops||[]).length+' Stopp'+((o.stops||[]).length>1?'s':'')+'</span>'+
       '</div>'+
+      '<div class="oc-split">'+payoutTxt(o)+'</div>'+
+      /* Warum kann ich nicht tippen? Weil ein Fahrer, der im selben Ort
+         wie das Lokal ist, 30 Sekunden Vorsprung hat. Nimmt er ihn nicht,
+         gehört der Auftrag danach dem Schnellsten – also auch mir. */
+      (warte > 0
+        ? '<div class="lockban">⏳ Ein Fahrer aus <b>'+esc(ort||'dem Ort')+'</b> darf zuerst.'+
+          '<br>Für dich frei in <b>'+warte+' Sekunden</b>.</div>'
+        : '')+
       /* Der Auftrag liegt hier nur, WEIL das Lokal ihn angenommen hat.
          Das soll der Fahrer auch schwarz auf weiß sehen – und ob das
          Essen schon fertig dasteht oder noch gekocht wird. */
@@ -913,7 +1042,9 @@ function renderJobs(jobs, act){
            : '<div class="okban">👨‍🍳 Lokal hat angenommen</div>'))+
       '<div class="oc-route">'+stopsHtml(o,false)+'</div>'+
       '<div class="oc-bar">'+
-        '<button class="b b-ok" onclick="accept(\''+o.id+'\')">✓ Annehmen</button>'+
+        (warte > 0
+          ? '<button class="b b-wait" disabled>⏳ noch '+warte+' s</button>'
+          : '<button class="b b-ok" onclick="accept(\''+o.id+'\')">✓ Annehmen</button>')+
         '<button class="b b-no" onclick="decline(\''+o.id+'\')">Ablehnen</button>'+
       '</div>'+
     '</div>';
@@ -923,6 +1054,13 @@ function renderJobs(jobs, act){
 /* ---------- Annehmen / Ablehnen ---------- */
 function accept(id){
   if(myActive()){ toast('Du hast schon eine Lieferung'); return; }
+  /* Sicherheitsnetz zum Vorsprung: der Knopf ist zwar gesperrt, aber
+     falls doch jemand zu früh hier landet, wird hier abgebrochen. */
+  const _o = (bxLoad()||[]).filter(x=>x.id===id)[0];
+  if(_o){
+    const _w = wartetNoch(_o);
+    if(_w > 0){ toast('Noch '+_w+' Sekunden – ein Fahrer vor Ort darf zuerst'); render(); return; }
+  }
   /* Firebase-Transaktion: wenn zwei Fahrer gleichzeitig tippen,
      bekommt nur einer den Auftrag – der andere sieht "schon weg". */
   if(FB_OK){
@@ -992,6 +1130,7 @@ function renderActive(o){
       '<span class="oc-earn-l">dein Verdienst</span>'+
       '<span class="oc-dist">🛣️ '+km(totalKm(o))+'</span>'+
     '</div>'+
+    '<div class="oc-split">'+payoutTxt(o)+'</div>'+
     '<div class="oc-route">'+stopsHtml(o,true)+'</div>'+
   '</div>';
 
@@ -1085,7 +1224,11 @@ function renderEarn(){
       '<div class="ea-c"><b>'+today.length+'</b><span>Lieferungen</span></div>'+
       '<div class="ea-c"><b>'+eur(tips(today))+'</b><span>Trinkgeld</span></div>'+
       '<div class="ea-c"><b>'+eur(sum(all))+'</b><span>gesamt</span></div>'+
-    '</div>';
+    '</div>'+
+    /* Damit keine Frage offen bleibt: so kommt der Betrag zustande. */
+    '<div class="ea-note">So rechnet sich das: von der Liefergebühr bekommst du '+
+      '<b>die Hälfte</b> – bei 4,00 € sind das <b>2,00 €</b>. Dazu kommt das '+
+      '<b>Trinkgeld, das gehört zu 100 % dir</b>.</div>';
 
   if(!all.length){
     h += '<div class="empty"><div class="e-ic">💶</div><b>Noch nichts geliefert</b>'+
@@ -1210,7 +1353,10 @@ function closeAlert(){ document.getElementById('alertOv').classList.add('hide');
 /* ---------- Live: neue Bestellungen erkennen ---------- */
 let seen = null;
 function watch(){
-  const jobs = openJobs();
+  /* Geklingelt wird nur für Aufträge, die ich AUCH ANNEHMEN DARF.
+     Ist gerade noch ein Fahrer vor Ort dran, klingelt es nicht – aber
+     30 Sekunden später taucht der Auftrag hier auf und es klingelt dann. */
+  const jobs = freieJobs();
   const ids = jobs.map(o=>o.id).join('|');
   if(seen === null){ seen = ids; render(); return; }
   if(ids !== seen){
@@ -1227,6 +1373,12 @@ function watch(){
 }
 window.addEventListener('storage', e=>{ if(e.key===BX_ORDERS && ME) watch(); });
 setInterval(()=>{ if(ME) watch(); }, FB_OK ? 8000 : 1800);
+/* Läuft irgendwo eine Sperre, muss die Sekundenzahl auch wirklich
+   runterzählen – darum jede Sekunde neu zeichnen, aber NUR dann.
+   Liegt keine gesperrte Karte da, passiert hier gar nichts. */
+setInterval(()=>{
+  if(ME && TAB==='Jobs' && openJobs().some(o=> wartetNoch(o) > 0)) watch();
+}, 1000);
 
 /* ---------- Anmeldung steuert alles ---------- */
 var APP_ON = false, drvRef = null, meSig = '';

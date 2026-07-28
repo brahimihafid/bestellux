@@ -260,6 +260,9 @@ input,select{font-family:inherit;}
   text-transform:uppercase;letter-spacing:.5px;margin-top:3px;}
 .vd-c.p b{color:var(--yellow);}
 .vd-c.f b{color:var(--green);}
+/* Der Fahreranteil wird abgezogen – darum rot und über die ganze Breite. */
+.vd-c.m b{color:#FF6B6B;}
+.vd-c.wide{grid-column:1/-1;}
 .vd-pro{display:flex;align-items:center;gap:9px;margin-top:10px;
   padding:10px 12px;border-radius:12px;background:rgba(0,0,0,.26);
   font-size:12.5px;font-weight:800;color:var(--tx2);}
@@ -375,6 +378,8 @@ input,select{font-family:inherit;}
         <div class="vd-g">
           <div class="vd-c p"><b id="vdProv">0 €</b><span>Provision von den Lokalen</span></div>
           <div class="vd-c f"><b id="vdFee">0 €</b><span>Liefergebühren</span></div>
+          <!-- Was ich an die Fahrer auszahle. Geht von oben ab. -->
+          <div class="vd-c m wide"><b id="vdLohn">0 €</b><span id="vdLohnL">Fahreranteil (geht ab)</span></div>
         </div>
         <div class="vd-pro">Ø pro Bestellung<b id="vdAvg">0 €</b></div>
       </div>
@@ -390,7 +395,11 @@ input,select{font-family:inherit;}
 
       <p class="hint">
         Beispiel: Essen für 20,00 € + 4,00 € Liefergebühr.<br>
-        Bei 15 % sind das 3,00 € Provision + 4,00 € Liefergebühr = <b>7,00 € für mich</b>.<br>
+        Bei 15 % sind das 3,00 € Provision + 4,00 € Liefergebühr − 2,00 € Fahreranteil
+        = <b>5,00 € für mich</b>.<br>
+        Die Liefergebühr wird geteilt: die Hälfte für den Fahrer, die Hälfte für mich.
+        Bei 5,00 € Gebühr sind das 2,50 € und 2,50 €.
+        Sein Trinkgeld gehört zu 100 % ihm und steht hier gar nicht drin.<br>
         Gezählt wird nur, was geliefert wurde. Abgelehnte Bestellungen bringen nichts.<br>
         Der Prozentsatz gilt sofort für die Anzeige und wird für alle Geräte gespeichert.
       </p>
@@ -493,8 +502,26 @@ function tagStart(off){    /* 0 = heute 00:00, 1 = gestern 00:00 … */
 function wtag(t){
   return ['So','Mo','Di','Mi','Do','Fr','Sa'][new Date(t).getDay()];
 }
-/* Verdienst des Fahrers – gleiche Regel wie in der Fahrer-App */
-function payout(o){ return (Number(o.fee)||0) + (Number(o.tip)||0); }
+/* =====================================================================
+   WAS BEKOMMT DER FAHRER?
+   ---------------------------------------------------------------------
+   Die Liefergebühr wird geteilt: die HÄLFTE geht an den Fahrer, die
+   andere Hälfte bleibt bei Bestellux.
+     4,00 € Liefergebühr  ->  2,00 € Fahrer / 2,00 € Bestellux
+     5,00 € Liefergebühr  ->  2,50 € Fahrer / 2,50 € Bestellux
+   Das Trinkgeld gehört zusätzlich zu 100 % dem Fahrer – davon geht
+   nichts ab, es war nie das Geld von Bestellux.
+   ACHTUNG: Derselbe Anteil steht auch in fahrer.html (FAHRER_ANTEIL).
+   Wird er hier geändert, muss er dort GENAUSO geändert werden –
+   sonst rechnen die beiden Apps verschieden.
+   ===================================================================== */
+var FAHRER_ANTEIL = 0.50;                 /* die Hälfte der Liefergebühr */
+function fahrerLohn(o){
+  /* Auf den Cent gerundet – genau wie in fahrer.html, damit Fahrer und
+     Zentrale nie 1 Cent auseinanderliegen. */
+  return Math.round((Number(o.fee)||0) * FAHRER_ANTEIL * 100) / 100;
+}
+function payout(o){ return fahrerLohn(o) + (Number(o.tip)||0); }
 
 const ST_TXT = {
   neu:'beim Lokal', bestaetigt:'Küche kocht', abgelehnt:'abgelehnt',
@@ -781,27 +808,35 @@ function renderRest(){
 
   /* ------------------------------------------------------------------
      MEIN VERDIENST
-     Zwei Töpfe, und beide gehören Bestellux:
-       1. Provision – der Prozentsatz vom Warenkorb jedes Lokals.
-       2. Liefergebühr – die zahlt der Kunde fürs Bringen, davon geht
-          nichts an das Lokal.
+     Zwei Töpfe kommen rein, einer geht raus:
+       + Provision – der Prozentsatz vom Warenkorb jedes Lokals.
+       + Liefergebühr – die zahlt der Kunde fürs Bringen, davon geht
+         nichts an das Lokal.
+       − Fahreranteil – die HÄLFTE der Liefergebühr geht an den Fahrer.
+         Das Trinkgeld taucht hier gar nicht auf: es geht direkt vom
+         Kunden an den Fahrer und war nie mein Geld.
      Gezählt wird immer nur, was auch wirklich GELIEFERT wurde.
      Eine Bestellung mit zwei Lokalen hat trotzdem nur EINE
-     Liefergebühr – darum je Bestellung zählen, nicht je Lokal.
+     Liefergebühr und EINEN Fahreranteil – darum je Bestellung zählen,
+     nicht je Lokal.
      ------------------------------------------------------------------ */
   var vonZ = (RANGE >= 999) ? 0 : tagStart(RANGE - 1);
-  var gFee = 0, gBest = 0;
+  var gFee = 0, gBest = 0, gLohn = 0;
   ORDERS.forEach(function(o){
     if((o.at||0) < vonZ) return;
     if(o.status !== 'geliefert') return;
     gBest++;
-    gFee += (Number(o.fee) || 0);
+    gFee  += (Number(o.fee) || 0);
+    gLohn += fahrerLohn(o);          /* je Bestellung die Hälfte der Gebühr */
   });
-  var gesamt = gProv + gFee;
+  var gesamt = gProv + gFee - gLohn;
 
   $('vdBig').textContent  = eur(gesamt);
   $('vdProv').textContent = eur(gProv);
   $('vdFee').textContent  = eur(gFee);
+  $('vdLohn').textContent = '− ' + eur(gLohn);
+  $('vdLohnL').textContent = 'Fahreranteil · die Hälfte von ' + eur(gFee) + ' Liefergebühr aus ' +
+                             gBest + (gBest === 1 ? ' Lieferung' : ' Lieferungen');
   $('vdAvg').textContent  = eur(gBest ? gesamt / gBest : 0);
   $('vdSub').textContent  = gBest
     ? ('aus ' + gBest + (gBest === 1 ? ' gelieferten Bestellung' : ' gelieferten Bestellungen')
