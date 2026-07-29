@@ -63,6 +63,9 @@
 
   .appbar{display:flex;align-items:center;justify-content:space-between;padding:14px 18px 6px;position:relative;}
   .logo{display:flex;align-items:center;gap:9px;}
+  /* Ein Wort: das Zeichen IST das B, "estellux" steht direkt daneben.
+     Darum steht hier ein einziges Bild statt Badge + Schriftzug. */
+  .logo-img{height:40px;width:auto;display:block;}
   .logo-badge{width:42px;height:42px;border-radius:12px;background:var(--red);display:flex;align-items:center;justify-content:center;box-shadow:var(--shadow-sm);flex-shrink:0;padding:5px;}
   .logo-badge svg{width:100%;height:100%;display:block;}
   .logo-lock{display:flex;flex-direction:column;justify-content:center;line-height:1;}
@@ -428,6 +431,7 @@
     .install-banner{display:none;}
     .appbar{padding:20px 42px 10px;position:sticky;top:0;background:rgba(251,247,238,0.94);backdrop-filter:blur(10px);z-index:50;border-bottom:1px solid var(--line);}
     .logo-badge{width:50px;height:50px;}
+    .logo-img{height:50px;}
     .logo-text{font-size:24px;letter-spacing:0.8px;}
     .logo-text b{font-size:37px;}
     .logo-tag{font-size:9px;letter-spacing:1.5px;margin-top:5px;}
@@ -487,10 +491,7 @@
   </div>
 
   <div class="appbar">
-    <div class="logo">
-      <div class="logo-badge"><svg viewBox="0 0 100 100" aria-hidden="true"><g transform="translate(50,50) scale(1.0203) translate(-44.30,-45.98)"><g fill="#FFB800"><path d="M24.95 10.399999999999999 a1.45 1.45 0 0 1 2.9 0 L28.10 25 h-3.4 Z"/><path d="M29.55 9.2 a1.45 1.45 0 0 1 2.9 0 L32.70 25 h-3.4 Z"/><path d="M34.15 10.399999999999999 a1.45 1.45 0 0 1 2.9 0 L37.30 25 h-3.4 Z"/><path d="M22.9 21.5 h16.20 v4.4 c0 6.2 -5.80 10.6 -5.80 12.1 h-4.6 c0 -1.5 -5.80 -5.9 -5.80 -12.1 z"/><path d="M28.4 34 C28.2 43 27.3 52 27.2 60 L27.2 80.4 a3.8 3.8 0 0 0 7.6 0 L34.8 60 C34.7 52 33.8 43 33.6 34 Z"/></g><path fill="#FFB800" fill-rule="evenodd" d="M33.2 32 H50.5 A11.4 11.4 0 0 1 50.5 54.6 H33.2 Z M41.0 39.2 H48.8 A4.2 4.2 0 0 1 48.8 47.6 H41.0 Z"/><path fill="#FFB800" fill-rule="evenodd" d="M33.2 53.6 H52.6 A13.1 13.1 0 0 1 52.6 79.8 H33.2 Z M41.0 60.8 H50.9 A5.8 5.8 0 0 1 50.9 72.4 H41.0 Z"/></g></svg></div>
-      <div class="logo-lock"><div class="logo-text"><b>B</b>estellux</div><div class="logo-tag">ESSEN &middot; SCHNELL GELIEFERT</div></div>
-    </div>
+    <div class="logo"><img class="logo-img" src="logo-wort.png" alt="Bestellux"></div>
     <div class="appbar-icons">
       <button class="lang-btn" id="langBtn" onclick="toggleLangMenu(event)" aria-label="Sprache / Language"><span class="flag">🌐</span><span id="langCode">DE</span></button>
       <button class="icon-btn" onclick="openAccount()">👤</button>

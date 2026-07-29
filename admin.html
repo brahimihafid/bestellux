@@ -38,10 +38,8 @@ input,select{font-family:inherit;}
   padding:26px 20px calc(30px + env(safe-area-inset-bottom));
 }
 .lg-logo{
-  width:84px;height:84px;border-radius:26px;margin-bottom:16px;
-  background:linear-gradient(140deg,var(--yellow),var(--yellow-dark) 60%,#C98600);
-  display:flex;align-items:center;justify-content:center;font-size:38px;
-  box-shadow:0 14px 34px rgba(255,184,0,0.28);
+  margin-bottom:16px;display:flex;align-items:center;justify-content:center;
+  animation:lgFloat 3.4s ease-in-out infinite;
 }
 .lg-title{font-size:25px;font-weight:900;letter-spacing:-0.4px;margin:0;}
 .lg-title b{color:var(--yellow);}
@@ -82,8 +80,7 @@ input,select{font-family:inherit;}
    Restaurant-App, damit die drei Apps als eine Familie zu erkennen sind. */
 .top-row{display:flex;align-items:center;gap:11px;}
 .bxbar{display:flex;align-items:center;gap:8px;margin-bottom:10px;}
-.bxbar-lg{width:26px;height:26px;border-radius:9px;flex:0 0 auto;display:block;
-  box-shadow:0 2px 8px rgba(0,0,0,.45);}
+.bxbar-lg{height:26px;width:auto;flex:0 0 auto;display:block;}
 .bxbar-tx{font-size:14.5px;font-weight:900;letter-spacing:-0.3px;color:var(--gold);}
 .bxbar-tx b{color:var(--yellow);font-weight:900;}
 .bxbar-tag{font-size:10px;font-weight:900;letter-spacing:.9px;text-transform:uppercase;
@@ -350,10 +347,9 @@ input,select{font-family:inherit;}
 
 <!-- ================= LOGIN ================= -->
 <div id="login">
-  <div class="lg-logo"><img src="icon-192.png" alt="Bestellux"
-       style="width:72px;height:72px;border-radius:22px;display:block;
-              box-shadow:0 8px 26px rgba(0,0,0,.55)"></div>
-  <h1 class="lg-title">Bestellux <b>Zentrale</b></h1>
+  <div class="lg-logo"><img src="logo-wort-dunkel.png" alt="Bestellux"
+       style="height:58px;width:auto;display:block"></div>
+  <h1 class="lg-title"><b>Zentrale</b></h1>
   <p class="lg-sub">Nur für die Betriebsleitung</p>
 
   <div class="lg-card" id="lgBox">
@@ -376,8 +372,7 @@ input,select{font-family:inherit;}
 
   <div class="top">
     <div class="bxbar">
-      <img class="bxbar-lg" src="icon-192.png" alt="Bestellux">
-      <div class="bxbar-tx">Bestell<b>ux</b></div>
+      <img class="bxbar-lg" src="logo-wort-dunkel.png" alt="Bestellux">
       <div class="bxbar-tag">Zentrale</div>
     </div>
     <div class="top-row">
