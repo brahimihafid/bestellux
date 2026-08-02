@@ -9,6 +9,11 @@
 <link rel="apple-touch-icon" href="icon-180.png">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
 <style>
+/* Gutschein-Liste (2.13) – nur Anzeige */
+.gs{display:flex;flex-direction:column;gap:8px;margin:10px 0}
+.gs-r{background:#fff;border:1px solid #e6e0d6;border-radius:12px;padding:10px 12px}
+.gs-c{font-weight:800;letter-spacing:.5px;font-size:15px}
+.gs-t{font-size:13px;opacity:.75;margin-top:2px}
 :root{
   --yellow:#FFB800; --yellow-dark:#E09E00; --gold:#C9A24B;
   --red:#A0152C; --red-dark:#7C0F21;
@@ -444,7 +449,7 @@ input,select{font-family:inherit;}
         <div class="kpi y"><b id="pGes">0 €</b><span>meine Provision</span></div>
         <div class="kpi"><b id="pWaren">0 €</b><span>Warenkorb gesamt</span></div>
         <div class="kpi g"><b id="pGel">0</b><span>geliefert</span></div>
-        <div class="kpi"><b id="pAbg">0</b><span>abgelehnt</span></div>
+        <div class="kpi"><b id="pAbg">0</b><span>abgelehnt / storniert</span></div>
       </div>
 
       <div id="restList" class="rl"></div>
@@ -452,6 +457,29 @@ input,select{font-family:inherit;}
       <!-- Tag für Tag: an welchem Tag kam wie viel herein? -->
       <div class="sec-h"><h2>Tag für Tag</h2><em id="tagNote">—</em></div>
       <div id="tagList" class="dl"></div>
+
+      <!-- Gutscheine: nur zum Nachlesen. Geaendert wird in index.html (CODES). -->
+      <div class="sec-h"><h2>Gutscheine</h2><em>3 Codes aktiv</em></div>
+      <div class="gs">
+        <div class="gs-r">
+          <div class="gs-c">START5</div>
+          <div class="gs-t">5,00 € Rabatt · ab 20,00 € Bestellwert · bis 31.12.2026</div>
+        </div>
+        <div class="gs-r">
+          <div class="gs-c">NACHBAR10</div>
+          <div class="gs-t">10 % Rabatt · ab 15,00 € Bestellwert · bis 31.12.2026</div>
+        </div>
+        <div class="gs-r">
+          <div class="gs-c">FREIELIEFERUNG</div>
+          <div class="gs-t">Lieferung gratis · ab 25,00 € Bestellwert · bis 31.12.2026</div>
+        </div>
+      </div>
+      <p class="hint">
+        Der Rabatt geht von meinem Anteil ab, nicht vom Lokal und nicht vom Fahrer.
+        Das Trinkgeld bleibt immer voll beim Fahrer.<br>
+        Codes ändern: in <b>index.html</b> im Block <b>CODES</b>. Diese Liste hier
+        ist nur zum Nachlesen.
+      </p>
 
       <p class="hint">
         Beispiel: Essen für 20,00 € + 4,00 € Liefergebühr.<br>
@@ -598,12 +626,13 @@ function payout(o){ return fahrerLohn(o) + (Number(o.tip)||0); }
 const ST_TXT = {
   neu:'beim Lokal', bestaetigt:'Küche kocht', abgelehnt:'abgelehnt',
   angenommen:'angenommen', am_restaurant:'am Lokal',
-  abgeholt:'abgeholt', unterwegs:'unterwegs', geliefert:'geliefert'
+  abgeholt:'abgeholt', unterwegs:'unterwegs', geliefert:'geliefert',
+  storniert:'vom Kunden storniert'
 };
 function stClass(s){
   if(s === 'neu' || s === 'bestaetigt') return 'neu';
   if(s === 'geliefert') return 'fertig';
-  if(s === 'abgelehnt') return 'no';
+  if(s === 'abgelehnt' || s === 'storniert') return 'no';
   return 'lauf';
 }
 
@@ -714,7 +743,8 @@ function jobOf(uid){
   for(var i=0;i<ORDERS.length;i++){
     var o = ORDERS[i];
     if(o.status !== 'geliefert' && o.status !== 'neu' && o.status !== 'bestaetigt' &&
-       o.status !== 'abgelehnt' && o.driver && o.driver.uid === uid) return o;
+       o.status !== 'abgelehnt' && o.status !== 'storniert' &&
+       o.driver && o.driver.uid === uid) return o;
   }
   return null;
 }
@@ -785,12 +815,8 @@ const BX_RATES = 'bx_rates';  /* Notfall-Kopie im Gerät, falls kein Netz */
    Sie steht hier, damit auch Lokale ohne Bestellung eine Zeile bekommen. */
 const SHOPS = [
   {id:'berlin-doener',     name:'Berlin Döner',     ini:'BD', color:'#D01E2C', town:'Langwedel'},
-  {id:'imbiss-berlin',     name:'Imbiss Langwedel', ini:'IL', color:'#C0392B', town:'Langwedel'},
   {id:'pizza-hawaii',      name:'Pizza Hawaii',     ini:'PH', color:'#F0193C', town:'Verden'},
-  {id:'sushi-sakura',      name:'Sushi Sakura',     ini:'SS', color:'#2C2C2C', town:'Verden'},
-  {id:'getraenke-express', name:'Getränke Express', ini:'GE', color:'#1E6FB0', town:'Langwedel'},
-  {id:'mcd',               name:"McDonald's",       ini:'M',  color:'#D9A441', town:'Verden'},
-  {id:'burger-king',       name:'Burger King',      ini:'BK', color:'#8B4513', town:'Etelsen'}
+  {id:'getraenke-express', name:'Getränke Express', ini:'GE', color:'#1E6FB0', town:'Langwedel'}
 ];
 
 var RATES = {};        /* {shopId: prozent} */
@@ -866,7 +892,7 @@ function restStats(id){
         var n = (o.stops||[]).length || 1;
         r.fee += bxFee(o) / n;
       }
-      else if(o.status !== 'abgelehnt'){ r.offen++; }
+      else if(o.status !== 'abgelehnt' && o.status !== 'storniert'){ r.offen++; }
     }else if(s.ok === 0){
       r.abg++;                       /* dieses Lokal hat selbst abgelehnt */
     }
@@ -1118,7 +1144,8 @@ function render(){
   var neu    = ORDERS.filter(function(o){ return o.status === 'neu' || o.status === 'bestaetigt'; });
   var lauf   = ORDERS.filter(function(o){
     return o.status !== 'neu' && o.status !== 'bestaetigt' &&
-           o.status !== 'geliefert' && o.status !== 'abgelehnt';
+           o.status !== 'geliefert' && o.status !== 'abgelehnt' &&
+           o.status !== 'storniert';
   });
 
   $('kOn').textContent   = online.length;

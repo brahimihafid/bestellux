@@ -291,6 +291,29 @@
   .dish-note{width:100%;border:1.5px solid var(--line);border-radius:11px;padding:9px 12px;font-size:12.5px;font-family:inherit;color:var(--dark);background:var(--bg);}
   .dish-note:focus{outline:none;border-color:var(--yellow-dark);background:#fff;}
 
+  /* ---------- Allergene am Gericht (2.9) ---------- */
+  .dish-alg{font-size:10.5px;color:#7a6f63;margin-top:5px;line-height:1.45;}
+  .dish-alg.none{color:#a0968a;font-style:italic;}
+  .alg-item{display:flex;gap:10px;padding:8px 0;border-bottom:1px solid var(--line);font-size:13px;}
+  .alg-item:last-child{border-bottom:none;}
+  .alg-item b{flex-shrink:0;width:26px;color:var(--red);}
+
+  /* ---------- Mindestbestellwert (2.7) ---------- */
+  .min-warn{background:#FFF3CD;border:1.5px solid #E7C765;border-radius:12px;padding:10px 13px;font-size:12.5px;font-weight:700;color:#6b5300;margin-top:12px;line-height:1.5;}
+
+  /* ---------- Gutschein (2.13) ---------- */
+  .code-row{display:flex;gap:8px;align-items:stretch;}
+  .code-row .addr-input{flex:1;margin:0;}
+  .code-btn{background:var(--dark);color:#fff;border:none;border-radius:11px;padding:0 16px;font-weight:800;font-size:12.5px;font-family:inherit;cursor:pointer;white-space:nowrap;}
+  .code-msg{font-size:12px;font-weight:700;margin-top:7px;line-height:1.45;}
+  .code-msg.good{color:#1c7a3e;}
+  .code-msg.bad{color:#B3261E;}
+
+  /* ---------- Stornieren (2.14) ---------- */
+  .live-cancel{width:100%;margin-top:12px;background:#fff;border:1.5px solid #E0B4B4;color:#B3261E;border-radius:12px;padding:11px;font-size:13px;font-weight:800;font-family:inherit;cursor:pointer;}
+  .live-cancel.arm{background:#B3261E;border-color:#B3261E;color:#fff;}
+  .live-cancel-hint{font-size:11.5px;color:#7a6f63;margin-top:6px;line-height:1.45;}
+
   /* ---------- Cart ---------- */
   .cart-group{margin-bottom:14px;}
   .cart-group-head{display:flex;align-items:center;gap:9px;margin:4px 0 6px;}
@@ -545,10 +568,10 @@
     </div>
 
     <div class="stat-strip">
-      <div class="stat-chip"><b>7</b><span>Restaurants</span></div>
+      <div class="stat-chip"><b>3</b><span>Restaurants</span></div>
       <div class="stat-chip"><b>3</b><span>Orte</span></div>
       <div class="stat-chip"><b>~25min</b><span>⌀ Lieferzeit</span></div>
-      <div class="stat-chip"><b>4.6★</b><span>⌀ Bewertung</span></div>
+      <div class="stat-chip"><b>ab 2,50 €</b><span>Liefergebühr</span></div>
     </div>
 
     <div class="filter-row" id="filterRow"></div>
@@ -556,7 +579,7 @@
     <div class="section-label"><h2>Restaurants in deiner Nähe</h2></div>
     <div class="rest-list" id="restList"></div>
 
-    <div class="section-label" style="margin-top:22px;"><h2>Das lieben unsere Kund:innen</h2></div>
+    <div class="section-label" style="margin-top:22px;"><h2>Warum Bestellux?</h2></div>
     <div class="perk-scroll">
       <div class="perk-card hl"><div class="perk-icon">🛍️</div><h3>Mehrere Restaurants, eine Lieferung</h3><p>Kombiniere Burger, Pizza &amp; Dessert in einer einzigen Bestellung.</p></div>
       <div class="perk-card"><div class="perk-icon">📍</div><h3>Auch in Etelsen &amp; Langwedel</h3><p>Wir liefern dort, wo andere gar nicht erst anfangen.</p></div>
@@ -653,6 +676,7 @@
         <div class="choice-row" id="payChoice">
           <div class="choice-pill" data-pay="Bargeld" onclick="selectPay('Bargeld')">💵 Bargeld</div>
           <div class="choice-pill" data-pay="Karte" onclick="selectPay('Karte')">💳 Karte bei Lieferung</div>
+          <div class="choice-pill" data-pay="PayPal" id="payPaypal" style="display:none;" onclick="selectPay('PayPal')">🅿️ PayPal</div>
         </div>
         <div id="cashBox" style="display:none;">
           <div class="field-label">Mit welchem Schein zahlst du?</div>
@@ -660,15 +684,46 @@
           <div class="addr-hint">So hat dein Fahrer das Wechselgeld schon passend dabei.</div>
           <div class="change-line" id="changeLine" style="display:none;"></div>
         </div>
+        <div id="paypalBox" style="display:none;">
+          <div class="addr-hint">Du bezahlst mit PayPal, sobald das Restaurant die Bestellung bestätigt hat. Den Link bekommst du hier und per WhatsApp.</div>
+          <a class="wa-btn" id="paypalLink" href="#" target="_blank" rel="noopener" style="display:none;">🅿️ Jetzt mit PayPal bezahlen</a>
+        </div>
+        <div class="field-label">Gutscheincode</div>
+        <div class="code-row">
+          <input class="addr-input" id="codeInput" type="text" placeholder="z. B. START5" autocapitalize="characters">
+          <button class="code-btn" onclick="applyCode()">Einlösen</button>
+        </div>
+        <div class="code-msg" id="codeMsg" style="display:none;"></div>
         <div class="summary-box">
           <div class="summary-row"><span>Zwischensumme</span><span id="sumSubtotal">0,00 €</span></div>
           <div class="summary-row"><span id="sumFeeLabel">Liefergebühr</span><span id="sumFee">–</span></div>
+          <div class="summary-row" id="sumRabRow" style="display:none;"><span id="sumRabLabel">Gutschein</span><span id="sumRab">0,00 €</span></div>
           <div class="summary-row" id="sumTipRow" style="display:none;"><span>Trinkgeld</span><span id="sumTip">0,00 €</span></div>
           <div class="summary-row total"><span>Gesamt</span><span id="sumTotal">0,00 €</span></div>
+          <div class="summary-note" id="sumFeeNote"></div>
           <div class="summary-note" id="sumNote" style="display:none;"></div>
         </div>
+        <div class="min-warn" id="minWarn" style="display:none;"></div>
         <button class="order-btn" id="orderBtn" onclick="placeOrder()" disabled>Bitte Ort &amp; Zahlungsart wählen</button>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- Allergene & Zusatzstoffe -->
+<div class="overlay" id="algOverlay">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('algOverlay')">✕</button>
+    <div class="modal-head">
+      <h3>Allergene &amp; Zusatzstoffe</h3>
+      <p>Die Angaben kommen direkt vom jeweiligen Restaurant. Steht am Gericht „Angaben folgen“, hat uns das Lokal die Liste noch nicht gegeben – frag dann bitte kurz im Restaurant nach, bevor du bestellst.</p>
+    </div>
+    <div class="modal-body">
+      <div class="field-label">Die 14 Hauptallergene</div>
+      <div id="algList"></div>
+      <div class="field-label" style="margin-top:16px;">Zusatzstoffe</div>
+      <div id="zusList"></div>
+      <div class="addr-hint" style="margin-top:14px;">Wichtig: Bei einer echten Allergie ruf bitte immer zusätzlich im Restaurant an. In einer Küche können Spuren in jedes Gericht kommen.</div>
     </div>
   </div>
 </div>
@@ -701,6 +756,7 @@
       <div class="summary-box" id="reviewSummaryBox">
         <div class="summary-row"><span>Zwischensumme</span><span id="revSubtotal">0,00 €</span></div>
         <div class="summary-row"><span id="revFeeLabel">Liefergebühr</span><span id="revFee">–</span></div>
+        <div class="summary-row" id="revRabRow" style="display:none;"><span id="revRabLabel">Gutschein</span><span id="revRab">0,00 €</span></div>
         <div class="summary-row" id="revTipRow" style="display:none;"><span>Trinkgeld</span><span id="revTip">0,00 €</span></div>
         <div class="summary-row total"><span>Gesamt</span><span id="revTotal">0,00 €</span></div>
       </div>
@@ -740,6 +796,8 @@
         <div class="live-head"><span class="live-dot"></span><b>Live-Status</b></div>
         <div class="live-steps" id="liveSteps"></div>
         <div class="live-msg" id="liveMsg"></div>
+        <button class="live-cancel" id="liveCancelBtn" style="display:none;" onclick="cancelOrder()">Bestellung stornieren</button>
+        <div class="live-cancel-hint" id="liveCancelHint" style="display:none;">Solange das Restaurant noch nicht bestätigt hat, kannst du kostenlos stornieren.</div>
       </div>
       <div class="wa-bubble" id="waBubble"></div>
       <a class="wa-btn" id="waLink" href="#" target="_blank" rel="noopener">📲 Bestellung per WhatsApp senden</a>
@@ -798,6 +856,7 @@
       <div class="acc-row"><div class="acc-icon">🛠️</div><a href="#" onclick="closeModal('accOverlay');openReklamation();return false;">Reklamation aufgeben</a></div>
       <div class="acc-row"><div class="acc-icon">✉️</div><a href="mailto:bestellux1@gmail.com">bestellux1@gmail.com</a></div>
       <div class="acc-row"><div class="acc-icon">📍</div><span>Liefergebiet: Langwedel, Etelsen, Verden</span></div>
+      <div class="acc-row"><div class="acc-icon">🧾</div><a href="#" onclick="closeModal('accOverlay');openAllergene();return false;">Allergene &amp; Zusatzstoffe</a></div>
       <div class="acc-row"><div class="acc-icon">📄</div><span>Impressum &amp; Datenschutz</span></div>
       <div class="acc-row"><div class="acc-icon">🧑‍🍳</div><a href="#" onclick="closeModal('accOverlay');openBewerbung();return false;">Bei uns arbeiten – jetzt bewerben</a></div>
       <div class="acc-row"><div class="acc-icon">🛵</div><a href="fahrer.html">Fahrer-App (nur für Kuriere)</a></div>
@@ -925,7 +984,7 @@ function dishImg(keyword, fallbackSvg, directUrl){
    ================================================================ */
 const RESTAURANTS = [
   /* ---- Berlin Döner · Große Straße 54, 27299 Langwedel · Tel. 04232-945360 · Mo–Sa 11–22, So/Feiertag 12–22 ---- */
-  { id:'berlin-doener', name:'Berlin Döner', type:'Döner, Pizza & Grill', filter:'Döner', town:'Langwedel', rating:4.6, time:'15–25 Min', color:'#D01E2C', initials:'BD', cover:'donerkebab,grill', coverImg:'https://images.pexels.com/photos/36750264/pexels-photo-36750264.jpeg?auto=compress&cs=tinysrgb&w=600',
+  { id:'berlin-doener', name:'Berlin Döner', type:'Döner, Pizza & Grill', filter:'Döner', town:'Langwedel', time:'15–25 Min', color:'#D01E2C', initials:'BD', cover:'donerkebab,grill', coverImg:'https://images.pexels.com/photos/36750264/pexels-photo-36750264.jpeg?auto=compress&cs=tinysrgb&w=600',
     /* Echte Fotos pro Kategorie (Pexels) – hier URLs ändern, um Bilder auszutauschen */
     catImg:{
       'Drehspieß (Kalb & Pute)':'https://images.pexels.com/photos/36750264/pexels-photo-36750264.jpeg?auto=compress&cs=tinysrgb&w=500',
@@ -1009,38 +1068,14 @@ const RESTAURANTS = [
       {cat:'Getränke', name:'1L Getränk', price:4.50, desc:'1 Liter Flasche', img:'https://images.pexels.com/photos/6920722/pexels-photo-6920722.jpeg?auto=compress&cs=tinysrgb&w=500', svg: svgDrink()},
       {cat:'Getränke', name:'Ayran 0,20l', price:2.00, desc:'Türkisches Joghurtgetränk', photo:'ayran', svg: svgDrink()},
     ]},
-  { id:'mcd', name:"McDonald's", type:'Burger & Fast Food', filter:'Burger', town:'Verden', rating:4.3, time:'20–30 Min', color:'#D9A441', initials:'M', cover:'cheeseburger,fastfood', coverImg:'https://images.pexels.com/photos/4109243/pexels-photo-4109243.jpeg?auto=compress&cs=tinysrgb&w=600',
-    menu:[
-      {name:'Cheeseburger Menü', price:7.49, desc:'Saftiger Cheeseburger, Pommes & Getränk', photo:'cheeseburger', svg: svgBurger('#7B3F00')},
-      {name:'Chicken Nuggets (9er)', price:5.99, desc:'Knusprige Hähnchen-Nuggets mit Dip', photo:'chickennuggets', svg: svgNuggets()},
-      {name:'Pommes groß', price:2.99, desc:'Goldgelb & knusprig', photo:'frenchfries', svg: svgFries()},
-    ]},
-  { id:'imbiss-berlin', name:'Imbiss Langwedel', type:'Döner & Grill', filter:'Döner', town:'Langwedel', rating:4.7, time:'15–25 Min', color:'#C0392B', initials:'IL', cover:'donerkebab', coverImg:'https://images.pexels.com/photos/34106240/pexels-photo-34106240.jpeg?auto=compress&cs=tinysrgb&w=600',
-    menu:[
-      {name:'Döner Kebap', price:6.50, desc:'Rind/Kalb, frisches Gemüse, Knoblauchsoße', photo:'donerkebab', svg: svgDoener()},
-      {name:'Dürüm Döner', price:7.00, desc:'Im warmen Fladenbrot gerollt', photo:'durum,wrap', svg: svgDoener()},
-      {name:'Falafel Teller', price:7.50, desc:'Hausgemachte Falafel mit Salat & Hummus', photo:'falafel', svg: svgFalafel()},
-    ]},
-  { id:'pizza-hawaii', name:'Pizza Hawaii', type:'Pizzeria', filter:'Pizza', town:'Verden', rating:4.5, time:'25–35 Min', color:'#F0193C', initials:'PH', cover:'hawaiianpizza,pizza', coverImg:'https://images.pexels.com/photos/31846715/pexels-photo-31846715.jpeg?auto=compress&cs=tinysrgb&w=600',
+  { id:'pizza-hawaii', name:'Pizza Hawaii', type:'Pizzeria', filter:'Pizza', town:'Verden', time:'25–35 Min', color:'#F0193C', initials:'PH', cover:'hawaiianpizza,pizza', coverImg:'https://images.pexels.com/photos/31846715/pexels-photo-31846715.jpeg?auto=compress&cs=tinysrgb&w=600',
     menu:[
       {name:'Pizza Hawaii', price:8.50, desc:'Schinken, Ananas, extra Käse', photo:'hawaiianpizza', svg: svgPizza('#F5C451','#E8A33D')},
       {name:'Pizza Salami', price:8.00, desc:'Würzige Salami, Mozzarella', photo:'pepperonipizza', svg: svgPizza('#C0392B','#8B2E22')},
       {name:'Pizza Margherita', price:7.00, desc:'Tomate, Mozzarella, frisches Basilikum', photo:'margheritapizza', svg: svgPizza('#2E7D32','#4C9A2A')},
     ]},
-  { id:'burger-king', name:'Burger King', type:'Burger & Fast Food', filter:'Burger', town:'Etelsen', rating:4.2, time:'20–30 Min', color:'#8B4513', initials:'BK', cover:'burger,grill', coverImg:'https://images.pexels.com/photos/34725360/pexels-photo-34725360.jpeg?auto=compress&cs=tinysrgb&w=600',
-    menu:[
-      {name:'Whopper Menü', price:8.49, desc:'Flame-grilled Patty, Pommes & Getränk', photo:'flamegrilledburger', svg: svgBurger('#5A3210')},
-      {name:'Chicken Royale', price:6.99, desc:'Knuspriges Hähnchenfilet, Salat, Mayo', photo:'chickenburger', svg: svgBurger('#D9A441')},
-      {name:'Pommes groß', price:2.99, desc:'Goldgelb & knusprig', photo:'frenchfries', svg: svgFries()},
-    ]},
-  { id:'sushi-sakura', name:'Sushi Sakura', type:'Sushi & Asiatisch', filter:'Sushi', town:'Verden', rating:4.8, time:'30–40 Min', color:'#2C2C2C', initials:'SS', cover:'sushi,platter', coverImg:'https://images.pexels.com/photos/35452371/pexels-photo-35452371.jpeg?auto=compress&cs=tinysrgb&w=600',
-    menu:[
-      {name:'Sushi Mixbox (12 Stk.)', price:12.90, desc:'Lachs, Thunfisch, Avocado – frisch gerollt', photo:'sushi', svg: svgSushi()},
-      {name:'Yakisoba Nudelbox', price:9.90, desc:'Gebratene Nudeln mit Gemüse', photo:'yakisoba,noodles', svg: svgNoodleBox()},
-      {name:'Frühlingsrollen (4er)', price:4.90, desc:'Knusprig frittiert, mit Süß-Sauer-Soße', photo:'springrolls', svg: svgRolls()},
-    ]},
   /* ---- Getränke Express · reiner Getränke-Shop (Fotos später ergänzen) ---- */
-  { id:'getraenke-express', name:'Getränke Express', type:'Getränke & mehr', filter:'Getränke', town:'Langwedel', rating:4.6, time:'15–25 Min', color:'#1E6FB0', initials:'GE', cover:'softdrinks,drinks', coverImg:'https://images.pexels.com/photos/6920722/pexels-photo-6920722.jpeg?auto=compress&cs=tinysrgb&w=600',
+  { id:'getraenke-express', name:'Getränke Express', type:'Getränke & mehr', filter:'Getränke', town:'Langwedel', time:'15–25 Min', color:'#1E6FB0', initials:'GE', cover:'softdrinks,drinks', coverImg:'https://images.pexels.com/photos/6920722/pexels-photo-6920722.jpeg?auto=compress&cs=tinysrgb&w=600',
     menu:[
       {cat:'Softdrinks', name:'Coca Cola 0,33l', price:2.00, desc:'', img:'https://images.pexels.com/photos/11256166/pexels-photo-11256166.jpeg?auto=compress&cs=tinysrgb&w=500', svg: svgDrink()},
       {cat:'Softdrinks', name:'Coca Cola Light 0,33l', price:2.00, desc:'', img:'https://images.pexels.com/photos/11256166/pexels-photo-11256166.jpeg?auto=compress&cs=tinysrgb&w=500', svg: svgDrink()},
@@ -1056,7 +1091,7 @@ const RESTAURANTS = [
       {cat:'Energy & Mehr', name:'Ayran 0,25l', price:1.80, desc:'Türkisches Joghurtgetränk', photo:'ayran', svg: svgDrink()},
     ]},
 ];
-const FILTERS = ['Alle','Burger','Pizza','Döner','Sushi','Getränke'];
+const FILTERS = ['Alle','Pizza','Döner','Getränke'];
 
 const TOWN_COORDS = {
   'Verden': [52.9348, 9.2330],
@@ -1073,7 +1108,12 @@ const DIST = {
    nimmt die App die Ortsmitte – dann ist die Zeit etwas gröber.
    → Neue Adresse einfach hier eintragen, sonst nichts ändern. */
 const REST_ADDRESS = {
-  'berlin-doener': 'Große Straße 54, 27299 Langwedel, Deutschland'
+  'berlin-doener':     'Große Straße 54, 27299 Langwedel, Deutschland',
+  /* ↓↓↓ Hier die echten Straßenadressen eintragen – zwischen die Anführungszeichen.
+         Format: 'Straße Hausnummer, PLZ Ort, Deutschland'
+         Solange das Feld leer bleibt, rechnet die App ab der Ortsmitte. ↓↓↓ */
+  'pizza-hawaii':      '',
+  'getraenke-express': ''
 };
 
 /* Zubereitungszeit pro Restaurant in Minuten [von, bis].
@@ -1081,14 +1121,84 @@ const REST_ADDRESS = {
    deiner Küche realistisch ist. */
 const REST_PREP = {
   'berlin-doener':    [10, 18],
-  'mcd':              [ 8, 14],
-  'imbiss-berlin':    [10, 18],
   'pizza-hawaii':     [18, 28],
-  'burger-king':      [ 8, 14],
-  'sushi-sakura':     [20, 30],
   'getraenke-express':[ 3,  6]
 };
 const DEFAULT_PREP = [12, 20];
+
+/* =====================================================================
+   MINDESTBESTELLWERT (2.7)
+   ---------------------------------------------------------------------
+   Betrag in Euro, den das ESSEN erreichen muss. Liefergebühr und
+   Trinkgeld zählen bewusst nicht mit – sonst fühlt es sich unfair an.
+   0 = kein Mindestbestellwert.
+   Jedes Lokal zählt für sich: bestellt jemand bei zwei Lokalen, muss
+   jedes Lokal seinen eigenen Wert erreichen.
+   ===================================================================== */
+const MIN_ORDER = {
+  'berlin-doener':     10,
+  'pizza-hawaii':      12,
+  'getraenke-express':  8
+};
+const DEFAULT_MIN_ORDER = 0;
+function minOrderFor(id){
+  var v = MIN_ORDER[id];
+  return (typeof v === 'number') ? v : DEFAULT_MIN_ORDER;
+}
+
+/* =====================================================================
+   ALLERGENE & ZUSATZSTOFFE (2.9)
+   ---------------------------------------------------------------------
+   In Deutschland müssen die 14 Hauptallergene und die Zusatzstoffe am
+   Gericht stehen. Die Angaben kommen vom Restaurant – nicht von uns.
+   Solange ein Lokal nichts geliefert hat, steht am Gericht bewusst
+   "Angaben folgen". Lieber ehrlich als geraten.
+
+   So trägst du sie ein – direkt beim Gericht in der Speisekarte:
+     {name:'Döner Kebap', price:6.50, desc:'…', alg:'A,G,J', zus:'2'}
+   alg = Buchstaben aus ALLERGENE, zus = Zahlen aus ZUSATZSTOFFE.
+
+   Hinweis: das ist keine Rechtsberatung. Die verbindliche Liste muss
+   jedes Restaurant selbst bestätigen.
+   ===================================================================== */
+const ALLERGENE = {
+  'A':'Glutenhaltiges Getreide', 'B':'Krebstiere', 'C':'Eier', 'D':'Fisch',
+  'E':'Erdnüsse', 'F':'Soja', 'G':'Milch & Laktose', 'H':'Schalenfrüchte (Nüsse)',
+  'I':'Sellerie', 'J':'Senf', 'K':'Sesam', 'L':'Schwefeldioxid & Sulfite',
+  'M':'Lupinen', 'N':'Weichtiere'
+};
+const ZUSATZSTOFFE = {
+  '1':'mit Farbstoff', '2':'mit Konservierungsstoff', '3':'mit Antioxidationsmittel',
+  '4':'mit Geschmacksverstärker', '5':'geschwefelt', '6':'geschwärzt',
+  '7':'mit Phosphat', '8':'mit Süßungsmittel', '9':'koffeinhaltig',
+  '10':'chininhaltig', '11':'gewachst'
+};
+function algText(item){
+  var out = [];
+  if(item && item.alg) String(item.alg).split(',').forEach(function(c){
+    c = c.trim().toUpperCase(); if(ALLERGENE[c]) out.push(c+' '+ALLERGENE[c]);
+  });
+  if(item && item.zus) String(item.zus).split(',').forEach(function(c){
+    c = c.trim(); if(ZUSATZSTOFFE[c]) out.push(c+' '+ZUSATZSTOFFE[c]);
+  });
+  return out;
+}
+
+/* =====================================================================
+   GUTSCHEINCODES (2.13)
+   ---------------------------------------------------------------------
+   typ: 'euro'      → fester Betrag  (wert = Euro)
+        'prozent'   → Prozent vom Essen (wert = Prozent)
+        'lieferung' → die Liefergebühr entfällt
+   min: Mindestbestellwert (nur Essen), bis: letzter gültiger Tag.
+   Der Rabatt geht IMMER nur auf das Essen – nie auf das Trinkgeld des
+   Fahrers. Neuen Code einfach als weitere Zeile eintragen.
+   ===================================================================== */
+const CODES = {
+  'START5':        { typ:'euro',      wert:5,  min:20, bis:'2026-12-31', text:'5 € Rabatt ab 20 € Bestellwert' },
+  'NACHBAR10':     { typ:'prozent',   wert:10, min:15, bis:'2026-12-31', text:'10 % Rabatt ab 15 € Bestellwert' },
+  'FREIELIEFERUNG':{ typ:'lieferung', wert:0,  min:25, bis:'2026-12-31', text:'Lieferung gratis ab 25 € Bestellwert' }
+};
 
 const WHATSAPP_NUMBER = '4917620660723';
 
@@ -1149,7 +1259,67 @@ function isOpen(s){
   if(s.until && Date.now() >= s.until) st = !st;
   return st;
 }
-function shopOpen(id){ return isOpen(SHOPS_STATE[id]); }
+/* ---------------------------------------------------------------------
+   ÖFFNUNGSZEITEN – der Regelfall (2.10)
+   ---------------------------------------------------------------------
+   0 = Sonntag, 1 = Montag … 6 = Samstag.
+     ['11:00','22:00'] = an diesem Tag von … bis geöffnet
+     null              = Ruhetag
+   Geht es über Mitternacht (z. B. 11:00–02:00), einfach so eintragen –
+   die App rechnet die Nachtstunden selbst dem Vortag zu.
+   Steht ein Lokal hier NICHT drin, ist es immer offen (wie bisher).
+
+   Die Zeiten sind die Regel, der Schalter im Restaurant-Konto bleibt für
+   die Ausnahme: Pause, früher Feierabend, Ruhetag außer der Reihe.
+   Außerhalb der Öffnungszeiten ist ein Lokal IMMER zu – auch wenn der
+   Schalter noch auf "offen" steht.
+   Auch dieser Block ist ZEICHENGLEICH mit dem in restaurant.html.
+   --------------------------------------------------------------------- */
+const REST_HOURS = {
+  'berlin-doener':     { 0:['12:00','22:00'], 1:['11:00','22:00'], 2:['11:00','22:00'], 3:['11:00','22:00'], 4:['11:00','22:00'], 5:['11:00','23:00'], 6:['11:00','23:00'] },
+  'pizza-hawaii':      { 0:['12:00','22:00'], 1:null,              2:['11:30','22:00'], 3:['11:30','22:00'], 4:['11:30','22:00'], 5:['11:30','23:00'], 6:['11:30','23:00'] },
+  'getraenke-express': { 0:null,              1:['09:00','20:00'], 2:['09:00','20:00'], 3:['09:00','20:00'], 4:['09:00','20:00'], 5:['09:00','21:00'], 6:['09:00','18:00'] }
+};
+var WOCHENTAG = ['Sonntag','Montag','Dienstag','Mittwoch','Donnerstag','Freitag','Samstag'];
+function hmToMin(t){ var p = String(t).split(':'); return (+p[0])*60 + (+p[1]); }
+function dayWindow(id, d){
+  var h = REST_HOURS[id];
+  if(!h) return null;
+  var t = h[d];
+  if(!t || !t[0] || !t[1]) return null;
+  return [hmToMin(t[0]), hmToMin(t[1])];
+}
+function hoursOpen(id, now){
+  if(!REST_HOURS[id]) return true;
+  now = now || new Date();
+  var day = now.getDay();
+  var min = now.getHours()*60 + now.getMinutes();
+  var w = dayWindow(id, day);
+  if(w){
+    if(w[1] > w[0]){ if(min >= w[0] && min < w[1]) return true; }
+    else if(min >= w[0]) return true;
+  }
+  var y = dayWindow(id, (day+6)%7);
+  if(y && y[1] <= y[0] && min < y[1]) return true;
+  return false;
+}
+function nextOpenText(id, now){
+  if(!REST_HOURS[id]) return '';
+  now = now || new Date();
+  var day = now.getDay();
+  var min = now.getHours()*60 + now.getMinutes();
+  var w = dayWindow(id, day);
+  if(w && min < w[0]) return 'öffnet heute um ' + REST_HOURS[id][day][0];
+  for(var i=1;i<=7;i++){
+    var d = (day+i)%7;
+    if(dayWindow(id, d)) return 'öffnet ' + (i===1 ? 'morgen' : WOCHENTAG[d]) + ' um ' + REST_HOURS[id][d][0];
+  }
+  return '';
+}
+function shopOpen(id){
+  if(!hoursOpen(id)) return false;
+  return isOpen(SHOPS_STATE[id]);
+}
 function shopsLoadLocal(){
   try{
     for(var i=0;i<localStorage.length;i++){
@@ -1272,6 +1442,67 @@ function showThanks(name){
   }, 1000);
 }
 
+/* =====================================================================
+   BESTELLUNG STORNIEREN (2.14)
+   ---------------------------------------------------------------------
+   Geht nur, solange der Status noch 'neu' ist – also bevor das
+   Restaurant bestätigt hat und bevor jemand zu kochen anfängt.
+   Zwei Tipps sind nötig, damit niemand aus Versehen storniert.
+   WICHTIG: In Firebase müssen dafür die neuen Regeln veröffentlicht
+   sein (firebase-rules.json), sonst wird das Schreiben abgelehnt.
+   ===================================================================== */
+var cancelArmed = false, cancelArmTimer = null;
+function cancelOrder(){
+  const btn = document.getElementById('liveCancelBtn');
+  if(!liveId) return;
+  const o = bxGet(liveId);
+  if(!o || o.status !== 'neu'){
+    showToast('Das Restaurant hat schon angefangen – bitte ruf kurz an.');
+    if(btn) btn.style.display='none';
+    return;
+  }
+  if(!cancelArmed){
+    cancelArmed = true;
+    if(btn){ btn.classList.add('arm'); btn.textContent = 'Wirklich stornieren? Nochmal tippen'; }
+    if(cancelArmTimer) clearTimeout(cancelArmTimer);
+    cancelArmTimer = setTimeout(function(){
+      cancelArmed = false;
+      if(btn){ btn.classList.remove('arm'); btn.textContent = 'Bestellung stornieren'; }
+    }, 6000);
+    return;
+  }
+  cancelArmed = false;
+  if(cancelArmTimer){ clearTimeout(cancelArmTimer); cancelArmTimer = null; }
+  if(btn){ btn.classList.remove('arm'); btn.disabled = true; btn.textContent = 'Wird storniert …'; }
+
+  const t = Date.now();
+  const patch = { status:'storniert', storniertAt:t, storniertVon:'Kunde' };
+  /* 1) lokal – funktioniert auch ohne Netz */
+  try{
+    const a = bxLoad();
+    for(var i=0;i<a.length;i++) if(a[i].id===liveId){
+      a[i].status = 'storniert'; a[i].storniertAt = t; a[i].storniertVon = 'Kunde';
+      a[i].hist = (a[i].hist||[]).concat([{s:'storniert', t:t}]);
+      break;
+    }
+    bxSave(a);
+  }catch(e){}
+  if(LIVE_O && LIVE_O.id===liveId){
+    LIVE_O.status='storniert'; LIVE_O.storniertAt=t; LIVE_O.storniertVon='Kunde';
+  }
+  /* 2) Firebase – damit Restaurant und Fahrer es sofort sehen */
+  if(FB_OK){
+    try{
+      FB_DB.ref('orders/'+liveId).update(patch).catch(function(){
+        showToast('Storno konnte nicht gesendet werden – bitte ruf das Restaurant an.');
+      });
+    }catch(e){}
+  }
+  liveLast = '';
+  liveRender();
+  showToast('Deine Bestellung wurde storniert.');
+}
+
 function liveRender(){
   const box = document.getElementById('liveBox');
   if(!box || !liveId) return;
@@ -1288,11 +1519,31 @@ function liveRender(){
     else if(o.status === 'unterwegs') chime('near');
     else if(o.status === 'geliefert') chime('done');
     else if(o.status === 'abgelehnt') chime('near');
+    else if(o.status === 'storniert')  chime('near');
   }
   LIVE_PREV = o.status;
 
   const msgEl = document.getElementById('liveMsg');
   const restName = (o.stops && o.stops[0]) ? o.stops[0].name : '';
+
+  /* Stornier-Knopf: nur solange nichts angefangen hat (2.14). */
+  const cbtn = document.getElementById('liveCancelBtn');
+  const chint = document.getElementById('liveCancelHint');
+  const canCancel = (o.status === 'neu');
+  if(cbtn){
+    cbtn.style.display = canCancel ? 'block' : 'none';
+    if(canCancel){ cbtn.disabled = false; cbtn.classList.remove('arm'); cbtn.textContent = 'Bestellung stornieren'; }
+  }
+  if(chint) chint.style.display = canCancel ? 'block' : 'none';
+
+  /* Sonderfall: der Kunde hat selbst storniert. */
+  if(o.status === 'storniert'){
+    document.getElementById('liveSteps').innerHTML =
+      '<div class="live-s now" style="flex:1"><i></i><span>Storniert</span></div>';
+    if(msgEl) msgEl.innerHTML = '🚫 Deine Bestellung wurde <b>storniert</b>. Es wird nichts berechnet. '+
+      'Du kannst jederzeit neu bestellen.';
+    return;
+  }
 
   /* Sonderfall: das Restaurant hat die Bestellung abgelehnt. */
   if(o.status === 'abgelehnt'){
@@ -1352,11 +1603,33 @@ function liveRender(){
   if(o.status === 'geliefert') showThanks(d.name || '');
 }
 window.addEventListener('storage', function(e){ if(e.key===BX_ORDERS) liveRender(); });
+/* =====================================================================
+   LIEFERGEBÜHR (2.8) – nach echter Entfernung
+   ---------------------------------------------------------------------
+   FEE_BASE      Grundpreis für jede Lieferung
+   FEE_FREE_KM   diese km sind im Grundpreis drin
+   FEE_PER_KM    jeder angefangene km darüber kostet extra
+   FEE_MAX       Deckel, damit es für den Kunden nie unfair wird
+   Beispiel: 7,4 km  ->  2,50 + 5 × 0,40 = 4,50 €
+   Ändere nur diese Zahlen – der Rest rechnet automatisch mit.
+   ===================================================================== */
+const FEE_BASE    = 2.50;
+const FEE_FREE_KM = 3;
+const FEE_PER_KM  = 0.40;
+const FEE_MAX     = 7.50;
 const EXTRA_REST_FEE = 1;
+
+function feeForKm(km){
+  if(km==null || isNaN(km)) return FEE_BASE;
+  var extra = Math.ceil(Math.max(0, km - FEE_FREE_KM));
+  return Math.min(FEE_MAX, FEE_BASE + extra * FEE_PER_KM);
+}
+function eurTxt(n){ return (Number(n)||0).toFixed(2).replace('.',',')+' €'; }
+function kmTxtG(n){ return (Number(n)||0).toFixed(1).replace('.',',')+' km'; }
 
 /* ============ State ============
    cart.items = { restaurantId: { itemKey: {name, price, qty, note} } } */
-let cart = { items:{}, town:null, pay:null, customerCoords:null, tip:0, cash:null };
+let cart = { items:{}, town:null, pay:null, customerCoords:null, tip:0, cash:null, code:null };
 let activeFilter='Alle';
 let leafletMap=null, driverMarker=null, trackTimer=null;
 /* Zählt echte Minuten herunter (kein Demo-Tempo). */
@@ -1369,6 +1642,80 @@ let reklaReason=null;
 function cartRestIds(){ return Object.keys(cart.items); }
 function cartTotalQty(){ let q=0; cartRestIds().forEach(id=>Object.values(cart.items[id]).forEach(it=>q+=it.qty)); return q; }
 function cartSubtotal(){ let s=0; cartRestIds().forEach(id=>Object.values(cart.items[id]).forEach(it=>s+=it.qty*it.price)); return s; }
+/* Summe NUR für ein Lokal – dafür ist der Mindestbestellwert da (2.7). */
+function restSubtotal(id){
+  let s=0; if(!cart.items[id]) return 0;
+  Object.values(cart.items[id]).forEach(it=>s+=it.qty*it.price);
+  return s;
+}
+/* Welche Lokale sind noch unter ihrem Mindestbestellwert? */
+function minOrderMissing(){
+  const out=[];
+  cartRestIds().forEach(function(id){
+    const m = minOrderFor(id);
+    if(m>0 && restSubtotal(id) < m - 0.001){
+      const r = RESTAURANTS.find(x=>x.id===id);
+      out.push({ id:id, name:(r?r.name:id), min:m, fehlt:(m - restSubtotal(id)) });
+    }
+  });
+  return out;
+}
+
+/* ---------- Gutschein (2.13) ---------- */
+function codeToday(){
+  const d = new Date();
+  return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2);
+}
+/* Prüft den Code und sagt WARUM er nicht geht – nie nur "ungültig". */
+function codeCheck(name){
+  const key = String(name||'').trim().toUpperCase();
+  if(!key) return { ok:false, msg:'Bitte einen Code eintragen.' };
+  const c = CODES[key];
+  if(!c) return { ok:false, msg:'Diesen Code kennen wir nicht.' };
+  if(c.bis && codeToday() > c.bis) return { ok:false, msg:'Dieser Code ist leider abgelaufen.' };
+  const sub = cartSubtotal();
+  if(c.min && sub < c.min - 0.001)
+    return { ok:false, msg:'Der Code gilt ab '+eurTxt(c.min)+'. Dir fehlen noch '+eurTxt(c.min-sub)+'.' };
+  return { ok:true, key:key, code:c, msg:'✅ '+c.text };
+}
+/* Rabatt geht immer nur aufs Essen und auf die Liefergebühr –
+   niemals auf das Trinkgeld des Fahrers. */
+function computeDiscount(sub, fee){
+  if(!cart.code) return { rab:0, label:'' };
+  const c = CODES[cart.code];
+  if(!c) return { rab:0, label:'' };
+  let rab = 0;
+  if(c.typ==='euro')           rab = Math.min(c.wert, sub);
+  else if(c.typ==='prozent')   rab = sub * c.wert / 100;
+  else if(c.typ==='lieferung') rab = (fee||0);
+  rab = Math.round(rab*100)/100;
+  return { rab:rab, label:'Gutschein '+cart.code };
+}
+/* EINE Stelle, an der die Rechnung entsteht. Alle Anzeigen lesen hier. */
+function cartTotals(){
+  const sub = cartSubtotal();
+  const fee = computeFee();
+  const tip = cart.tip || 0;
+  const d   = computeDiscount(sub, fee);
+  let total = sub + (fee||0) + tip - d.rab;
+  if(total < tip) total = tip;
+  total = Math.round(total*100)/100;
+  return { sub:sub, fee:fee, tip:tip, rab:d.rab, rabLabel:d.label, total:total };
+}
+function applyCode(){
+  const inp = document.getElementById('codeInput');
+  const msg = document.getElementById('codeMsg');
+  const r = codeCheck(inp ? inp.value : '');
+  if(r.ok){ cart.code = r.key; if(inp) inp.value = r.key; }
+  else    { cart.code = null; }
+  if(msg){
+    msg.style.display='block';
+    msg.className = 'code-msg '+(r.ok?'good':'bad');
+    msg.textContent = r.msg;
+  }
+  updateSummary();
+  renderCashChoice();
+}
 /* Echte Luftlinien-Distanz (Haversine) zwischen zwei [lat,lng] Punkten, in km */
 function haversineKm(a, b){
   const R = 6371;
@@ -1694,12 +2041,23 @@ function detectGPS(silent){
   );
 }
 
+/* Der weiteste Weg bestimmt den Preis – jedes weitere Lokal kostet nur
+   den kleinen Aufschlag, weil der Fahrer trotzdem nur einmal fährt. */
+function feeKm(){
+  const ids = cartRestIds();
+  if(!cart.town || ids.length===0) return null;
+  let far = 0;
+  ids.forEach(function(id){
+    const r = RESTAURANTS.find(x=>x.id===id);
+    const d = distToCustomer(r.town);
+    if(d!=null && d>far) far = d;
+  });
+  return far;
+}
 function computeFee(){
   const ids = cartRestIds();
   if(!cart.town || ids.length===0) return null;
-  let base=0;
-  ids.forEach(id=>{ const r=RESTAURANTS.find(x=>x.id===id); const d=distToCustomer(r.town); const f=d<=2?2:3; if(f>base) base=f; });
-  return base + (ids.length-1)*EXTRA_REST_FEE;
+  return feeForKm(feeKm()) + (ids.length-1)*EXTRA_REST_FEE;
 }
 
 function tickClock(){
@@ -1861,9 +2219,9 @@ function renderRestaurants(){
       '<div class="rest-cover">'+
         '<img class="cover-photo" loading="lazy" src="'+(r.coverImg ? r.coverImg : photoUrl(r.cover))+'" onerror="this.style.display=\'none\'">'+
         '<div class="cover-fade"></div>'+
-        (auf?'':'<div class="zu-chip">🔴 Gerade geschlossen</div>')+
+        (auf?'':'<div class="zu-chip">'+zuChipText(r.id)+'</div>')+
         '<div class="rest-badge-sm" style="background:'+r.color+'">'+r.initials+'</div>'+
-        '<div class="rest-rating-chip">⭐ '+r.rating+'</div>'+
+        '<div class="rest-rating-chip">✨ Neu</div>'+
         '<div class="rest-town-chip">📍 '+r.town+'</div>'+
       '</div>'+
       '<div class="rest-body">'+
@@ -1938,14 +2296,43 @@ function bewSenden(){
   document.getElementById('bewOk').style.display   = '';
 }
 
+/* Text auf dem roten Streifen: wenn es an der Uhrzeit liegt, sagen wir
+   dem Kunden gleich, wann es wieder losgeht. */
+function zuChipText(id){
+  if(!hoursOpen(id)){
+    var nx = nextOpenText(id);
+    if(nx) return '🔴 Zu · ' + nx + ' Uhr';
+  }
+  return '🔴 Gerade geschlossen';
+}
+
+/* Zeigt Allergene am Gericht – oder ehrlich, dass sie noch fehlen (2.9). */
+function dishAlgLine(item){
+  const list = algText(item);
+  if(!list.length) return '<div class="dish-alg none">ℹ️ Allergene: Angaben folgen</div>';
+  return '<div class="dish-alg">ℹ️ '+list.join(' · ')+'</div>';
+}
+function openAllergene(){
+  const a = document.getElementById('algList');
+  const z = document.getElementById('zusList');
+  if(a) a.innerHTML = Object.keys(ALLERGENE).map(function(k){
+    return '<div class="alg-item"><b>'+k+'</b><span>'+ALLERGENE[k]+'</span></div>'; }).join('');
+  if(z) z.innerHTML = Object.keys(ZUSATZSTOFFE).map(function(k){
+    return '<div class="alg-item"><b>'+k+'</b><span>'+ZUSATZSTOFFE[k]+'</span></div>'; }).join('');
+  openModal('algOverlay');
+}
+
 function openRestaurant(id){
   const r = RESTAURANTS.find(x=>x.id===id);
   if(!shopOpen(id)){
-    showToast('🔴 '+r.name+' hat gerade geschlossen');
+    var nx2 = hoursOpen(id) ? '' : nextOpenText(id);
+    showToast('🔴 '+r.name+' hat gerade geschlossen'+(nx2 ? ' – '+nx2+' Uhr' : ''));
     return;
   }
   document.getElementById('modalRestName').textContent = r.name;
-  document.getElementById('modalRestMeta').textContent = r.type+' · ⭐ '+r.rating+' · ⏱ '+r.time+' · 📍 '+r.town;
+  var minO = minOrderFor(r.id);
+  document.getElementById('modalRestMeta').textContent =
+    r.type+' · ⏱ '+r.time+' · 📍 '+r.town + (minO>0 ? ' · Mindestbestellwert '+eurTxt(minO) : '');
   const body = document.getElementById('modalDishes');
   body.innerHTML='';
   let lastCat=null;
@@ -1963,7 +2350,9 @@ function openRestaurant(id){
     row.innerHTML =
       '<div class="dish-main">'+
         dishImg(item.photo, item.svg, directUrl)+
-        '<div class="dish-info"><h4>'+item.name+'</h4><p>'+item.desc+'</p><div class="dish-price">'+item.price.toFixed(2).replace('.',',')+' €</div></div>'+
+        '<div class="dish-info"><h4>'+item.name+'</h4><p>'+item.desc+'</p>'+
+          dishAlgLine(item)+
+          '<div class="dish-price">'+item.price.toFixed(2).replace('.',',')+' €</div></div>'+
         '<div class="dish-qtywrap"></div>'+
       '</div>'+
       '<input class="dish-note" type="text" placeholder="Sonderwunsch? z.B. ohne Tomate, extra scharf …">';
@@ -2118,9 +2507,25 @@ function openCart(){
       pill.onclick=()=>selectTown(t);
       townDiv.appendChild(pill);
     });
+    /* PayPal erscheint erst, wenn oben ein echter PayPal.Me-Link steht. */
+    const pp = document.getElementById('payPaypal');
+    if(pp){
+      pp.style.display = PAYPAL_ME ? '' : 'none';
+      if(!PAYPAL_ME && cart.pay==='PayPal') cart.pay = null;
+    }
     document.querySelectorAll('#payChoice .choice-pill').forEach(p=>{
       p.classList.toggle('active', cart.pay===p.dataset.pay);
     });
+    /* Gutschein: eingelösten Code wieder ins Feld schreiben. */
+    const ci = document.getElementById('codeInput');
+    if(ci && cart.code && !ci.value) ci.value = cart.code;
+    if(cart.code){
+      const rc = codeCheck(cart.code);
+      if(!rc.ok){ cart.code = null; }
+      const cm = document.getElementById('codeMsg');
+      if(cm){ cm.style.display='block'; cm.className='code-msg '+(rc.ok?'good':'bad'); cm.textContent = rc.msg; }
+    }
+    renderPaypalBox();
     renderUpsellInline();
     renderTipChoice();
     renderCashChoice();
@@ -2158,6 +2563,36 @@ function selectPay(p){
   cart.pay=p;
   if(p!=='Bargeld') cart.cash=null;   // Wechselgeld nur bei Barzahlung
   openCart();
+}
+
+/* =====================================================================
+   PAYPAL (2.11)
+   ---------------------------------------------------------------------
+   Trag hier deinen echten PayPal.Me-Namen ein, z. B.:
+       const PAYPAL_ME = 'bestellux';
+   Solange die Zeile leer ist, sieht der Kunde die PayPal-Option NICHT.
+   So verspricht die App nie etwas, was noch nicht geht.
+   (Hinweis: für ein Geschäftskonto brauchst du dein Gewerbe. Das hier
+   ist keine Rechts- oder Steuerberatung.)
+   ===================================================================== */
+const PAYPAL_ME = '';
+
+function paypalUrl(total){
+  if(!PAYPAL_ME) return '';
+  return 'https://www.paypal.me/'+PAYPAL_ME+'/'+(Number(total)||0).toFixed(2);
+}
+function renderPaypalBox(){
+  const box = document.getElementById('paypalBox');
+  const link = document.getElementById('paypalLink');
+  if(!box) return;
+  if(cart.pay !== 'PayPal' || !PAYPAL_ME){ box.style.display='none'; return; }
+  box.style.display='block';
+  const t = cartTotals().total;
+  if(link){
+    link.href = paypalUrl(t);
+    link.style.display = t>0 ? '' : 'none';
+    link.textContent = '🅿️ '+eurTxt(t)+' mit PayPal bezahlen';
+  }
 }
 
 /* ============ Trinkgeld ============ */
@@ -2220,7 +2655,7 @@ function renderCashChoice(){
   if(cart.pay !== 'Bargeld'){ box.style.display='none'; if(line) line.style.display='none'; return; }
   box.style.display='block';
 
-  const total = cartSubtotal() + (computeFee()||0) + (cart.tip||0);
+  const total = cartTotals().total;
   // Reicht der gewählte Schein nach einer Änderung nicht mehr? Dann Auswahl zurücksetzen.
   if(typeof cart.cash === 'number' && cart.cash < total) cart.cash = null;
   row.innerHTML='';
@@ -2260,19 +2695,52 @@ function selectCash(v){
 
 function updateSummary(){
   const ids = cartRestIds();
-  const subtotal = cartSubtotal();
-  document.getElementById('sumSubtotal').textContent = subtotal.toFixed(2).replace('.',',')+' €';
-  const fee = computeFee();
+  const T = cartTotals();
+  const subtotal = T.sub, fee = T.fee, tip = T.tip, total = T.total;
+  document.getElementById('sumSubtotal').textContent = eurTxt(subtotal);
   document.getElementById('sumFeeLabel').textContent = ids.length>1 ? ('Liefergebühr ('+ids.length+ ' Restaurants)') : 'Liefergebühr';
-  document.getElementById('sumFee').textContent = fee!==null ? fee.toFixed(2).replace('.',',')+' €' : '–';
-  const tip = cart.tip || 0;
+  document.getElementById('sumFee').textContent = fee!==null ? eurTxt(fee) : '–';
+
+  /* Gutschein-Zeile */
+  const rabRow = document.getElementById('sumRabRow');
+  if(rabRow){
+    rabRow.style.display = T.rab>0 ? 'flex' : 'none';
+    document.getElementById('sumRabLabel').textContent = T.rabLabel || 'Gutschein';
+    document.getElementById('sumRab').textContent = '– '+eurTxt(T.rab);
+  }
+
   const tipRow = document.getElementById('sumTipRow');
   if(tipRow){
     tipRow.style.display = tip>0 ? 'flex' : 'none';
-    document.getElementById('sumTip').textContent = tip.toFixed(2).replace('.',',')+' €';
+    document.getElementById('sumTip').textContent = eurTxt(tip);
   }
-  const total = subtotal + (fee||0) + tip;
-  document.getElementById('sumTotal').textContent = total.toFixed(2).replace('.',',')+' €';
+  document.getElementById('sumTotal').textContent = eurTxt(total);
+
+  /* Ehrlich zeigen, WIE die Liefergebühr entsteht (2.8). */
+  const fn = document.getElementById('sumFeeNote');
+  if(fn){
+    if(fee===null){
+      fn.textContent = 'Liefergebühr: '+eurTxt(FEE_BASE)+' bis '+FEE_FREE_KM+' km, danach '+eurTxt(FEE_PER_KM)+' pro km. Wähle deinen Ort, dann rechnen wir sie genau aus.';
+    } else {
+      const km = feeKm();
+      fn.textContent = '🚴 '+kmTxtG(km)+' bis zu dir · '+eurTxt(FEE_BASE)+' bis '+FEE_FREE_KM+' km, danach '+eurTxt(FEE_PER_KM)+' pro km'+
+        (ids.length>1 ? (' · + '+eurTxt(EXTRA_REST_FEE)+' pro weiterem Restaurant') : '')+'. Höchstens '+eurTxt(FEE_MAX)+'.';
+    }
+  }
+
+  /* Mindestbestellwert (2.7) */
+  const miss = minOrderMissing();
+  const mw = document.getElementById('minWarn');
+  if(mw){
+    if(miss.length){
+      mw.style.display='block';
+      mw.innerHTML = miss.map(function(m){
+        return '🛒 Bei <b>'+m.name+'</b> liegt der Mindestbestellwert bei <b>'+eurTxt(m.min)+'</b>. Es fehlen noch <b>'+eurTxt(m.fehlt)+'</b>.';
+      }).join('<br>');
+    } else {
+      mw.style.display='none';
+    }
+  }
 
   const note = document.getElementById('sumNote');
   if(ids.length>1){
@@ -2284,12 +2752,13 @@ function updateSummary(){
 
   const btn = document.getElementById('orderBtn');
   const a = getAddr();
-  if(cart.town && cart.pay && addrComplete()){
+  if(cart.town && cart.pay && addrComplete() && miss.length===0){
     btn.disabled=false;
-    btn.textContent = 'Bestellung aufgeben · '+total.toFixed(2).replace('.',',')+' €';
+    btn.textContent = 'Bestellung aufgeben · '+eurTxt(total);
   } else {
     btn.disabled=true;
-    if(!(a.street.length>=4 && /\d/.test(a.street)))            btn.textContent='Bitte Straße & Hausnummer eingeben';
+    if(miss.length)                                             btn.textContent='Mindestbestellwert noch nicht erreicht';
+    else if(!(a.street.length>=4 && /\d/.test(a.street)))       btn.textContent='Bitte Straße & Hausnummer eingeben';
     else if(a.phone.replace(/\D/g,'').length<6)                 btn.textContent='Bitte Telefonnummer eingeben';
     else if(!cart.town)                                         btn.textContent='Bitte Ort wählen';
     else                                                        btn.textContent='Bitte Zahlungsart wählen';
@@ -2404,24 +2873,28 @@ function renderOrderReview(){
     linesDiv.appendChild(group);
   });
 
-  const subtotal = cartSubtotal();
-  const fee = computeFee();
-  const tip = cart.tip || 0;
-  const total = subtotal + (fee||0) + tip;
-  document.getElementById('revSubtotal').textContent = subtotal.toFixed(2).replace('.',',')+' €';
+  const T = cartTotals();
+  const subtotal = T.sub, fee = T.fee, tip = T.tip, total = T.total;
+  document.getElementById('revSubtotal').textContent = eurTxt(subtotal);
   document.getElementById('revFeeLabel').textContent = ids.length>1 ? ('Liefergebühr ('+ids.length+' Restaurants)') : 'Liefergebühr';
-  document.getElementById('revFee').textContent = fee!==null ? fee.toFixed(2).replace('.',',')+' €' : '–';
+  document.getElementById('revFee').textContent = fee!==null ? eurTxt(fee) : '–';
+  const revRabRow = document.getElementById('revRabRow');
+  if(revRabRow){
+    revRabRow.style.display = T.rab>0 ? 'flex' : 'none';
+    document.getElementById('revRabLabel').textContent = T.rabLabel || 'Gutschein';
+    document.getElementById('revRab').textContent = '– '+eurTxt(T.rab);
+  }
   const revTipRow = document.getElementById('revTipRow');
   if(revTipRow){
     revTipRow.style.display = tip>0 ? 'flex' : 'none';
-    document.getElementById('revTip').textContent = tip.toFixed(2).replace('.',',')+' €';
+    document.getElementById('revTip').textContent = eurTxt(tip);
   }
-  document.getElementById('revTotal').textContent = total.toFixed(2).replace('.',',')+' €';
+  document.getElementById('revTotal').textContent = eurTxt(total);
 
   const a = getAddr();
   const addrLine = [a.street, [a.plz, cart.town].filter(Boolean).join(' ')].filter(Boolean).join(', ')
                  + (a.extra ? ' · '+a.extra : '');
-  let payLabel = (cart.pay==='Karte'?'💳 ':'💵 ') + (cart.pay||'–');
+  let payLabel = (cart.pay==='Karte'?'💳 ':(cart.pay==='PayPal'?'🅿️ ':'💵 ')) + (cart.pay||'–');
   if(cart.pay==='Bargeld' && typeof cart.cash === 'number'){
     payLabel += ' · zahlt mit '+cart.cash+' €';
   } else if(cart.pay==='Bargeld' && cart.cash==='passend'){
@@ -2457,14 +2930,23 @@ function finalizePlaceOrder(){
     try{ renderRestaurants(); }catch(e){}
     return;
   }
+  /* Letzte Kontrolle Mindestbestellwert (2.7) */
+  const missNow = minOrderMissing();
+  if(missNow.length){
+    showToast('🛒 Mindestbestellwert bei '+missNow[0].name+': '+eurTxt(missNow[0].min));
+    try{ openCart(); }catch(e){}
+    return;
+  }
   const destTown = cart.town;
   const destCoords = cart.customerCoords; // echte GPS-Position, falls erkannt
   const addr = getAddr();
   const payMethod = cart.pay;
-  const subtotal = cartSubtotal();
-  const fee = computeFee();
-  const tip = cart.tip || 0;
-  const total = subtotal + fee + tip;
+  const T = cartTotals();
+  const subtotal = T.sub;
+  const fee = T.fee;
+  const tip = T.tip;
+  const rabatt = T.rab;
+  const total = T.total;
 
   const orderId = ++orderSeq;
   const orderAt = Date.now();
@@ -2522,11 +3004,14 @@ function finalizePlaceOrder(){
   /* --- Kostenblock: kurz, eine Zeile pro Posten --- */
   let costBlock = 'Zwischensumme  '+eur(subtotal)+'\n'
                 + 'Liefergebühr  '+eur(fee)+'\n';
+  if(rabatt>0) costBlock += 'Gutschein '+cart.code+'  -'+eur(rabatt)+'\n';
   if(tip>0) costBlock += 'Trinkgeld  '+eur(tip)+'\n';
   costBlock += '*GESAMT  '+eur(total)+'*\n';
 
   /* --- Zahlung inkl. Wechselgeld, damit der Fahrer es passend dabei hat --- */
-  let payLine = (payMethod==='Karte' ? '💳 Karte bei Lieferung' : '💵 Bargeld bei Lieferung');
+  let payLine = (payMethod==='Karte' ? '💳 Karte bei Lieferung'
+              : (payMethod==='PayPal' ? ('🅿️ PayPal'+(PAYPAL_ME ? ('  '+paypalUrl(total)) : ''))
+              : '💵 Bargeld bei Lieferung'));
   if(payMethod==='Bargeld' && typeof cart.cash === 'number'){
     payLine += ' · zahlt mit '+cart.cash+' € → *Wechselgeld '+eur(cart.cash-total)+'*';
   } else if(payMethod==='Bargeld' && cart.cash==='passend'){
@@ -2565,6 +3050,7 @@ function finalizePlaceOrder(){
       coords:destCoords||null, mapsUrl:mapsUrl,
       pay:payMethod, cash:(cart.cash!==undefined?cart.cash:null),
       subtotal:subtotal, fee:(fee||0), tip:tip, total:total,
+      code:(cart.code||null), rabatt:rabatt,
       vehicle:vehicle, km:farthest, etaLo:est.lo, etaHi:est.hi,
       stops:bxStops, status:'neu', driver:null,
       hist:[{s:'neu', t:orderAt}]
@@ -2663,7 +3149,7 @@ function finalizePlaceOrder(){
   points.push(destCoords || TOWN_COORDS[destTown]);
   const restObjs = ids.map(id=>RESTAURANTS.find(x=>x.id===id));
 
-  cart = { items:{}, town:null, pay:null, customerCoords:null, tip:0, cash:null };
+  cart = { items:{}, town:null, pay:null, customerCoords:null, tip:0, cash:null, code:null };
   gpsAutoTried = false;
   tipCustomOpen = false;
   const tipInp = document.getElementById('tipCustom');
@@ -2747,6 +3233,81 @@ function renderFallbackTrack(mapDiv, restaurants, townTo, farthest){
 /* ===== I18N DICT START ===== */
 const I18N = {
 en: {
+  "ab 2,50 €": "from €2.50",
+  "Warum Bestellux?": "Why Bestellux?",
+  "✨ Neu": "✨ New",
+  "🅿️ PayPal": "🅿️ PayPal",
+  "Gutscheincode": "Voucher code",
+  "Einlösen": "Apply",
+  "Gutschein": "Voucher",
+  "Du bezahlst mit PayPal, sobald das Restaurant die Bestellung bestätigt hat. Den Link bekommst du hier und per WhatsApp.": "You pay with PayPal as soon as the restaurant confirms your order. You get the link here and on WhatsApp.",
+  "Bestellung stornieren": "Cancel order",
+  "Wirklich stornieren? Nochmal tippen": "Really cancel? Tap again",
+  "Wird storniert …": "Cancelling …",
+  "Storniert": "Cancelled",
+  "Solange das Restaurant noch nicht bestätigt hat, kannst du kostenlos stornieren.": "As long as the restaurant has not confirmed yet, you can cancel free of charge.",
+  "🚫 Deine Bestellung wurde <b>storniert</b>. Es wird nichts berechnet. Du kannst jederzeit neu bestellen.": "🚫 Your order was <b>cancelled</b>. Nothing will be charged. You can order again any time.",
+  "Deine Bestellung wurde storniert.": "Your order was cancelled.",
+  "Das Restaurant hat schon angefangen – bitte ruf kurz an.": "The restaurant has already started – please give us a call.",
+  "Storno konnte nicht gesendet werden – bitte ruf das Restaurant an.": "The cancellation could not be sent – please call the restaurant.",
+  "Mindestbestellwert noch nicht erreicht": "Minimum order value not reached yet",
+  "Allergene &amp; Zusatzstoffe": "Allergens &amp; additives",
+  "Die 14 Hauptallergene": "The 14 main allergens",
+  "Zusatzstoffe": "Additives",
+  "Die Angaben kommen direkt vom jeweiligen Restaurant. Steht am Gericht „Angaben folgen“, hat uns das Lokal die Liste noch nicht gegeben – frag dann bitte kurz im Restaurant nach, bevor du bestellst.": "The information comes straight from each restaurant. If a dish says “details to follow”, the restaurant has not given us the list yet – please ask there before you order.",
+  "Wichtig: Bei einer echten Allergie ruf bitte immer zusätzlich im Restaurant an. In einer Küche können Spuren in jedes Gericht kommen.": "Important: with a real allergy, always call the restaurant as well. In any kitchen, traces can end up in any dish.",
+  "ℹ️ Allergene: Angaben folgen": "ℹ️ Allergens: details to follow",
+  "z. B. START5": "e.g. START5",
+  "Bitte einen Code eintragen.": "Please enter a code.",
+  "Diesen Code kennen wir nicht.": "We do not know this code.",
+  "Dieser Code ist leider abgelaufen.": "Unfortunately this code has expired.",
+  "Der Code gilt ab {0}. Dir fehlen noch {1}.": "The code applies from {0}. You still need {1}.",
+  "✅ 5 € Rabatt ab 20 € Bestellwert": "✅ €5 off from €20 order value",
+  "✅ 10 % Rabatt ab 15 € Bestellwert": "✅ 10 % off from €15 order value",
+  "✅ Lieferung gratis ab 25 € Bestellwert": "✅ Free delivery from €25 order value",
+  "🛒 Bei <b>{0}</b> liegt der Mindestbestellwert bei <b>{1}</b>. Es fehlen noch <b>{2}</b>.": "🛒 At <b>{0}</b> the minimum order value is <b>{1}</b>. You still need <b>{2}</b>.",
+  "🛒 Mindestbestellwert bei {0}: {1}": "🛒 Minimum order value at {0}: {1}",
+  "Liefergebühr: {0} bis {1} km, danach {2} pro km. Wähle deinen Ort, dann rechnen wir sie genau aus.": "Delivery fee: {0} up to {1} km, then {2} per km. Choose your town and we work it out exactly.",
+  "🚴 {0} bis zu dir · {1} bis {2} km, danach {3} pro km. Höchstens {4}.": "🚴 {0} to you · {1} up to {2} km, then {3} per km. Maximum {4}.",
+  "🚴 {0} bis zu dir · {1} bis {2} km, danach {3} pro km · + {4} pro weiterem Restaurant. Höchstens {5}.": "🚴 {0} to you · {1} up to {2} km, then {3} per km · + {4} per extra restaurant. Maximum {5}.",
+  "🔴 Zu · öffnet heute um {0} Uhr": "🔴 Closed · opens today at {0}",
+  "🔴 Zu · öffnet morgen um {0} Uhr": "🔴 Closed · opens tomorrow at {0}",
+  "🔴 Zu · öffnet {0} um {1} Uhr": "🔴 Closed · opens {0} at {1}",
+  "Glutenhaltiges Getreide": "Cereals containing gluten",
+  "Krebstiere": "Crustaceans",
+  "Eier": "Eggs",
+  "Fisch": "Fish",
+  "Erdnüsse": "Peanuts",
+  "Soja": "Soy",
+  "Milch &amp; Laktose": "Milk &amp; lactose",
+  "Schalenfrüchte (Nüsse)": "Tree nuts",
+  "Sellerie": "Celery",
+  "Senf": "Mustard",
+  "Sesam": "Sesame",
+  "Schwefeldioxid &amp; Sulfite": "Sulphur dioxide &amp; sulphites",
+  "Lupinen": "Lupin",
+  "Weichtiere": "Molluscs",
+  "mit Farbstoff": "with colouring",
+  "mit Konservierungsstoff": "with preservative",
+  "mit Antioxidationsmittel": "with antioxidant",
+  "mit Geschmacksverstärker": "with flavour enhancer",
+  "geschwefelt": "sulphured",
+  "geschwärzt": "blackened",
+  "mit Phosphat": "with phosphate",
+  "mit Süßungsmittel": "with sweetener",
+  "koffeinhaltig": "contains caffeine",
+  "chininhaltig": "contains quinine",
+  "gewachst": "waxed",
+  "Döner, Pizza &amp; Grill · ⏱ 15–25 Min · 📍 Langwedel": "Kebab, Pizza &amp; Grill · ⏱ 15–25 min · 📍 Langwedel",
+  "Döner, Pizza &amp; Grill · ⏱ 15–25 Min · 📍 Langwedel · Mindestbestellwert 10,00 €": "Kebab, Pizza &amp; Grill · ⏱ 15–25 min · 📍 Langwedel · Minimum order 10,00 €",
+  "Döner &amp; Grill · ⏱ 15–25 Min · 📍 Langwedel": "Kebab &amp; Grill · ⏱ 15–25 min · 📍 Langwedel",
+  "Döner &amp; Grill · ⏱ 15–25 Min · 📍 Langwedel · Mindestbestellwert 10,00 €": "Kebab &amp; Grill · ⏱ 15–25 min · 📍 Langwedel · Minimum order 10,00 €",
+  "Pizzeria · ⏱ 25–35 Min · 📍 Verden": "Pizzeria · ⏱ 25–35 min · 📍 Verden",
+  "Pizzeria · ⏱ 25–35 Min · 📍 Verden · Mindestbestellwert 12,00 €": "Pizzeria · ⏱ 25–35 min · 📍 Verden · Minimum order 12,00 €",
+  "Sushi &amp; Asiatisch · ⏱ 30–40 Min · 📍 Verden": "Sushi &amp; Asian · ⏱ 30–40 min · 📍 Verden",
+  "Sushi &amp; Asiatisch · ⏱ 30–40 Min · 📍 Verden · Mindestbestellwert 15,00 €": "Sushi &amp; Asian · ⏱ 30–40 min · 📍 Verden · Minimum order 15,00 €",
+  "Getränke &amp; mehr · ⏱ 15–25 Min · 📍 Langwedel": "Drinks &amp; more · ⏱ 15–25 min · 📍 Langwedel",
+  "Getränke &amp; mehr · ⏱ 15–25 Min · 📍 Langwedel · Mindestbestellwert 8,00 €": "Drinks &amp; more · ⏱ 15–25 min · 📍 Langwedel · Minimum order 8,00 €",
   "📲 Bestellux zum Startbildschirm hinzufügen für schnelleren Zugriff": "📲 Add Bestellux to your home screen for faster access",
   "Installieren": "Install",
   "ESSEN · SCHNELL GELIEFERT": "FOOD · DELIVERED FAST",
@@ -2762,9 +3323,7 @@ en: {
   "Orte": "Towns",
   "~25min": "~25min",
   "⌀ Lieferzeit": "⌀ Delivery time",
-  "⌀ Bewertung": "⌀ Rating",
   "Restaurants in deiner Nähe": "Restaurants near you",
-  "Das lieben unsere Kund:innen": "What our customers love",
   "Alle": "All",
   "Mehrere Restaurants, eine Lieferung": "Several restaurants, one delivery",
   "Kombiniere Burger, Pizza &amp; Dessert in einer einzigen Bestellung.": "Combine burger, pizza &amp; dessert in a single order.",
@@ -2927,13 +3486,6 @@ en: {
   "Pizzeria": "Pizzeria",
   "Sushi &amp; Asiatisch": "Sushi &amp; Asian",
   "Getränke &amp; mehr": "Drinks &amp; more",
-  "Döner &amp; Grill · ⭐ 4.7 · ⏱ 15–25 Min · 📍 Langwedel": "Kebab &amp; Grill · ⭐ 4.7 · ⏱ 15–25 min · 📍 Langwedel",
-  "Döner, Pizza &amp; Grill · ⭐ 4.6 · ⏱ 15–25 Min · 📍 Langwedel": "Kebab, Pizza &amp; Grill · ⭐ 4.6 · ⏱ 15–25 min · 📍 Langwedel",
-  "Burger &amp; Fast Food · ⭐ 4.2 · ⏱ 20–30 Min · 📍 Etelsen": "Burger &amp; Fast Food · ⭐ 4.2 · ⏱ 20–30 min · 📍 Etelsen",
-  "Burger &amp; Fast Food · ⭐ 4.3 · ⏱ 20–30 Min · 📍 Verden": "Burger &amp; Fast Food · ⭐ 4.3 · ⏱ 20–30 min · 📍 Verden",
-  "Pizzeria · ⭐ 4.5 · ⏱ 25–35 Min · 📍 Verden": "Pizzeria · ⭐ 4.5 · ⏱ 25–35 min · 📍 Verden",
-  "Sushi &amp; Asiatisch · ⭐ 4.8 · ⏱ 30–40 Min · 📍 Verden": "Sushi &amp; Asian · ⭐ 4.8 · ⏱ 30–40 min · 📍 Verden",
-  "Getränke &amp; mehr · ⭐ 4.6 · ⏱ 15–25 Min · 📍 Langwedel": "Drinks &amp; more · ⭐ 4.6 · ⏱ 15–25 min · 📍 Langwedel",
   "⏱ 15–25 Min": "⏱ 15–25 min",
   "⏱ 20–30 Min": "⏱ 20–30 min",
   "⏱ 25–35 Min": "⏱ 25–35 min",
@@ -3146,6 +3698,81 @@ en: {
   "Bitte wähle aus, womit du fahren möchtest.": "Please choose what you would like to drive."
 },
 ar: {
+  "ab 2,50 €": "ابتداءً من 2,50 €",
+  "Warum Bestellux?": "لماذا Bestellux؟",
+  "✨ Neu": "✨ جديد",
+  "🅿️ PayPal": "🅿️ باي بال",
+  "Gutscheincode": "كود الخصم",
+  "Einlösen": "تفعيل",
+  "Gutschein": "قسيمة",
+  "Du bezahlst mit PayPal, sobald das Restaurant die Bestellung bestätigt hat. Den Link bekommst du hier und per WhatsApp.": "تدفع عبر باي بال بمجرد تأكيد المطعم للطلب. يصلك الرابط هنا وعبر واتساب.",
+  "Bestellung stornieren": "إلغاء الطلب",
+  "Wirklich stornieren? Nochmal tippen": "هل تريد الإلغاء فعلاً؟ اضغط مرة أخرى",
+  "Wird storniert …": "جارٍ الإلغاء …",
+  "Storniert": "ملغى",
+  "Solange das Restaurant noch nicht bestätigt hat, kannst du kostenlos stornieren.": "ما دام المطعم لم يؤكد بعد، يمكنك الإلغاء مجاناً.",
+  "🚫 Deine Bestellung wurde <b>storniert</b>. Es wird nichts berechnet. Du kannst jederzeit neu bestellen.": "🚫 تم <b>إلغاء</b> طلبك. لن يتم خصم أي مبلغ. يمكنك الطلب من جديد في أي وقت.",
+  "Deine Bestellung wurde storniert.": "تم إلغاء طلبك.",
+  "Das Restaurant hat schon angefangen – bitte ruf kurz an.": "المطعم بدأ التحضير – يرجى الاتصال بنا.",
+  "Storno konnte nicht gesendet werden – bitte ruf das Restaurant an.": "تعذّر إرسال الإلغاء – يرجى الاتصال بالمطعم.",
+  "Mindestbestellwert noch nicht erreicht": "لم يتم بلوغ الحد الأدنى للطلب",
+  "Allergene &amp; Zusatzstoffe": "مسببات الحساسية والمواد المضافة",
+  "Die 14 Hauptallergene": "مسببات الحساسية الـ14 الرئيسية",
+  "Zusatzstoffe": "المواد المضافة",
+  "Die Angaben kommen direkt vom jeweiligen Restaurant. Steht am Gericht „Angaben folgen“, hat uns das Lokal die Liste noch nicht gegeben – frag dann bitte kurz im Restaurant nach, bevor du bestellst.": "المعلومات تأتي مباشرة من كل مطعم. إذا كُتب على الطبق «التفاصيل لاحقاً»، فالمطعم لم يزوّدنا بالقائمة بعد – يرجى السؤال في المطعم قبل الطلب.",
+  "Wichtig: Bei einer echten Allergie ruf bitte immer zusätzlich im Restaurant an. In einer Küche können Spuren in jedes Gericht kommen.": "مهم: في حال وجود حساسية حقيقية، اتصل دائماً بالمطعم أيضاً. في أي مطبخ قد تصل آثار المواد إلى أي طبق.",
+  "ℹ️ Allergene: Angaben folgen": "ℹ️ مسببات الحساسية: التفاصيل لاحقاً",
+  "z. B. START5": "مثال: START5",
+  "Bitte einen Code eintragen.": "يرجى إدخال كود.",
+  "Diesen Code kennen wir nicht.": "هذا الكود غير معروف لدينا.",
+  "Dieser Code ist leider abgelaufen.": "انتهت صلاحية هذا الكود للأسف.",
+  "Der Code gilt ab {0}. Dir fehlen noch {1}.": "الكود صالح ابتداءً من {0}. ينقصك {1}.",
+  "✅ 5 € Rabatt ab 20 € Bestellwert": "✅ خصم 5 € ابتداءً من 20 € قيمة الطلب",
+  "✅ 10 % Rabatt ab 15 € Bestellwert": "✅ خصم 10 % ابتداءً من 15 € قيمة الطلب",
+  "✅ Lieferung gratis ab 25 € Bestellwert": "✅ توصيل مجاني ابتداءً من 25 € قيمة الطلب",
+  "🛒 Bei <b>{0}</b> liegt der Mindestbestellwert bei <b>{1}</b>. Es fehlen noch <b>{2}</b>.": "🛒 في <b>{0}</b> الحد الأدنى للطلب هو <b>{1}</b>. ينقصك <b>{2}</b>.",
+  "🛒 Mindestbestellwert bei {0}: {1}": "🛒 الحد الأدنى للطلب في {0}: {1}",
+  "Liefergebühr: {0} bis {1} km, danach {2} pro km. Wähle deinen Ort, dann rechnen wir sie genau aus.": "رسوم التوصيل: {0} حتى {1} كم، ثم {2} لكل كم. اختر مدينتك ونحسبها بدقة.",
+  "🚴 {0} bis zu dir · {1} bis {2} km, danach {3} pro km. Höchstens {4}.": "🚴 {0} إليك · {1} حتى {2} كم، ثم {3} لكل كم. بحد أقصى {4}.",
+  "🚴 {0} bis zu dir · {1} bis {2} km, danach {3} pro km · + {4} pro weiterem Restaurant. Höchstens {5}.": "🚴 {0} إليك · {1} حتى {2} كم، ثم {3} لكل كم · + {4} لكل مطعم إضافي. بحد أقصى {5}.",
+  "🔴 Zu · öffnet heute um {0} Uhr": "🔴 مغلق · يفتح اليوم الساعة {0}",
+  "🔴 Zu · öffnet morgen um {0} Uhr": "🔴 مغلق · يفتح غداً الساعة {0}",
+  "🔴 Zu · öffnet {0} um {1} Uhr": "🔴 مغلق · يفتح {0} الساعة {1}",
+  "Glutenhaltiges Getreide": "حبوب تحتوي على الغلوتين",
+  "Krebstiere": "قشريات",
+  "Eier": "بيض",
+  "Fisch": "سمك",
+  "Erdnüsse": "فول سوداني",
+  "Soja": "صويا",
+  "Milch &amp; Laktose": "حليب ولاكتوز",
+  "Schalenfrüchte (Nüsse)": "مكسرات",
+  "Sellerie": "كرفس",
+  "Senf": "خردل",
+  "Sesam": "سمسم",
+  "Schwefeldioxid &amp; Sulfite": "ثاني أكسيد الكبريت والكبريتيت",
+  "Lupinen": "ترمس",
+  "Weichtiere": "رخويات",
+  "mit Farbstoff": "بمادة ملونة",
+  "mit Konservierungsstoff": "بمادة حافظة",
+  "mit Antioxidationsmittel": "بمضاد أكسدة",
+  "mit Geschmacksverstärker": "بمعزز نكهة",
+  "geschwefelt": "مكبرت",
+  "geschwärzt": "مسود",
+  "mit Phosphat": "بالفوسفات",
+  "mit Süßungsmittel": "بمحلي",
+  "koffeinhaltig": "يحتوي على الكافيين",
+  "chininhaltig": "يحتوي على الكينين",
+  "gewachst": "مشمع",
+  "Döner, Pizza &amp; Grill · ⏱ 15–25 Min · 📍 Langwedel": "شاورما وبيتزا ومشاوي · ⏱ 15–25 د · 📍 Langwedel",
+  "Döner, Pizza &amp; Grill · ⏱ 15–25 Min · 📍 Langwedel · Mindestbestellwert 10,00 €": "شاورما وبيتزا ومشاوي · ⏱ 15–25 د · 📍 Langwedel · حد أدنى للطلب 10,00 €",
+  "Döner &amp; Grill · ⏱ 15–25 Min · 📍 Langwedel": "شاورما ومشاوي · ⏱ 15–25 د · 📍 Langwedel",
+  "Döner &amp; Grill · ⏱ 15–25 Min · 📍 Langwedel · Mindestbestellwert 10,00 €": "شاورما ومشاوي · ⏱ 15–25 د · 📍 Langwedel · حد أدنى للطلب 10,00 €",
+  "Pizzeria · ⏱ 25–35 Min · 📍 Verden": "بيتزيريا · ⏱ 25–35 د · 📍 Verden",
+  "Pizzeria · ⏱ 25–35 Min · 📍 Verden · Mindestbestellwert 12,00 €": "بيتزيريا · ⏱ 25–35 د · 📍 Verden · حد أدنى للطلب 12,00 €",
+  "Sushi &amp; Asiatisch · ⏱ 30–40 Min · 📍 Verden": "سوشي وآسيوي · ⏱ 30–40 د · 📍 Verden",
+  "Sushi &amp; Asiatisch · ⏱ 30–40 Min · 📍 Verden · Mindestbestellwert 15,00 €": "سوشي وآسيوي · ⏱ 30–40 د · 📍 Verden · حد أدنى للطلب 15,00 €",
+  "Getränke &amp; mehr · ⏱ 15–25 Min · 📍 Langwedel": "مشروبات والمزيد · ⏱ 15–25 د · 📍 Langwedel",
+  "Getränke &amp; mehr · ⏱ 15–25 Min · 📍 Langwedel · Mindestbestellwert 8,00 €": "مشروبات والمزيد · ⏱ 15–25 د · 📍 Langwedel · حد أدنى للطلب 8,00 €",
   "📲 Bestellux zum Startbildschirm hinzufügen für schnelleren Zugriff": "📲 أضف Bestellux إلى الشاشة الرئيسية للوصول السريع",
   "Installieren": "تثبيت",
   "ESSEN · SCHNELL GELIEFERT": "طعام · توصيل سريع",
@@ -3161,9 +3788,7 @@ ar: {
   "Orte": "مدن",
   "~25min": "~25 د",
   "⌀ Lieferzeit": "⌀ وقت التوصيل",
-  "⌀ Bewertung": "⌀ التقييم",
   "Restaurants in deiner Nähe": "مطاعم بالقرب منك",
-  "Das lieben unsere Kund:innen": "ما يحبه زبائننا",
   "Alle": "الكل",
   "Mehrere Restaurants, eine Lieferung": "عدة مطاعم، توصيلة واحدة",
   "Kombiniere Burger, Pizza &amp; Dessert in einer einzigen Bestellung.": "اجمع البرجر والبيتزا والحلوى في طلب واحد.",
@@ -3326,13 +3951,6 @@ ar: {
   "Pizzeria": "بيتزيريا",
   "Sushi &amp; Asiatisch": "سوشي وآسيوي",
   "Getränke &amp; mehr": "مشروبات والمزيد",
-  "Döner &amp; Grill · ⭐ 4.7 · ⏱ 15–25 Min · 📍 Langwedel": "شاورما ومشاوي · ⭐ 4.7 · ⏱ 15–25 د · 📍 Langwedel",
-  "Döner, Pizza &amp; Grill · ⭐ 4.6 · ⏱ 15–25 Min · 📍 Langwedel": "شاورما وبيتزا ومشاوي · ⭐ 4.6 · ⏱ 15–25 د · 📍 Langwedel",
-  "Burger &amp; Fast Food · ⭐ 4.2 · ⏱ 20–30 Min · 📍 Etelsen": "برجر ووجبات سريعة · ⭐ 4.2 · ⏱ 20–30 د · 📍 Etelsen",
-  "Burger &amp; Fast Food · ⭐ 4.3 · ⏱ 20–30 Min · 📍 Verden": "برجر ووجبات سريعة · ⭐ 4.3 · ⏱ 20–30 د · 📍 Verden",
-  "Pizzeria · ⭐ 4.5 · ⏱ 25–35 Min · 📍 Verden": "بيتزيريا · ⭐ 4.5 · ⏱ 25–35 د · 📍 Verden",
-  "Sushi &amp; Asiatisch · ⭐ 4.8 · ⏱ 30–40 Min · 📍 Verden": "سوشي وآسيوي · ⭐ 4.8 · ⏱ 30–40 د · 📍 Verden",
-  "Getränke &amp; mehr · ⭐ 4.6 · ⏱ 15–25 Min · 📍 Langwedel": "مشروبات والمزيد · ⭐ 4.6 · ⏱ 15–25 د · 📍 Langwedel",
   "⏱ 15–25 Min": "⏱ 15–25 د",
   "⏱ 20–30 Min": "⏱ 20–30 د",
   "⏱ 25–35 Min": "⏱ 25–35 د",

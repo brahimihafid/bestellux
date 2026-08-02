@@ -348,14 +348,9 @@ main{padding:13px 15px 30px;}
     <p class="lg-note">Die Zugangsdaten bekommst du von Bestellux.<br>Eine eigene Registrierung gibt es hier nicht.</p>
   </div>
 
-  <!-- Stufe 2: Lokal wählen (nur Betreiber) -->
-  <div id="lgPick" class="hide">
-    <p class="lg-sub">Du bist als Betreiber angemeldet.<br>Welches Lokal möchtest du öffnen?</p>
-    <div class="lg-card">
-      <div class="lg-pick" id="pickList"></div>
-    </div>
-    <button class="lnk" onclick="logout()">Abmelden</button>
-  </div>
+  <!-- Es gibt hier bewusst KEINE Liste aller Lokale mehr.
+       Eine Anmeldung öffnet genau ein Lokal – das Lokal, zu dem die
+       E-Mail gehört. Wer die Liste sehen will, nimmt admin.html. -->
 
   <!-- Stufe 3: E-Mail gehört zu keinem Lokal -->
   <div id="lgNo" class="hide">
@@ -393,7 +388,6 @@ main{padding:13px 15px 30px;}
     <div class="bxbar">
       <img class="bxbar-lg" src="logo-wort-dunkel.png" alt="Bestellux">
       <div class="bxbar-tag">Restaurant</div>
-      <button class="bxbar-sw hide" id="bxSwitch" onclick="pickList()">Lokal wechseln</button>
     </div>
     <div class="hd-row">
       <div class="hd-av" id="hdAv">BD</div>
@@ -456,26 +450,19 @@ const BX_SHOP   = 'bx_shop';
    Die id MUSS exakt der id in der Kunden-App entsprechen. */
 const SHOP_USERS = {
   'berlin-doener@bestellux.com'     : 'berlin-doener',
-  'imbiss@bestellux.com'            : 'imbiss-berlin',
   'pizza-hawaii@bestellux.com'      : 'pizza-hawaii',
-  'sushi@bestellux.com'             : 'sushi-sakura',
-  'getraenke@bestellux.com'         : 'getraenke-express',
-  'mcd@bestellux.com'               : 'mcd',
-  'burgerking@bestellux.com'        : 'burger-king'
+  'getraenke@bestellux.com'         : 'getraenke-express'
 };
 
 /* Nur Namen/Farben zum Anzeigen – die Speisekarte lebt in der Kunden-App. */
 const SHOPS = [
   {id:'berlin-doener',     name:'Berlin Döner',     ini:'BD', color:'#D01E2C', town:'Langwedel'},
-  {id:'imbiss-berlin',     name:'Imbiss Langwedel', ini:'IL', color:'#C0392B', town:'Langwedel'},
   {id:'pizza-hawaii',      name:'Pizza Hawaii',     ini:'PH', color:'#F0193C', town:'Verden'},
-  {id:'sushi-sakura',      name:'Sushi Sakura',     ini:'SS', color:'#2C2C2C', town:'Verden'},
-  {id:'getraenke-express', name:'Getränke Express', ini:'GE', color:'#1E6FB0', town:'Langwedel'},
-  {id:'mcd',               name:"McDonald's",       ini:'M',  color:'#D9A441', town:'Verden'},
-  {id:'burger-king',       name:'Burger King',      ini:'BK', color:'#8B4513', town:'Etelsen'}
+  {id:'getraenke-express', name:'Getränke Express', ini:'GE', color:'#1E6FB0', town:'Langwedel'}
 ];
 /* Betreiber-Konten: dürfen jedes Lokal öffnen (zum Testen und für den Notfall). */
-const ADMINS = ['bestellux1@gmail.com','ibrahimi.hafid22@gmail.com'];
+/* Kein Betreiber-Zugang mehr auf dieser Seite. Eine Anmeldung = ein Lokal.
+   Die Übersicht über alle Lokale liegt in admin.html. */
 
 const FB_CONFIG = {
   apiKey: "AIzaSyBsCEXpAKJwYI3Zg_8XHUE8CeIyjo7zX2c",
@@ -579,6 +566,57 @@ function isOpen(s){
   if(s.until && Date.now() >= s.until) st = !st;        /* Zeit abgelaufen → kippt */
   return st;
 }
+/* =====================================================================
+   ÖFFNUNGSZEITEN – der Regelfall (2.10)
+   ---------------------------------------------------------------------
+   ZEICHENGLEICH mit index.html. Wird hier etwas geändert, muss es dort
+   mitgeändert werden – sonst widersprechen sich die beiden Apps.
+   0 = Sonntag, 1 = Montag … 6 = Samstag.
+     ['11:00','22:00'] = an diesem Tag von … bis geöffnet
+     null              = Ruhetag
+   ===================================================================== */
+const REST_HOURS = {
+  'berlin-doener':     { 0:['12:00','22:00'], 1:['11:00','22:00'], 2:['11:00','22:00'], 3:['11:00','22:00'], 4:['11:00','22:00'], 5:['11:00','23:00'], 6:['11:00','23:00'] },
+  'pizza-hawaii':      { 0:['12:00','22:00'], 1:null,              2:['11:30','22:00'], 3:['11:30','22:00'], 4:['11:30','22:00'], 5:['11:30','23:00'], 6:['11:30','23:00'] },
+  'getraenke-express': { 0:null,              1:['09:00','20:00'], 2:['09:00','20:00'], 3:['09:00','20:00'], 4:['09:00','20:00'], 5:['09:00','21:00'], 6:['09:00','18:00'] }
+};
+var WOCHENTAG = ['Sonntag','Montag','Dienstag','Mittwoch','Donnerstag','Freitag','Samstag'];
+function hmToMin(t){ var p = String(t).split(':'); return (+p[0])*60 + (+p[1]); }
+function dayWindow(id, d){
+  var h = REST_HOURS[id];
+  if(!h) return null;
+  var t = h[d];
+  if(!t || !t[0] || !t[1]) return null;
+  return [hmToMin(t[0]), hmToMin(t[1])];
+}
+function hoursOpen(id, now){
+  if(!REST_HOURS[id]) return true;
+  now = now || new Date();
+  var day = now.getDay();
+  var min = now.getHours()*60 + now.getMinutes();
+  var w = dayWindow(id, day);
+  if(w){
+    if(w[1] > w[0]){ if(min >= w[0] && min < w[1]) return true; }
+    else if(min >= w[0]) return true;
+  }
+  var y = dayWindow(id, (day+6)%7);
+  if(y && y[1] <= y[0] && min < y[1]) return true;
+  return false;
+}
+function nextOpenText(id, now){
+  if(!REST_HOURS[id]) return '';
+  now = now || new Date();
+  var day = now.getDay();
+  var min = now.getHours()*60 + now.getMinutes();
+  var w = dayWindow(id, day);
+  if(w && min < w[0]) return 'öffnet heute um ' + REST_HOURS[id][day][0];
+  for(var i=1;i<=7;i++){
+    var d = (day+i)%7;
+    if(dayWindow(id, d)) return 'öffnet ' + (i===1 ? 'morgen' : WOCHENTAG[d]) + ' um ' + REST_HOURS[id][d][0];
+  }
+  return '';
+}
+
 function setShop(open, untilTs){
   SHOP_STATE = { open:!!open, until:untilTs||0, t:Date.now(),
                  by:(AUTH_MAIL||''), name:(SHOP?SHOP.name:'') };
@@ -608,9 +646,14 @@ function paintShop(){
   var bis = (s.until && Date.now() < s.until) ? uhr(s.until) : '';
 
   document.getElementById('swT').textContent = on ? 'Geöffnet' : 'Geschlossen';
-  document.getElementById('swS').textContent = on
-    ? (bis ? 'Kunden können bestellen – bis '+bis+' Uhr.' : 'Kunden können jetzt bestellen.')
-    : (bis ? 'Pause – wieder offen um '+bis+' Uhr.'       : 'Kunden können gerade nicht bestellen.');
+  /* Öffnungszeiten (2.10): der Schalter allein reicht nicht – ausserhalb
+     der eingetragenen Zeiten bleibt das Lokal für Kunden zu. */
+  var inZeit = hoursOpen(SHOP_ID);
+  document.getElementById('swS').textContent = !inZeit
+    ? ('Ausserhalb deiner Öffnungszeiten – Kunden sehen dich als geschlossen. ' + (nextOpenText(SHOP_ID) || ''))
+    : (on
+      ? (bis ? 'Kunden können bestellen – bis '+bis+' Uhr.' : 'Kunden können jetzt bestellen.')
+      : (bis ? 'Pause – wieder offen um '+bis+' Uhr.'       : 'Kunden können gerade nicht bestellen.'));
   document.getElementById('swB').textContent = on ? 'Schließen' : 'Öffnen';
   document.getElementById('hdState').textContent = on
     ? ('● Geöffnet'+(bis?' bis '+bis:'')) : ('Geschlossen'+(bis?' · offen um '+bis:''));
@@ -645,7 +688,7 @@ function mine(){ return bxLoad().filter(function(o){ return myIdx(o) >= 0; }); }
 function listNeu(){
   return mine().filter(function(o){
     var s = myStop(o);
-    return o.status==='neu' && s && s.ok===undefined;
+    return o.status==='neu' && s && s.ok===undefined;   /* storniert faellt hier automatisch raus */
   });
 }
 /* In der Küche = angenommen, aber noch nicht auf "Fertig" getippt.
@@ -654,7 +697,7 @@ function listRun(){
   return mine().filter(function(o){
     var s = myStop(o);
     return s && s.ok===1 && !s.fertig &&
-           o.status!=='geliefert' && o.status!=='abgelehnt';
+           o.status!=='geliefert' && o.status!=='abgelehnt' && o.status!=='storniert';
   });
 }
 /* Erledigt = fertig gemacht, ausgeliefert oder abgelehnt – von heute. */
@@ -663,7 +706,7 @@ function listDone(){
   return mine().filter(function(o){
     if((o.at||0) < t0.getTime()) return false;
     var s = myStop(o);
-    return (s && s.fertig) || o.status==='geliefert' || o.status==='abgelehnt';
+    return (s && s.fertig) || o.status==='geliefert' || o.status==='abgelehnt' || o.status==='storniert';
   }).sort(function(a,b){ return (b.at||0) - (a.at||0); });
 }
 /* Summe nur für DIESES Lokal – nicht der Gesamtbetrag der Bestellung. */
@@ -880,6 +923,8 @@ function card(o, mode){
     var sf = myStop(o);
     h += (o.status==='geliefert')
        ? '<div class="st go">✅ Geliefert'+(sf&&sf.fertig?' · fertig gemacht um '+uhr(sf.fertig)+' Uhr':'')+'</div>'
+       : (o.status==='storniert')
+       ? '<div class="st bad">🚫 Vom Kunden storniert</div>'
        : (o.status==='abgelehnt')
        ? '<div class="st bad">✕ Abgelehnt'+(o.grund?' · '+esc(o.grund):'')+'</div>'
        : '<div class="st go">✓ Fertig um '+uhr(sf.fertig)+' Uhr · wartet auf den Fahrer</div>';
@@ -915,7 +960,7 @@ function bilanz(ab){
     if(s.ok === 1){
       r.angenommen++;
       if(o.status === 'geliefert'){ r.geliefert++; r.umsatz += stopSum(o); }
-    } else if(s.ok === 0 || o.status === 'abgelehnt'){
+    } else if(s.ok === 0 || o.status === 'abgelehnt' || o.status === 'storniert'){
       r.abgelehnt++;
     }
   });
@@ -1097,7 +1142,7 @@ setInterval(function(){ if(SHOP_ID) watch(); }, FB_OK ? 8000 : 1800);
    ANMELDUNG
    ===================================================================== */
 function stage(id){
-  ['lgAuth','lgPick','lgNo','lgOff'].forEach(function(k){
+  ['lgAuth','lgNo','lgOff'].forEach(function(k){
     var el = document.getElementById(k); if(el) el.classList.toggle('hide', k!==id);
   });
   document.getElementById('login').classList.remove('hide');
@@ -1137,32 +1182,19 @@ function logout(){
   else location.reload();
 }
 
-function pickList(){
-  document.getElementById('pickList').innerHTML = SHOPS.map(function(s){
-    return '<button onclick="startShop(\''+s.id+'\')">'+
-      '<span class="bdg" style="background:'+s.color+'">'+esc(s.ini)+'</span>'+
-      '<span>'+esc(s.name)+'<br><small style="color:var(--tx3);font-weight:700">'+esc(s.town)+'</small></span>'+
-    '</button>';
-  }).join('');
-  stage('lgPick');
-}
-
 function startShop(id){
   SHOP_ID = id;
   SHOP = SHOPS.filter(function(s){ return s.id===id; })[0] ||
          {id:id, name:id, ini:'??', color:'#666', town:''};
-  try{ localStorage.setItem('bx_shop_pick', id); }catch(e){}
+  /* Nichts mehr merken: die Seite darf nie von selbst in ein Lokal springen.
+     Nur die Anmeldung entscheidet, welches Lokal sich öffnet. */
+  try{ localStorage.removeItem('bx_shop_pick'); }catch(e){}
 
   document.getElementById('login').classList.add('hide');
   document.getElementById('app').classList.remove('hide');
   document.getElementById('hdAv').textContent = SHOP.ini;
   document.getElementById('hdAv').style.background = SHOP.color;
   document.getElementById('hdName').textContent = SHOP.name;
-
-  /* Nur der Betreiber darf zwischen den Lokalen springen. Ein Lokal sieht
-     den Knopf gar nicht – für das gibt es nichts zu wechseln. */
-  var sw = document.getElementById('bxSwitch');
-  if(sw) sw.classList.toggle('hide', ADMINS.indexOf(AUTH_MAIL) < 0);
 
   /* Öffnungszustand live mitlesen – auch wenn ihn ein Kollege am anderen
      Gerät umstellt, springt diese Seite sofort mit. */
@@ -1189,16 +1221,11 @@ function onAuth(u){
   AUTH_UID = u.uid;
   AUTH_MAIL = (u.email || '').toLowerCase();
 
+  /* Eine E-Mail gehört zu genau einem Lokal. Passt sie zu keinem, gibt es
+     keinen Zugang – und vor allem keine Liste der anderen Lokale. */
   var id = SHOP_USERS[AUTH_MAIL];
   if(id){ startShop(id); return; }
 
-  if(ADMINS.indexOf(AUTH_MAIL) >= 0){
-    var last = null;
-    try{ last = localStorage.getItem('bx_shop_pick'); }catch(e){}
-    if(last && SHOPS.some(function(s){ return s.id===last; })) startShop(last);
-    else pickList();
-    return;
-  }
   document.getElementById('noMail').textContent = AUTH_MAIL;
   stage('lgNo');
 }
