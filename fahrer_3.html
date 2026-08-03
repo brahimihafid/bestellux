@@ -1,0 +1,1449 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<title>Bestellux Fahrer</title>
+<meta name="theme-color" content="#12100B">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="apple-touch-icon" href="icon-180.png">
+<style>
+:root{
+  --yellow:#FFB800; --yellow-dark:#E09E00; --gold:#C9A24B;
+  --red:#A0152C; --red-dark:#7C0F21;
+  --bg:#12100B; --bg2:#1B1810; --card:#221E14; --card2:#2B2618;
+  --line:rgba(255,184,0,0.16);
+  --tx:#F6F1E4; --tx2:#B7AE99; --tx3:#7E7767;
+  --green:#2BB673; --green-dark:#1E8C57;
+  --blue:#3D8BF2;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html,body{margin:0;padding:0;}
+body{
+  background:var(--bg);color:var(--tx);
+  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;
+  font-size:15px;line-height:1.45;
+  padding-bottom:calc(74px + env(safe-area-inset-bottom));
+  overscroll-behavior-y:contain;
+}
+button{font-family:inherit;cursor:pointer;border:none;}
+input,select{font-family:inherit;}
+.hide{display:none !important;}
+
+/* ================= LOGIN ================= */
+#login{
+  position:fixed;inset:0;z-index:999;overflow-y:auto;
+  background:radial-gradient(120% 80% at 50% 0%,#2A2415 0%,var(--bg) 62%);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:26px 20px calc(30px + env(safe-area-inset-bottom));
+}
+.lg-logo{
+  margin-bottom:16px;display:flex;align-items:center;justify-content:center;
+  animation:lgFloat 3.4s ease-in-out infinite;
+}
+@keyframes lgFloat{0%,100%{transform:translateY(0);}50%{transform:translateY(-7px);}}
+.lg-title{font-size:26px;font-weight:900;letter-spacing:-0.4px;margin:0;}
+.lg-title b{color:var(--yellow);}
+.lg-sub{color:var(--tx2);font-size:13.5px;margin:5px 0 26px;text-align:center;}
+.lg-card{
+  width:100%;max-width:400px;background:var(--card);border:1px solid var(--line);
+  border-radius:22px;padding:20px 18px;box-shadow:0 18px 40px rgba(0,0,0,0.45);
+}
+.fld{margin-bottom:15px;}
+.fld label{display:block;font-size:12px;font-weight:800;color:var(--tx2);
+  text-transform:uppercase;letter-spacing:0.6px;margin-bottom:7px;}
+.fld input,.fld select{
+  width:100%;background:var(--bg2);border:1.5px solid var(--line);border-radius:13px;
+  padding:13px 14px;color:var(--tx);font-size:15.5px;font-weight:600;outline:none;
+  transition:border-color .16s;
+}
+.fld input:focus,.fld select:focus{border-color:var(--yellow);}
+.chips{display:flex;gap:8px;flex-wrap:wrap;}
+.chip{
+  flex:1 1 0;min-width:96px;background:var(--bg2);border:1.5px solid var(--line);
+  border-radius:13px;padding:12px 8px;color:var(--tx2);font-size:13.5px;font-weight:800;
+  text-align:center;transition:all .16s;
+}
+.chip.on{background:linear-gradient(140deg,var(--yellow),var(--yellow-dark));
+  border-color:var(--yellow);color:#241C00;box-shadow:0 6px 16px rgba(255,184,0,0.28);}
+.btn-main{
+  width:100%;background:linear-gradient(140deg,var(--yellow),var(--yellow-dark));
+  color:#241C00;font-size:16.5px;font-weight:900;border-radius:15px;padding:15px;
+  box-shadow:0 10px 26px rgba(255,184,0,0.30);transition:transform .14s;
+}
+.btn-main:active{transform:scale(0.975);}
+.lg-note{color:var(--tx3);font-size:11.5px;text-align:center;margin:14px 0 0;max-width:400px;}
+.lg-err{background:rgba(224,60,60,.13);border:1px solid rgba(224,60,60,.45);color:#FF8A8A;
+  border-radius:11px;padding:10px 12px;font-size:13px;font-weight:700;margin-top:12px;line-height:1.45;}
+.lg-wait{text-align:center;}
+.lg-wait .wi{font-size:46px;margin-bottom:10px;}
+.lg-wait h2{margin:0 0 8px;font-size:19px;color:var(--yellow);}
+.lg-wait p{margin:0 0 6px;color:var(--tx2);font-size:14px;line-height:1.6;}
+.lg-mail{font-family:ui-monospace,Menlo,monospace;font-size:13px;color:var(--tx);
+  background:rgba(255,255,255,.05);border-radius:8px;padding:7px 11px;display:inline-block;margin:8px 0 14px;}
+.btn-ghost{width:100%;background:transparent;border:1.5px solid rgba(255,255,255,.16);color:var(--tx2);
+  border-radius:12px;padding:12px;font-size:14px;font-weight:800;cursor:pointer;}
+
+
+/* ================= TOPBAR ================= */
+.top{
+  position:sticky;top:0;z-index:60;
+  background:linear-gradient(180deg,rgba(27,24,16,0.98),rgba(18,16,11,0.94));
+  backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+  border-bottom:1px solid var(--line);
+  padding:calc(10px + env(safe-area-inset-top)) 14px 10px;
+  display:block;
+}
+/* Bestellux-Zeile über dem Namen des Fahrers: Logo und Plattformname oben,
+   der Fahrer selbst darunter. */
+.top-row{display:flex;align-items:center;gap:11px;}
+.bxbar{display:flex;align-items:center;gap:8px;margin-bottom:10px;}
+.bxbar-lg{height:26px;width:auto;flex:0 0 auto;display:block;}
+.bxbar-tx{font-size:14.5px;font-weight:900;letter-spacing:-0.3px;color:var(--gold);}
+.bxbar-tx b{color:var(--yellow);font-weight:900;}
+.bxbar-tag{font-size:10px;font-weight:900;letter-spacing:.9px;text-transform:uppercase;
+  color:var(--tx3);border:1px solid var(--line);border-radius:999px;padding:3px 9px;}
+.av{
+  width:42px;height:42px;border-radius:14px;flex-shrink:0;
+  background:linear-gradient(140deg,var(--red),var(--red-dark));
+  display:flex;align-items:center;justify-content:center;
+  font-size:16px;font-weight:900;color:#fff;position:relative;
+  box-shadow:0 5px 14px rgba(160,21,44,0.4);
+}
+.av::after{content:"";position:absolute;right:-2px;bottom:-2px;width:13px;height:13px;
+  border-radius:50%;background:var(--tx3);border:2.5px solid var(--bg);}
+body.online .av::after{background:var(--green);box-shadow:0 0 0 0 rgba(43,182,115,0.6);
+  animation:pulseDot 1.9s ease-out infinite;}
+@keyframes pulseDot{0%{box-shadow:0 0 0 0 rgba(43,182,115,0.55);}100%{box-shadow:0 0 0 11px rgba(43,182,115,0);}}
+.top-tx{flex:1;min-width:0;}
+.top-tx b{display:block;font-size:15px;font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.top-tx span{display:block;font-size:11.5px;color:var(--tx3);font-weight:700;}
+body.online .top-tx span{color:var(--green);}
+.sw{
+  width:60px;height:32px;border-radius:20px;background:#3A3427;position:relative;
+  flex-shrink:0;transition:background .2s;border:1px solid rgba(255,255,255,0.06);
+}
+.sw::after{content:"";position:absolute;top:3px;left:3px;width:24px;height:24px;border-radius:50%;
+  background:#fff;transition:transform .22s cubic-bezier(.34,1.56,.64,1);
+  box-shadow:0 2px 6px rgba(0,0,0,0.35);}
+body.online .sw{background:linear-gradient(140deg,var(--green),var(--green-dark));}
+body.online .sw::after{transform:translateX(28px);}
+
+/* ================= WRAP / SECTIONS ================= */
+.wrap{padding:14px 13px 6px;max-width:560px;margin:0 auto;}
+.sec-h{display:flex;align-items:center;justify-content:space-between;margin:2px 0 11px;}
+.sec-h h2{font-size:17px;font-weight:900;margin:0;letter-spacing:-0.2px;}
+.count{
+  background:var(--red);color:#fff;font-size:11.5px;font-weight:900;
+  border-radius:20px;padding:3px 10px;min-width:24px;text-align:center;
+}
+.count.zero{background:#3A3427;color:var(--tx3);}
+
+/* ================= ORDER CARD ================= */
+.oc{
+  background:var(--card);border:1px solid var(--line);border-radius:20px;
+  margin-bottom:13px;overflow:hidden;position:relative;
+  box-shadow:0 8px 22px rgba(0,0,0,0.32);
+  animation:ocIn .34s cubic-bezier(.2,.8,.3,1) both;
+}
+@keyframes ocIn{from{opacity:0;transform:translateY(14px) scale(0.98);}to{opacity:1;transform:none;}}
+.oc.new::before{content:"";position:absolute;left:0;right:0;top:0;height:3px;
+  background:linear-gradient(90deg,var(--yellow),var(--red),var(--yellow));
+  background-size:200% 100%;animation:ocBar 2.2s linear infinite;}
+@keyframes ocBar{to{background-position:200% 0;}}
+.oc-top{display:flex;align-items:center;gap:10px;padding:14px 14px 0;}
+.oc-id{font-size:11.5px;font-weight:900;color:var(--tx3);letter-spacing:0.5px;}
+.oc-pay{
+  margin-left:auto;font-size:11.5px;font-weight:900;border-radius:9px;padding:4px 9px;
+  background:rgba(61,139,242,0.14);color:#8FBEFF;border:1px solid rgba(61,139,242,0.28);
+}
+.oc-pay.cash{background:rgba(43,182,115,0.14);color:#6FE0AE;border-color:rgba(43,182,115,0.3);}
+.oc-money{
+  padding:12px 14px 4px;display:flex;align-items:flex-end;gap:9px;
+}
+.oc-earn{font-size:30px;font-weight:900;line-height:1;
+  background:linear-gradient(120deg,var(--yellow),#FFE08A 50%,var(--yellow));
+  -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;}
+.oc-earn-l{font-size:11.5px;font-weight:800;color:var(--tx3);padding-bottom:3px;}
+.oc-dist{margin-left:auto;font-size:12.5px;font-weight:800;color:var(--tx2);padding-bottom:3px;
+  white-space:nowrap;}
+/* Eigene Zeile: woraus besteht der Betrag? Fester Lohn + Trinkgeld. */
+.oc-split{padding:2px 14px 0;font-size:11.5px;font-weight:800;color:var(--gold);}
+.oc-route{padding:12px 14px 2px;}
+.rw{display:flex;gap:11px;position:relative;padding-bottom:14px;}
+.rw:last-child{padding-bottom:2px;}
+.rw::before{content:"";position:absolute;left:15px;top:32px;bottom:-2px;width:2px;
+  background:repeating-linear-gradient(180deg,var(--line) 0 4px,transparent 4px 8px);}
+.rw:last-child::before{display:none;}
+.rw-ic{
+  width:32px;height:32px;border-radius:11px;flex-shrink:0;display:flex;
+  align-items:center;justify-content:center;font-size:12px;font-weight:900;color:#fff;
+}
+.rw-ic.dest{background:linear-gradient(140deg,var(--green),var(--green-dark));font-size:15px;}
+.rw-tx{min-width:0;flex:1;}
+.rw-tx b{display:block;font-size:14px;font-weight:800;line-height:1.28;}
+.rw-tx span{display:block;font-size:12px;color:var(--tx3);font-weight:600;line-height:1.35;}
+/* Der Fahrer muss auf einen Blick lesen: WO hole ich ab, und WOHIN bringe
+   ich es. Darum steht über jeder Zeile eine kleine Überschrift, und der
+   Ort steht direkt neben dem Namen des Lokals. */
+.rw-lb{display:block;font-size:10.5px;font-weight:900;letter-spacing:.8px;
+  text-transform:uppercase;margin:0 0 5px 43px;}
+.rw-lb.pick{color:var(--gold);}
+.rw-lb.zi{color:var(--green);}
+.rw-lb i{font-style:normal;color:var(--tx3);letter-spacing:.4px;}
+/* Der Ort steht NEBEN dem Namen, nicht darunter – darum inline.
+   (.rw-tx span ist sonst ein Block, das würde ihn umbrechen.) */
+.rw-tx b .rw-tn{display:inline;font-size:13px;font-weight:700;color:var(--tx3);}
+.rw-items{margin-top:5px;font-size:12px;color:var(--tx2);line-height:1.5;}
+.rw-items i{font-style:normal;color:var(--yellow);font-weight:800;}
+.rw-note{color:var(--gold);font-size:11.5px;}
+/* Balken auf der Auftragskarte: das Lokal hat zugesagt. */
+.okban{margin:9px 14px 2px;padding:9px 11px;border-radius:11px;font-size:13px;font-weight:800;
+  background:rgba(43,182,115,.13);border:1px solid rgba(43,182,115,.35);color:#2BB673;}
+.okban.jetzt{background:rgba(43,182,115,.22);border-color:#2BB673;color:#8BE0B7;font-size:13.5px;font-weight:900;}
+/* =====================================================================
+   GESPERRTE KARTE – ein Fahrer aus dem Ort hat 30 Sekunden Vorsprung
+   ---------------------------------------------------------------------
+   Die Karte bleibt sichtbar und voll lesbar, sie wird nur ruhiger:
+   kein blinkender Balken oben, etwas blasser. Der gelbe Balken sagt in
+   Worten, warum der Knopf noch nicht geht – und wie viele Sekunden noch.
+   ===================================================================== */
+.oc.gesperrt{opacity:.74;}
+.oc.gesperrt::before{display:none;}
+.lockban{margin:9px 14px 2px;padding:9px 11px;border-radius:11px;font-size:13px;font-weight:800;
+  background:rgba(255,184,0,.12);border:1px solid rgba(255,184,0,.38);color:var(--gold);line-height:1.45;}
+.lockban b{font-weight:900;color:#FFD980;}
+/* Der Knopf ist noch tot – das muss man SEHEN, nicht erst beim Tippen merken. */
+.b.b-wait{background:var(--line);color:var(--tx3);}
+.b.b-wait:active{transform:none;}
+/* Pro Lokal: hat es zugesagt, und steht das Essen schon da? */
+.rw-ok{display:inline-block;margin-top:5px;padding:3px 9px;border-radius:8px;
+  font-size:11px;font-weight:900;background:rgba(43,182,115,.15);color:#2BB673;}
+.rw-ok.warte{background:rgba(255,184,0,.14);color:var(--gold);}
+.oc-bar{display:flex;gap:9px;padding:12px 14px 14px;}
+.b{border-radius:13px;padding:13px 10px;font-size:14.5px;font-weight:900;transition:transform .14s;}
+.b:active{transform:scale(0.97);}
+.b-ok{flex:2;background:linear-gradient(140deg,var(--green),var(--green-dark));color:#fff;
+  box-shadow:0 8px 20px rgba(43,182,115,0.28);}
+.b-no{flex:1;background:var(--card2);color:var(--tx2);border:1px solid var(--line);}
+.b-gold{flex:1;background:linear-gradient(140deg,var(--yellow),var(--yellow-dark));color:#241C00;
+  box-shadow:0 8px 20px rgba(255,184,0,0.24);}
+.b-red{flex:1;background:linear-gradient(140deg,var(--red),var(--red-dark));color:#fff;}
+.b-gray{flex:1;background:var(--card2);color:var(--tx2);border:1px solid var(--line);}
+.b-wide{width:100%;}
+.timer{
+  height:4px;background:var(--card2);border-radius:4px;overflow:hidden;margin:0 14px;
+}
+.timer i{display:block;height:100%;background:linear-gradient(90deg,var(--yellow),var(--red));
+  border-radius:4px;transition:width 1s linear;}
+
+/* ================= ACTIVE ================= */
+.step{
+  display:flex;gap:11px;padding:11px 13px;border-radius:15px;margin-bottom:8px;
+  background:var(--card);border:1px solid transparent;transition:all .22s;
+}
+.step.done{opacity:0.5;}
+.step.now{border-color:var(--yellow);background:linear-gradient(140deg,#2E2716,#221E14);
+  box-shadow:0 8px 20px rgba(255,184,0,0.12);}
+.step-n{
+  width:28px;height:28px;border-radius:50%;flex-shrink:0;background:var(--card2);
+  color:var(--tx3);font-size:13px;font-weight:900;display:flex;align-items:center;justify-content:center;
+}
+.step.done .step-n{background:var(--green);color:#fff;}
+.step.now .step-n{background:linear-gradient(140deg,var(--yellow),var(--yellow-dark));color:#241C00;
+  animation:stepPulse 1.8s ease-in-out infinite;}
+@keyframes stepPulse{0%,100%{transform:scale(1);}50%{transform:scale(1.12);}}
+.step-tx b{display:block;font-size:14px;font-weight:800;}
+.step-tx span{display:block;font-size:11.5px;color:var(--tx3);font-weight:600;}
+.nav-row{display:flex;gap:9px;margin:11px 0 4px;}
+.nav-b{
+  flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;
+  background:var(--card);border:1px solid var(--line);border-radius:15px;
+  padding:12px 6px;color:var(--tx);font-size:11.5px;font-weight:800;text-decoration:none;
+  transition:transform .14s;
+}
+.nav-b:active{transform:scale(0.96);}
+.nav-b em{font-style:normal;font-size:19px;}
+.big-b{
+  width:100%;background:linear-gradient(140deg,var(--yellow),var(--yellow-dark));
+  color:#241C00;font-size:17px;font-weight:900;border-radius:17px;padding:17px;
+  box-shadow:0 12px 28px rgba(255,184,0,0.28);margin-top:12px;transition:transform .14s;
+}
+.big-b:active{transform:scale(0.98);}
+.big-b.green{background:linear-gradient(140deg,var(--green),var(--green-dark));color:#fff;
+  box-shadow:0 12px 28px rgba(43,182,115,0.3);}
+.cust{
+  background:var(--card);border:1px solid var(--line);border-radius:18px;padding:14px;margin-bottom:11px;
+}
+.cust h4{margin:0 0 8px;font-size:12px;font-weight:900;color:var(--tx3);
+  text-transform:uppercase;letter-spacing:0.7px;}
+.cust p{margin:0;font-size:15px;font-weight:800;line-height:1.45;}
+.cust small{display:block;color:var(--tx3);font-size:12px;font-weight:600;margin-top:3px;}
+.locked{color:var(--tx3);font-weight:700;font-size:13px;}
+
+/* ================= EARN ================= */
+.ea-hero{
+  background:linear-gradient(140deg,#332B17,#221E14);border:1px solid var(--line);
+  border-radius:22px;padding:20px 18px;text-align:center;margin-bottom:12px;
+  box-shadow:0 12px 30px rgba(0,0,0,0.35);
+}
+.ea-big{font-size:42px;font-weight:900;line-height:1;
+  background:linear-gradient(120deg,var(--yellow),#FFE8A6 50%,var(--yellow));
+  background-size:200% 100%;
+  -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;
+  animation:eaShine 4s linear infinite;}
+@keyframes eaShine{to{background-position:200% 0;}}
+.ea-l{font-size:12.5px;color:var(--tx2);font-weight:800;margin-top:5px;}
+.ea-grid{display:flex;gap:9px;}
+.ea-c{flex:1;background:var(--card);border:1px solid var(--line);border-radius:16px;
+  padding:14px 8px;text-align:center;}
+.ea-c b{display:block;font-size:21px;font-weight:900;}
+.ea-c span{display:block;font-size:11px;color:var(--tx3);font-weight:800;margin-top:2px;}
+/* Kurze Erklärung, wie der Verdienst entsteht – fester Lohn + Trinkgeld. */
+.ea-note{margin-top:10px;padding:11px 13px;border-radius:14px;background:var(--card);
+  border:1px solid var(--line);font-size:12.5px;line-height:1.55;color:var(--tx2);font-weight:600;}
+.ea-note b{color:var(--tx);font-weight:900;}
+.hist{margin-top:14px;}
+.hi{display:flex;align-items:center;gap:10px;padding:11px 13px;background:var(--card);
+  border:1px solid var(--line);border-radius:14px;margin-bottom:8px;}
+.hi-ic{width:32px;height:32px;border-radius:11px;background:rgba(43,182,115,0.15);
+  display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0;}
+.hi-tx{flex:1;min-width:0;}
+.hi-tx b{display:block;font-size:13.5px;font-weight:800;}
+.hi-tx span{display:block;font-size:11.5px;color:var(--tx3);font-weight:600;}
+.hi-eur{font-size:15px;font-weight:900;color:var(--yellow);}
+
+/* ================= PROFIL ================= */
+.pf-card{background:var(--card);border:1px solid var(--line);border-radius:20px;
+  padding:18px;margin-bottom:12px;}
+.pf-top{display:flex;align-items:center;gap:13px;margin-bottom:16px;}
+.pf-av{width:62px;height:62px;border-radius:20px;flex-shrink:0;
+  background:linear-gradient(140deg,var(--red),var(--red-dark));color:#fff;
+  display:flex;align-items:center;justify-content:center;font-size:23px;font-weight:900;
+  box-shadow:0 8px 20px rgba(160,21,44,0.35);}
+.pf-top b{display:block;font-size:19px;font-weight:900;}
+.pf-top span{display:block;font-size:12.5px;color:var(--tx3);font-weight:700;}
+
+/* ================= EMPTY ================= */
+.empty{text-align:center;padding:44px 20px;color:var(--tx3);}
+.empty .e-ic{font-size:52px;margin-bottom:12px;opacity:0.75;
+  display:inline-block;animation:eBob 3s ease-in-out infinite;}
+@keyframes eBob{0%,100%{transform:translateY(0);}50%{transform:translateY(-8px);}}
+.empty b{display:block;font-size:16px;font-weight:900;color:var(--tx2);margin-bottom:5px;}
+.empty p{margin:0;font-size:13px;line-height:1.5;}
+
+/* ================= NAV ================= */
+.nav{
+  position:fixed;left:0;right:0;bottom:0;z-index:70;display:flex;
+  background:rgba(27,24,16,0.97);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
+  border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom);
+}
+.nav button{
+  flex:1;background:none;color:var(--tx3);padding:9px 2px 10px;
+  display:flex;flex-direction:column;align-items:center;gap:3px;
+  font-size:10.5px;font-weight:800;position:relative;transition:color .16s;
+}
+.nav button em{font-style:normal;font-size:21px;line-height:1;}
+.nav button.on{color:var(--yellow);}
+.nav button.on em{animation:navPop .32s cubic-bezier(.34,1.56,.64,1);}
+@keyframes navPop{0%{transform:scale(1);}50%{transform:scale(1.25);}100%{transform:scale(1);}}
+.nav .bdg{
+  position:absolute;top:4px;left:50%;margin-left:5px;min-width:17px;height:17px;
+  border-radius:10px;background:var(--red);color:#fff;font-size:10px;font-weight:900;
+  display:flex;align-items:center;justify-content:center;padding:0 4px;
+  box-shadow:0 0 0 2px var(--bg);
+}
+
+/* ================= TOAST ================= */
+#toast{
+  position:fixed;left:50%;transform:translateX(-50%) translateY(-140%);
+  top:calc(12px + env(safe-area-inset-top));z-index:900;
+  background:linear-gradient(140deg,var(--yellow),var(--yellow-dark));color:#241C00;
+  font-size:14px;font-weight:900;padding:12px 20px;border-radius:14px;
+  box-shadow:0 12px 30px rgba(0,0,0,0.45);transition:transform .32s cubic-bezier(.2,.9,.3,1);
+  max-width:88vw;text-align:center;
+}
+#toast.on{transform:translateX(-50%) translateY(0);}
+
+/* ================= NEW-ORDER ALERT ================= */
+#alertOv{
+  position:fixed;inset:0;z-index:800;background:rgba(10,8,4,0.88);
+  backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);
+  display:flex;align-items:center;justify-content:center;padding:20px;
+}
+#alertOv .box{
+  width:100%;max-width:380px;background:var(--card);border:1.5px solid var(--yellow);
+  border-radius:26px;padding:24px 20px;text-align:center;
+  box-shadow:0 20px 60px rgba(255,184,0,0.22);
+  animation:alIn .34s cubic-bezier(.34,1.4,.64,1) both;
+}
+@keyframes alIn{from{opacity:0;transform:scale(0.86);}to{opacity:1;transform:scale(1);}}
+#alertOv .ring{width:74px;height:74px;border-radius:50%;margin:0 auto 14px;
+  background:linear-gradient(140deg,var(--yellow),var(--yellow-dark));
+  display:flex;align-items:center;justify-content:center;font-size:34px;
+  animation:ring .7s ease-in-out infinite;}
+@keyframes ring{0%,100%{transform:rotate(-9deg);}50%{transform:rotate(9deg);}}
+#alertOv h3{margin:0 0 4px;font-size:21px;font-weight:900;}
+#alertOv p{margin:0 0 18px;font-size:13.5px;color:var(--tx2);}
+#alertOv .amt{font-size:34px;font-weight:900;color:var(--yellow);margin-bottom:2px;}
+</style>
+<script src="https://www.gstatic.com/firebasejs/12.15.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/12.15.0/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/12.15.0/firebase-auth-compat.js"></script>
+</head>
+<body>
+
+<!-- ========== LOGIN ========== -->
+<div id="login">
+  <div class="lg-logo"><img src="logo-wort-dunkel.png" alt="Bestellux"
+       style="height:58px;width:auto;display:block"></div>
+  <h1 class="lg-title">Fahrer</h1>
+
+  <!-- ===== Stufe 1: Anmelden ===== -->
+  <div id="lgAuth">
+    <p class="lg-sub">Melde dich mit deinen Zugangsdaten an.</p>
+    <div class="lg-card">
+      <div class="fld">
+        <label>E-Mail</label>
+        <input id="inMail" type="email" placeholder="name@example.com" autocomplete="username" inputmode="email">
+      </div>
+      <div class="fld">
+        <label>Passwort</label>
+        <input id="inPw" type="password" placeholder="••••••••" autocomplete="current-password">
+      </div>
+      <button class="btn-main" onclick="doAuth()">Anmelden →</button>
+      <div class="lg-err hide" id="authErr"></div>
+    </div>
+    <p class="lg-note">Deine Zugangsdaten bekommst du von Bestellux.<br>Du kannst dich hier nicht selbst registrieren.</p>
+  </div>
+
+  <!-- ===== Stufe 2: Profil anlegen ===== -->
+  <div id="lgProf" class="hide">
+    <p class="lg-sub">Nur einmal: erzähl uns kurz, wer du bist.</p>
+    <div class="lg-card">
+      <div class="fld">
+        <label>Dein Name</label>
+        <input id="inName" type="text" placeholder="z.&nbsp;B. Youssef" autocomplete="name">
+      </div>
+      <div class="fld">
+        <label>Handynummer</label>
+        <input id="inPhone" type="tel" placeholder="0176 1234567" autocomplete="tel">
+      </div>
+      <div class="fld">
+        <label>Fahrzeug</label>
+        <div class="chips" id="vehChips">
+          <button class="chip on" data-v="E-Bike">🚲 E-Bike</button>
+          <button class="chip" data-v="Auto">🚗 Auto</button>
+          <button class="chip" data-v="Roller">🛵 Roller</button>
+        </div>
+      </div>
+      <div class="fld">
+        <label>Ich starte in</label>
+        <div class="chips" id="townChips">
+          <button class="chip on" data-t="Langwedel">Langwedel</button>
+          <button class="chip" data-t="Etelsen">Etelsen</button>
+          <button class="chip" data-t="Verden">Verden</button>
+        </div>
+      </div>
+      <button class="btn-main" onclick="doProfile()">Weiter →</button>
+    </div>
+    <p class="lg-note" id="profNote">Diese Angaben sieht nur Bestellux und der Kunde, der dich bestellt hat.</p>
+  </div>
+
+  <!-- ===== Stufe 3: Warten auf Freigabe ===== -->
+  <div id="lgWait" class="hide">
+    <div class="lg-card lg-wait">
+      <div class="wi">⏳</div>
+      <h2>Fast geschafft</h2>
+      <p>Dein Zugang muss noch von Bestellux freigegeben werden.</p>
+      <div class="lg-mail" id="waitMail">–</div>
+      <p>Sobald du freigeschaltet bist, öffnet sich die App hier automatisch. Du musst nichts weiter tun.</p>
+      <button class="btn-ghost" style="margin-top:16px" onclick="logout()">Abmelden</button>
+    </div>
+    <p class="lg-note">Dauert das zu lange? Melde dich bei Bestellux.</p>
+  </div>
+</div>
+
+<!-- ========== APP ========== -->
+<div id="app" class="hide">
+
+  <div class="top">
+    <div class="bxbar">
+      <img class="bxbar-lg" src="logo-wort-dunkel.png" alt="Bestellux">
+      <div class="bxbar-tag">Fahrer</div>
+    </div>
+    <div class="top-row">
+      <div class="av" id="tAv">–</div>
+      <div class="top-tx">
+        <b id="tName">Fahrer</b>
+        <span id="tState">Offline</span>
+      </div>
+      <button class="sw" id="tSw" onclick="toggleShift()" aria-label="Schicht"></button>
+    </div>
+  </div>
+
+  <!-- TAB: Aufträge -->
+  <div class="wrap tab" id="tabJobs">
+    <div class="sec-h">
+      <h2>Neue Aufträge</h2>
+      <span class="count zero" id="jobCount">0</span>
+    </div>
+    <div id="jobList"></div>
+  </div>
+
+  <!-- TAB: Aktiv -->
+  <div class="wrap tab hide" id="tabActive">
+    <div class="sec-h"><h2>Aktive Lieferung</h2></div>
+    <div id="activeBox"></div>
+  </div>
+
+  <!-- TAB: Verdienst -->
+  <div class="wrap tab hide" id="tabEarn">
+    <div class="sec-h"><h2>Mein Verdienst</h2></div>
+    <div id="earnBox"></div>
+  </div>
+
+  <!-- TAB: Profil -->
+  <div class="wrap tab hide" id="tabProf">
+    <div class="sec-h"><h2>Mein Profil</h2></div>
+    <div id="profBox"></div>
+  </div>
+
+  <div class="nav">
+    <button class="on" data-tab="Jobs"   onclick="go('Jobs')"><em>📋</em>Aufträge<span class="bdg hide" id="navBdg">0</span></button>
+    <button data-tab="Active" onclick="go('Active')"><em>🛵</em>Aktiv</button>
+    <button data-tab="Earn"   onclick="go('Earn')"><em>💶</em>Verdienst</button>
+    <button data-tab="Prof"   onclick="go('Prof')"><em>👤</em>Profil</button>
+  </div>
+</div>
+
+<div id="toast"></div>
+<div id="alertOv" class="hide" onclick="closeAlert()"></div>
+
+<script>
+/* =====================================================================
+   BESTELLUX FAHRER-APP
+   Bestellungen kommen aus der Firebase Realtime Database (Belgien,
+   europe-west1) – derselben Datenbank, in die die Kunden-App schreibt.
+   Deshalb landet eine Bestellung von bestellux.com direkt auf dem Handy
+   des Fahrers, egal wo er gerade ist.
+   Ohne Netz/Firebase faellt die App automatisch auf localStorage zurueck.
+   ===================================================================== */
+
+const BX_ORDERS = 'bx_orders';
+const BX_DRIVER = 'bx_driver';
+
+const FB_CONFIG = {
+  apiKey: "AIzaSyBsCEXpAKJwYI3Zg_8XHUE8CeIyjo7zX2c",
+  authDomain: "bestellux.firebaseapp.com",
+  databaseURL: "https://bestellux-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "bestellux",
+  storageBucket: "bestellux.firebasestorage.app",
+  messagingSenderId: "19751728202",
+  appId: "1:19751728202:web:a7daa8f4d57b01730ce2b3"
+};
+var FB_DB = null, FB_OK = false;
+try{
+  if(window.firebase && firebase.initializeApp){
+    if(!firebase.apps || !firebase.apps.length) firebase.initializeApp(FB_CONFIG);
+    FB_DB = firebase.database();
+    FB_OK = true;
+  }
+}catch(e){ FB_DB = null; FB_OK = false; }
+
+var FB_AUTH = null;
+try{ if(FB_OK && firebase.auth) FB_AUTH = firebase.auth(); }catch(e){ FB_AUTH = null; }
+var AUTH_UID = null, AUTH_MAIL = '';
+
+var FB_CACHE = [];   /* alle Auftraege, neueste zuerst */
+var FB_SNAP  = {};   /* id -> zuletzt bekannter Stand, damit wir nur Aenderungen senden */
+
+function bxLoad(){
+  if(FB_OK) return FB_CACHE;
+  try{ return JSON.parse(localStorage.getItem(BX_ORDERS)||'[]'); }catch(e){ return []; }
+}
+function bxSave(a){
+  if(a.length > 80) a.length = 80;
+  try{ localStorage.setItem(BX_ORDERS, JSON.stringify(a.slice(0,80))); }catch(e){}
+  if(!FB_OK) return;
+  try{
+    var up = {}, n = 0;
+    for(var i=0;i<a.length;i++){
+      var o = a[i]; if(!o || !o.id) continue;
+      var js = JSON.stringify(o);
+      if(FB_SNAP[o.id] !== js){ FB_SNAP[o.id] = js; up['orders/'+o.id] = o; n++; }
+    }
+    if(n) FB_DB.ref().update(up);
+  }catch(e){}
+}
+function bxUpdate(id, fn){
+  const a = bxLoad(); const i = a.findIndex(o=>o.id===id);
+  if(i<0) return null;
+  fn(a[i]); a[i].upd = Date.now(); bxSave(a); return a[i];
+}
+
+/* Firebase-Livestrom: jede Aenderung in der Datenbank landet sofort hier. */
+var fbPurged = false;
+function fbStart(){
+  if(!FB_OK) return;
+  FB_DB.ref('orders').on('value', function(snap){
+    var v = snap.val() || {}, arr = [];
+    for(var k in v){ if(v[k] && v[k].id) arr.push(v[k]); }
+    arr.sort(function(x,y){ return (y.at||0)-(x.at||0); });
+    FB_CACHE = arr;
+    FB_SNAP = {};
+    for(var i=0;i<arr.length;i++) FB_SNAP[arr[i].id] = JSON.stringify(arr[i]);
+    try{ localStorage.setItem(BX_ORDERS, JSON.stringify(arr.slice(0,80))); }catch(e){}
+    if(!fbPurged){ fbPurged = true; fbPurge(arr); }
+    if(ME) watch();
+  }, function(){ /* kein Zugriff -> App laeuft lokal weiter */ });
+}
+/* Alte Auftraege (aelter als 5 Tage) aufraeumen, damit die Datenbank klein bleibt. */
+function fbPurge(arr){
+  try{
+    var grenze = Date.now() - 5*24*60*60*1000, del = {}, n = 0;
+    for(var i=0;i<arr.length;i++){
+      if((arr[i].at||0) < grenze){ del['orders/'+arr[i].id] = null; n++; }
+    }
+    if(n) FB_DB.ref().update(del);
+  }catch(e){}
+}
+
+const DIST = {
+  'Verden-Verden':1.4,'Verden-Langwedel':7.4,'Verden-Etelsen':9.6,
+  'Langwedel-Verden':7.4,'Langwedel-Langwedel':1.1,'Langwedel-Etelsen':3.1,
+  'Etelsen-Verden':9.6,'Etelsen-Langwedel':3.1,'Etelsen-Etelsen':1.1
+};
+function distTowns(a,b){ return DIST[a+'-'+b] !== undefined ? DIST[a+'-'+b] : 6; }
+
+const eur = n => (Number(n)||0).toFixed(2).replace('.',',')+' €';
+const km  = n => (Number(n)||0).toFixed(1).replace('.',',')+' km';
+const esc = s => String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+const STEPS = [
+  {k:'angenommen',   t:'Auftrag angenommen', s:'Fahr los zum Restaurant',        b:'Ich bin am Restaurant'},
+  {k:'am_restaurant',t:'Am Restaurant',       s:'Warte auf das Essen',            b:'Essen abgeholt'},
+  {k:'abgeholt',     t:'Essen abgeholt',      s:'Alles eingesammelt',             b:'Losfahren zum Kunden'},
+  {k:'unterwegs',    t:'Unterwegs zum Kunden',s:'Fahr zur Lieferadresse',         b:'Geliefert ✓'},
+  {k:'geliefert',    t:'Geliefert',           s:'Auftrag abgeschlossen',          b:''}
+];
+function stepIdx(st){ const i = STEPS.findIndex(x=>x.k===st); return i<0?-1:i; }
+
+/* ---------- Fahrer-Profil ----------
+   Das Profil liegt in der Datenbank unter drivers/<uid>.
+   'active' setzt NUR der Betreiber im Dashboard – die Fahrer-App
+   schreibt dieses Feld nie. */
+let ME = null;
+try{ ME = JSON.parse(localStorage.getItem(BX_DRIVER)||'null'); }catch(e){ ME = null; }
+function saveMe(){
+  try{ localStorage.setItem(BX_DRIVER, JSON.stringify(ME)); }catch(e){}
+  if(!FB_OK || !AUTH_UID || !ME) return;
+  try{
+    FB_DB.ref('drivers/'+AUTH_UID).update({
+      uid:AUTH_UID, email:(ME.email||AUTH_MAIL||''),
+      name:(ME.name||''), ini:(ME.ini||''), phone:(ME.phone||''),
+      veh:(ME.veh||''), town:(ME.town||''),
+      online:!!ME.online, lastSeen:Date.now()
+    });
+  }catch(e){}
+}
+function isMine(o){
+  if(!o || !o.driver || !ME) return false;
+  if(o.driver.uid && ME.uid) return o.driver.uid === ME.uid;
+  return o.driver.name === ME.name;
+}
+function initials(n){
+  const p = String(n||'').trim().split(/\s+/).filter(Boolean);
+  if(!p.length) return 'FX';
+  return (p[0][0]+(p[1]?p[1][0]:'')).toUpperCase();
+}
+
+/* ---------- Login ---------- */
+let pickVeh = 'E-Bike', pickTown = 'Langwedel';
+document.getElementById('vehChips').addEventListener('click', e=>{
+  const b = e.target.closest('.chip'); if(!b) return;
+  [].forEach.call(b.parentNode.children, c=>c.classList.remove('on'));
+  b.classList.add('on'); pickVeh = b.dataset.v;
+});
+document.getElementById('townChips').addEventListener('click', e=>{
+  const b = e.target.closest('.chip'); if(!b) return;
+  [].forEach.call(b.parentNode.children, c=>c.classList.remove('on'));
+  b.classList.add('on'); pickTown = b.dataset.t;
+});
+function showStage(id){
+  ['lgAuth','lgProf','lgWait'].forEach(function(k){
+    var el = document.getElementById(k); if(el) el.classList.toggle('hide', k!==id);
+  });
+  document.getElementById('login').classList.remove('hide');
+  document.getElementById('app').classList.add('hide');
+}
+function authErr(msg){
+  var el = document.getElementById('authErr');
+  if(!el) return;
+  el.textContent = msg || '';
+  el.classList.toggle('hide', !msg);
+}
+function doAuth(){
+  var m = document.getElementById('inMail').value.trim();
+  var pw = document.getElementById('inPw').value;
+  if(!m || !pw){ authErr('Bitte E-Mail und Passwort eingeben.'); return; }
+  if(!FB_AUTH){ authErr('Keine Verbindung zum Server. Prüfe dein Internet.'); return; }
+  authErr('');
+  FB_AUTH.signInWithEmailAndPassword(m, pw).catch(function(e){
+    var c = (e && e.code) || '';
+    authErr(
+      (c.indexOf('wrong-password')>=0 || c.indexOf('invalid-credential')>=0) ? 'E-Mail oder Passwort ist falsch.' :
+      (c.indexOf('user-not-found')>=0) ? 'Für diese E-Mail gibt es noch keinen Zugang.' :
+      (c.indexOf('invalid-email')>=0)  ? 'Diese E-Mail-Adresse sieht nicht richtig aus.' :
+      (c.indexOf('too-many-requests')>=0) ? 'Zu viele Versuche. Bitte ein paar Minuten warten.' :
+      (c.indexOf('network')>=0) ? 'Keine Internetverbindung.' :
+      'Anmeldung nicht möglich. Bitte nochmal versuchen.'
+    );
+  });
+}
+function doProfile(){
+  const n = document.getElementById('inName').value.trim();
+  if(n.length < 2){ toast('Bitte trag deinen Namen ein'); return; }
+  ME = Object.assign(ME || {}, {
+    uid:AUTH_UID, email:AUTH_MAIL,
+    name:n, phone:document.getElementById('inPhone').value.trim(),
+    veh:pickVeh, town:pickTown, ini:initials(n),
+    online:false, since:(ME && ME.since) || Date.now()
+  });
+  saveMe();
+  if(!FB_OK){ ME.online = true; startApp(); }
+}
+function logout(){
+  if(ME){ ME.online=false; saveMe(); }
+  geoStop();
+  try{ if(FB_OK && AUTH_UID) FB_DB.ref('drivers/'+AUTH_UID+'/online').set(false); }catch(e){}
+  localStorage.removeItem(BX_DRIVER);
+  if(FB_AUTH){ FB_AUTH.signOut().then(function(){ location.reload(); }).catch(function(){ location.reload(); }); }
+  else location.reload();
+}
+
+/* ---------- GPS: Live-Position, nur wenn der Fahrer online ist ---------- */
+var geoW = null, geoLast = 0;
+function geoStart(){
+  if(geoW !== null || !navigator.geolocation) return;
+  try{
+    geoW = navigator.geolocation.watchPosition(function(p){
+      var now = Date.now();
+      if(now - geoLast < 15000) return;      /* höchstens alle 15 s senden */
+      geoLast = now;
+      var pos = { lat:p.coords.latitude, lng:p.coords.longitude,
+                  acc:Math.round(p.coords.accuracy||0), t:now };
+      if(ME) ME.pos = pos;
+      if(FB_OK && AUTH_UID){
+        try{ FB_DB.ref('drivers/'+AUTH_UID).update({ pos:pos, lastSeen:now }); }catch(e){}
+      }
+    }, function(){ /* Fahrer hat GPS abgelehnt – App läuft trotzdem */ },
+       { enableHighAccuracy:true, maximumAge:10000, timeout:20000 });
+  }catch(e){ geoW = null; }
+}
+function geoStop(){
+  if(geoW === null) return;
+  try{ navigator.geolocation.clearWatch(geoW); }catch(e){}
+  geoW = null;
+}
+
+/* ---------- App-Start ---------- */
+function startApp(){
+  document.getElementById('login').classList.add('hide');
+  document.getElementById('app').classList.remove('hide');
+  document.getElementById('tAv').textContent  = ME.ini;
+  document.getElementById('tName').textContent = ME.name;
+  document.body.classList.toggle('online', !!ME.online);
+  document.getElementById('tState').textContent = ME.online ? '● Online · '+ME.veh+' · '+ME.town : 'Offline';
+  if(ME.online) geoStart(); else geoStop();
+  render();
+}
+function toggleShift(){
+  ME.online = !ME.online; saveMe();
+  document.body.classList.toggle('online', ME.online);
+  document.getElementById('tState').textContent = ME.online ? '● Online · '+ME.veh+' · '+ME.town : 'Offline';
+  if(ME.online){
+    geoStart();
+    /* Verliert das Handy die Verbindung, setzt der Server den Fahrer auf offline. */
+    try{ if(FB_OK && AUTH_UID) FB_DB.ref('drivers/'+AUTH_UID+'/online').onDisconnect().set(false); }catch(e){}
+  } else {
+    geoStop();
+    try{ if(FB_OK && AUTH_UID) FB_DB.ref('drivers/'+AUTH_UID+'/online').onDisconnect().cancel(); }catch(e){}
+  }
+  toast(ME.online ? '🟢 Du bist online' : '⚪ Schicht beendet');
+  render();
+}
+
+/* ---------- Tabs ---------- */
+let TAB = 'Jobs';
+function go(t){
+  TAB = t;
+  ['Jobs','Active','Earn','Prof'].forEach(k=>{
+    document.getElementById('tab'+(k==='Prof'?'Prof':k)).classList.toggle('hide', k!==t);
+  });
+  [].forEach.call(document.querySelectorAll('.nav button'), b=>b.classList.toggle('on', b.dataset.tab===t));
+  render();
+  window.scrollTo(0,0);
+}
+
+/* ---------- Toast ---------- */
+let toastT=null;
+function toast(msg){
+  const el = document.getElementById('toast');
+  el.textContent = msg; el.classList.add('on');
+  clearTimeout(toastT); toastT = setTimeout(()=>el.classList.remove('on'), 2600);
+}
+
+/* =====================================================================
+   WAS BEKOMMT DER FAHRER?
+   ---------------------------------------------------------------------
+   Die Liefergebühr wird geteilt: die HÄLFTE geht an den Fahrer, die
+   andere Hälfte bleibt bei Bestellux.
+     4,00 € Liefergebühr  ->  2,00 € Fahrer / 2,00 € Bestellux
+     5,00 € Liefergebühr  ->  2,50 € Fahrer / 2,50 € Bestellux
+   Das Trinkgeld gehört zusätzlich zu 100 % dem Fahrer – davon geht
+   nichts ab, es war nie das Geld von Bestellux.
+   Wird der Anteil geändert, dann HIER und in der Zentrale (admin.html)
+   an derselben Stelle – sonst rechnen die beiden Apps verschieden.
+   ===================================================================== */
+/* Steht unten im Profil. Damit sieht man auf dem Handy sofort, ob wirklich
+   die neue Fassung läuft – oder ob das Telefon noch eine alte Datei zeigt.
+   Bei jedem Hochladen mit der Zahl in sw.js gleichziehen. */
+const APP_VERSION = 'v22 · Öffnungszeiten, Gutschein, Stornieren';
+
+const FAHRER_ANTEIL = 0.50;                 /* die Hälfte der Liefergebühr */
+function fahrerLohn(o){
+  /* Auf den Cent gerundet, damit Fahrer und Zentrale nie 1 Cent
+     auseinanderliegen. */
+  return Math.round((Number(o.fee)||0) * FAHRER_ANTEIL * 100) / 100;
+}
+function payout(o){ return fahrerLohn(o) + (Number(o.tip)||0); }
+
+/* Kleine Zeile unter dem Betrag: woraus besteht er? Der Fahrer soll sehen,
+   dass sein Anteil an der Lieferung und sein Trinkgeld zwei getrennte
+   Dinge sind. */
+function payoutTxt(o){
+  const t = Number(o.tip) || 0;
+  return t > 0
+    ? (eur(fahrerLohn(o)) + ' Lieferung + ' + eur(t) + ' Trinkgeld')
+    : (eur(fahrerLohn(o)) + ' für die Lieferung');
+}
+
+/* ---------- Wie weit bin ich vom Restaurant? ---------- */
+function myDistToPickup(o){
+  const first = (o.stops&&o.stops[0]) ? o.stops[0].town : o.town;
+  return distTowns(ME.town, first);
+}
+function totalKm(o){
+  let d = myDistToPickup(o);
+  const st = o.stops||[];
+  for(let i=0;i<st.length-1;i++) d += distTowns(st[i].town, st[i+1].town);
+  d += distTowns(st.length?st[st.length-1].town:ME.town, o.town);
+  return d;
+}
+
+/* =====================================================================
+   RENDER
+   ===================================================================== */
+function myActive(){
+  return bxLoad().find(o=> isMine(o) &&
+    ['angenommen','am_restaurant','abgeholt','unterwegs'].indexOf(o.status)>=0) || null;
+}
+/* Ein Auftrag erscheint hier ERST, wenn das Restaurant ihn bestätigt hat.
+   'neu'        = liegt beim Restaurant, der Fahrer sieht ihn noch nicht
+   'bestaetigt' = Küche hat OK gesagt -> jetzt darf ein Fahrer ihn nehmen */
+function openJobs(){
+  const ich = (ME && ME.name) ? ME.name : '';
+  return bxLoad().filter(o=>
+    o.status==='bestaetigt' &&
+    /* Wer selbst abgelehnt hat, sieht den Auftrag nicht mehr –
+       für die anderen Fahrer bleibt er offen. */
+    !((o.hidden||[]).indexOf(ich) >= 0)
+  );
+}
+
+/* =====================================================================
+   WER DARF ZUERST? – 30 Sekunden Vorsprung für den, der nah dran ist
+   ---------------------------------------------------------------------
+   Der Auftrag ist ab der ersten Sekunde für die Fahrer frei, die im
+   GLEICHEN ORT wie das Lokal sind. Alle anderen sehen ihn zwar sofort,
+   dürfen ihn aber erst nach 30 Sekunden annehmen. Ist nach 30 Sekunden
+   niemand aus dem Ort da, bekommt ihn wieder der Schnellste.
+   So fährt niemand quer durch die Gegend, während einer um die Ecke
+   steht – und trotzdem bleibt kein Auftrag liegen.
+   Der Ort kommt aus dem Profil des Fahrers ("Ich bin gerade in"), nicht
+   aus dem GPS. Wer die Stadt wechselt, stellt das oben im Profil um.
+   ===================================================================== */
+const VORSPRUNG_SEK = 30;
+const NAH_KM = 2.0;      /* gleicher Ort = 1,1–1,4 km laut Tabelle */
+
+/* Seit wann ist der Auftrag frei? Das ist der Moment, in dem das letzte
+   Lokal zugesagt hat – der steht im Verlauf als "bestaetigt". */
+function freiSeit(o){
+  const h = ((o && o.hist) || []).filter(x => x.s === 'bestaetigt');
+  return h.length ? h[h.length-1].t : ((o && o.at) || 0);
+}
+function binIchNah(o){ return myDistToPickup(o) <= NAH_KM; }
+/* Wie viele Sekunden muss ICH noch warten? 0 = ich darf sofort. */
+function wartetNoch(o){
+  if(binIchNah(o)) return 0;
+  const rest = VORSPRUNG_SEK*1000 - (Date.now() - freiSeit(o));
+  return rest > 0 ? Math.ceil(rest/1000) : 0;
+}
+/* Die Aufträge, die ich JETZT annehmen darf. */
+function freieJobs(){ return openJobs().filter(o => wartetNoch(o) === 0); }
+
+/* Hat schon ein Lokal auf "Fertig" getippt? */
+function istFertig(o){
+  const st = (o && o.stops) || [];
+  if(!st.length) return false;
+  for(let i=0;i<st.length;i++) if(!st[i].fertig) return false;
+  return true;
+}
+/* Wann ist das Essen fertig? (aus prepEnd oder aus den Stops) */
+function prepEndOf(o){
+  if(!o) return 0;
+  if(o.prepEnd) return o.prepEnd;
+  var st = o.stops||[], ende = 0;
+  for(var i=0;i<st.length;i++){
+    /* Hat das Lokal schon auf "Fertig" getippt, gilt dieser Zeitpunkt –
+       dann muss der Fahrer nicht mehr auf die Küchenzeit warten. */
+    if(st[i].fertig){
+      if(st[i].fertig > ende) ende = st[i].fertig;
+    }else if(st[i].okAt){
+      var e = st[i].okAt + ((st[i].prep||15)*60000);
+      if(e>ende) ende = e;
+    }
+  }
+  return ende;
+}
+function fertigTxt(o){
+  var e = prepEndOf(o); if(!e) return '';
+  var d = new Date(e);
+  var hh = ('0'+d.getHours()).slice(-2), mm = ('0'+d.getMinutes()).slice(-2);
+  var min = Math.round((e - Date.now())/60000);
+  if(min <= 0) return 'Essen ist fertig';
+  return 'fertig um '+hh+':'+mm+' ('+min+' Min)';
+}
+
+function render(){
+  const act = myActive();
+  const jobs = openJobs();
+  const n = jobs.length;
+  const c = document.getElementById('jobCount');
+  c.textContent = n; c.classList.toggle('zero', n===0);
+  const bdg = document.getElementById('navBdg');
+  bdg.textContent = n; bdg.classList.toggle('hide', n===0);
+
+  if(TAB==='Jobs')   renderJobs(jobs, act);
+  if(TAB==='Active') renderActive(act);
+  if(TAB==='Earn')   renderEarn();
+  if(TAB==='Prof')   renderProf();
+}
+
+/* ---------- Aufträge ---------- */
+/* =====================================================================
+   DIE ROUTE AUF DER KARTE
+   ---------------------------------------------------------------------
+   Der Fahrer soll nichts raten müssen. Über jeder Zeile steht in Worten,
+   was sie ist: "Abholen bei" für das Lokal, "Liefern nach" für den
+   Kunden. Beim Lokal stehen Name UND Ort direkt nebeneinander
+   (z. B. "Berlin Döner · Langwedel") und darunter die genaue Adresse.
+   Bei einer Sammelbestellung steht zusätzlich "Stopp 1 von 2".
+   ===================================================================== */
+function stopsHtml(o, withItems){
+  const st = o.stops||[];
+  const mehr = st.length > 1;
+  let h = '';
+  st.forEach((s,i)=>{
+    let items = '';
+    if(withItems){
+      items = '<div class="rw-items">' + (s.items||[]).map(it=>
+        '<i>'+it.qty+'×</i> '+esc(it.name) + (it.note?'<br><span class="rw-note">↳ '+esc(it.note)+'</span>':'')
+      ).join('<br>') + '</div>';
+    } else {
+      const cnt = (s.items||[]).reduce((a,it)=>a+(it.qty||0),0);
+      items = '<div class="rw-items">'+cnt+' Artikel</div>';
+    }
+    /* Bei einer Sammelbestellung muss der Fahrer sehen, welches Lokal
+       schon fertig ist und wo er noch warten muss. */
+    let ok = '';
+    if(s.fertig){
+      ok = '<span class="rw-ok">✅ steht bereit</span>';
+    }else if(s.ok === 1){
+      const e = (s.okAt||0) + ((s.prep||15)*60000);
+      const d = new Date(e);
+      ok = '<span class="rw-ok warte">👨‍🍳 zugesagt · fertig um '+
+           ('0'+d.getHours()).slice(-2)+':'+('0'+d.getMinutes()).slice(-2)+'</span>';
+    }
+    /* Die Adresse ohne "Deutschland" am Ende – das weiß der Fahrer selbst.
+       Steht in der Adresse nur der Name des Lokals, zeigen wir den Ort. */
+    const ort = s.town || '';
+    let adr = String(s.address || '').replace(/,\s*(Deutschland|Germany)\s*$/i, '').trim();
+    if(!adr || adr.toLowerCase() === ((s.name||'') + ', ' + ort).toLowerCase()) adr = ort;
+
+    h += '<div class="rw-lb pick">🍽️ Abholen bei'+
+         (mehr ? ' <i>· Stopp '+(i+1)+' von '+st.length+'</i>' : '')+'</div>'+
+      '<div class="rw">'+
+      '<div class="rw-ic" style="background:'+esc(s.color||'#A0152C')+'">'+esc(s.initials||'?')+'</div>'+
+      '<div class="rw-tx"><b>'+esc(s.name)+
+        (ort ? ' <span class="rw-tn">· '+esc(ort)+'</span>' : '')+'</b>'+
+        '<span>📍 '+esc(adr||ort)+'</span>'+items+ok+'</div>'+
+    '</div>';
+  });
+  const addr = [o.street, [o.plz,o.town].filter(Boolean).join(' ')].filter(Boolean).join(', ');
+  h += '<div class="rw-lb zi">🏁 Liefern nach</div>'+
+    '<div class="rw">'+
+    '<div class="rw-ic dest">🏠</div>'+
+    '<div class="rw-tx"><b>Kunde'+
+      (o.town ? ' <span class="rw-tn">· '+esc(o.town)+'</span>' : '')+'</b>'+
+      '<span>📍 '+esc(addr||o.town)+'</span></div>'+
+  '</div>';
+  return h;
+}
+
+function renderJobs(jobs, act){
+  const box = document.getElementById('jobList');
+
+  if(!ME.online){
+    box.innerHTML = '<div class="empty"><div class="e-ic">😴</div><b>Du bist offline</b>'+
+      '<p>Schalte oben rechts auf Online,<br>dann bekommst du neue Aufträge.</p></div>';
+    return;
+  }
+  if(act){
+    box.innerHTML = '<div class="empty"><div class="e-ic">🛵</div><b>Du lieferst gerade</b>'+
+      '<p>Schließ erst '+esc(act.id)+' ab,<br>dann kommen neue Aufträge.</p></div>'+
+      '<button class="big-b" onclick="go(\'Active\')">Zur aktiven Lieferung →</button>';
+    return;
+  }
+  if(!jobs.length){
+    box.innerHTML = '<div class="empty"><div class="e-ic">📭</div><b>Gerade keine Aufträge</b>'+
+      '<p>Sobald ein Kunde bestellt,<br>klingelt es hier sofort.</p></div>'+
+      '<button class="b b-gray b-wide" onclick="demoOrder()">🧪 Test-Bestellung erzeugen</button>';
+    return;
+  }
+
+  /* Aufträge, die ich sofort nehmen darf, stehen oben. Die, bei denen ein
+     Fahrer vor Ort noch Vorsprung hat, rutschen nach unten. */
+  jobs = jobs.slice().sort((a,b)=> wartetNoch(a) - wartetNoch(b));
+
+  box.innerHTML = jobs.map(o=>{
+    const cash = o.pay==='Bargeld';
+    const warte = wartetNoch(o);
+    const ort = (o.stops && o.stops[0]) ? (o.stops[0].town||'') : (o.town||'');
+    return '<div class="oc new'+(warte>0?' gesperrt':'')+'">'+
+      '<div class="oc-top">'+
+        '<span class="oc-id">'+esc(o.id)+'</span>'+
+        '<span class="oc-pay '+(cash?'cash':'')+'">'+(cash?'💵 Bargeld '+eur(o.total):'💳 Karte')+'</span>'+
+      '</div>'+
+      '<div class="oc-money">'+
+        '<span class="oc-earn">'+eur(payout(o))+'</span>'+
+        '<span class="oc-earn-l">dein Verdienst</span>'+
+        '<span class="oc-dist">🛣️ '+km(totalKm(o))+' · '+(o.stops||[]).length+' Stopp'+((o.stops||[]).length>1?'s':'')+'</span>'+
+      '</div>'+
+      '<div class="oc-split">'+payoutTxt(o)+'</div>'+
+      /* Warum kann ich nicht tippen? Weil ein Fahrer, der im selben Ort
+         wie das Lokal ist, 30 Sekunden Vorsprung hat. Nimmt er ihn nicht,
+         gehört der Auftrag danach dem Schnellsten – also auch mir. */
+      (warte > 0
+        ? '<div class="lockban">⏳ Ein Fahrer aus <b>'+esc(ort||'dem Ort')+'</b> darf zuerst.'+
+          '<br>Für dich frei in <b>'+warte+' Sekunden</b>.</div>'
+        : '')+
+      /* Der Auftrag liegt hier nur, WEIL das Lokal ihn angenommen hat.
+         Das soll der Fahrer auch schwarz auf weiß sehen – und ob das
+         Essen schon fertig dasteht oder noch gekocht wird. */
+      (istFertig(o)
+        ? '<div class="okban jetzt">✅ Essen steht bereit · sofort abholen</div>'
+        : (fertigTxt(o)
+           ? '<div class="okban">👨‍🍳 Lokal hat angenommen · '+esc(fertigTxt(o))+'</div>'
+           : '<div class="okban">👨‍🍳 Lokal hat angenommen</div>'))+
+      '<div class="oc-route">'+stopsHtml(o,false)+'</div>'+
+      '<div class="oc-bar">'+
+        (warte > 0
+          ? '<button class="b b-wait" disabled>⏳ noch '+warte+' s</button>'
+          : '<button class="b b-ok" onclick="accept(\''+o.id+'\')">✓ Annehmen</button>')+
+        '<button class="b b-no" onclick="decline(\''+o.id+'\')">Ablehnen</button>'+
+      '</div>'+
+    '</div>';
+  }).join('');
+}
+
+/* ---------- Annehmen / Ablehnen ---------- */
+function accept(id){
+  if(myActive()){ toast('Du hast schon eine Lieferung'); return; }
+  /* Sicherheitsnetz zum Vorsprung: der Knopf ist zwar gesperrt, aber
+     falls doch jemand zu früh hier landet, wird hier abgebrochen. */
+  const _o = (bxLoad()||[]).filter(x=>x.id===id)[0];
+  if(_o){
+    const _w = wartetNoch(_o);
+    if(_w > 0){ toast('Noch '+_w+' Sekunden – ein Fahrer vor Ort darf zuerst'); render(); return; }
+  }
+  /* Firebase-Transaktion: wenn zwei Fahrer gleichzeitig tippen,
+     bekommt nur einer den Auftrag – der andere sieht "schon weg". */
+  if(FB_OK){
+    try{
+      FB_DB.ref('orders/'+id).transaction(function(x){
+        if(!x) return x;
+        if(x.status!=='bestaetigt') return;      /* abbrechen */
+        x.status = 'angenommen';
+        x.driver = { uid:(ME.uid||null), name:ME.name, ini:ME.ini, veh:ME.veh, phone:ME.phone, town:ME.town,
+                     nearKm: distTowns(ME.town, (x.stops&&x.stops[0]?x.stops[0].town:x.town)) };
+        x.hist = (x.hist||[]).concat([{s:'angenommen', t:Date.now()}]);
+        x.upd = Date.now();
+        return x;
+      }, function(err, committed){
+        if(err || !committed){ toast('Der Auftrag ist schon weg'); render(); return; }
+        toast('✓ Auftrag '+id+' angenommen');
+        go('Active');
+      });
+    }catch(e){ toast('Verbindungsproblem – bitte nochmal'); render(); }
+    return;
+  }
+  const o = bxUpdate(id, x=>{
+    if(x.status!=='bestaetigt') return;
+    x.status = 'angenommen';
+    x.driver = { uid:(ME.uid||null), name:ME.name, ini:ME.ini, veh:ME.veh, phone:ME.phone, town:ME.town,
+                 nearKm: distTowns(ME.town, (x.stops&&x.stops[0]?x.stops[0].town:x.town)) };
+    x.hist = (x.hist||[]).concat([{s:'angenommen', t:Date.now()}]);
+  });
+  if(!o || o.status!=='angenommen'){ toast('Der Auftrag ist schon weg'); render(); return; }
+  toast('✓ Auftrag '+id+' angenommen');
+  go('Active');
+}
+function decline(id){
+  const a = bxLoad(); const i = a.findIndex(o=>o.id===id);
+  if(i>=0){ a[i].hidden = (a[i].hidden||[]).concat([ME.name]); a[i].status='bestaetigt'; bxSave(a); }
+  toast('Auftrag abgelehnt');
+  render();
+}
+
+/* ---------- Aktive Lieferung ---------- */
+function renderActive(o){
+  const box = document.getElementById('activeBox');
+  if(!o){
+    box.innerHTML = '<div class="empty"><div class="e-ic">🧭</div><b>Keine aktive Lieferung</b>'+
+      '<p>Nimm einen Auftrag an,<br>dann siehst du hier die Schritte.</p></div>'+
+      '<button class="big-b" onclick="go(\'Jobs\')">Zu den Aufträgen →</button>';
+    return;
+  }
+  const i = stepIdx(o.status);
+  const cur = STEPS[i];
+  const picked = i >= 2;              // ab „abgeholt“ Kundendaten freigeben
+  const addr = [o.street, [o.plz,o.town].filter(Boolean).join(' ')].filter(Boolean).join(', ');
+  const target = i<=1
+    ? ((o.stops&&o.stops[0]) ? (o.stops[0].address || (o.stops[0].name+', '+o.stops[0].town)) : o.town)
+    : (addr || o.town);
+  const mapsUrl = (i>=2 && o.mapsUrl) ? o.mapsUrl
+    : 'https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(target+', Deutschland');
+
+  let h = '<div class="oc" style="animation:none">'+
+    '<div class="oc-top">'+
+      '<span class="oc-id">'+esc(o.id)+'</span>'+
+      '<span class="oc-pay '+(o.pay==='Bargeld'?'cash':'')+'">'+
+        (o.pay==='Bargeld'?'💵 kassieren '+eur(o.total):'💳 schon bezahlt')+'</span>'+
+    '</div>'+
+    '<div class="oc-money">'+
+      '<span class="oc-earn">'+eur(payout(o))+'</span>'+
+      '<span class="oc-earn-l">dein Verdienst</span>'+
+      '<span class="oc-dist">🛣️ '+km(totalKm(o))+'</span>'+
+    '</div>'+
+    '<div class="oc-split">'+payoutTxt(o)+'</div>'+
+    '<div class="oc-route">'+stopsHtml(o,true)+'</div>'+
+  '</div>';
+
+  if(i<=1 && fertigTxt(o)){
+    h += '<div style="margin:10px 0 0;padding:10px 12px;border-radius:12px;'+
+      'background:rgba(43,182,115,.13);border:1px solid rgba(43,182,115,.35);'+
+      'color:#2BB673;font-weight:800;font-size:14px">👨‍🍳 Essen '+esc(fertigTxt(o))+'</div>';
+  }
+
+  h += '<div style="margin:14px 0 4px">' + STEPS.map((s,k)=>
+    '<div class="step '+(k<i?'done':(k===i?'now':''))+'">'+
+      '<div class="step-n">'+(k<i?'✓':(k+1))+'</div>'+
+      '<div class="step-tx"><b>'+s.t+'</b><span>'+s.s+'</span></div>'+
+    '</div>').join('') + '</div>';
+
+  h += '<div class="nav-row">'+
+    '<a class="nav-b" href="'+esc(mapsUrl)+'" target="_blank" rel="noopener"><em>🗺️</em>Navigation</a>'+
+    (picked && o.phone
+      ? '<a class="nav-b" href="tel:'+esc(o.phone.replace(/\s/g,''))+'"><em>📞</em>Anrufen</a>'+
+        '<a class="nav-b" href="https://wa.me/'+esc(waNum(o.phone))+'" target="_blank" rel="noopener"><em>💬</em>WhatsApp</a>'
+      : '<button class="nav-b" onclick="toast(\'Kundendaten nach dem Abholen\')"><em>🔒</em>Kunde</button>')+
+  '</div>';
+
+  h += '<div class="cust">'+
+    '<h4>Lieferadresse</h4>'+
+    (picked
+      ? '<p>📍 '+esc(addr||o.town)+'</p>'+
+        (o.extra?'<small>'+esc(o.extra)+'</small>':'')+
+        '<small>📞 '+esc(o.phone||'–')+'</small>'
+      : '<p class="locked">🔒 Wird nach dem Abholen freigegeben</p><small>Ort: '+esc(o.town)+'</small>')+
+  '</div>';
+
+  if(o.pay==='Bargeld'){
+    let cashLine = 'Kunde zahlt bar: <b>'+eur(o.total)+'</b>';
+    if(typeof o.cash === 'number') cashLine += '<br><small>zahlt mit '+o.cash+' € → Wechselgeld '+eur(o.cash-o.total)+'</small>';
+    else if(o.cash==='passend')    cashLine += '<br><small>zahlt passend</small>';
+    h += '<div class="cust"><h4>Kasse</h4><p>'+cashLine+'</p></div>';
+  }
+
+  if(cur && cur.b){
+    h += '<button class="big-b '+(i===3?'green':'')+'" onclick="nextStep(\''+o.id+'\')">'+cur.b+'</button>';
+  }
+  h += '<button class="b b-gray b-wide" style="margin-top:9px" onclick="giveBack(\''+o.id+'\')">Auftrag zurückgeben</button>';
+
+  box.innerHTML = h;
+}
+function waNum(p){
+  let d = String(p||'').replace(/[^0-9+]/g,'');
+  if(d.indexOf('+')===0) d = d.slice(1);
+  if(d.indexOf('00')===0) d = d.slice(2);
+  if(d.indexOf('0')===0)  d = '49'+d.slice(1);
+  return d;
+}
+function nextStep(id){
+  const o = bxLoad().find(x=>x.id===id); if(!o) return;
+  const i = stepIdx(o.status);
+  const nx = STEPS[i+1]; if(!nx) return;
+  bxUpdate(id, x=>{
+    x.status = nx.k;
+    x.hist = (x.hist||[]).concat([{s:nx.k, t:Date.now()}]);
+    if(nx.k==='geliefert') x.doneAt = Date.now();
+  });
+  if(nx.k==='geliefert'){
+    toast('🎉 Geliefert! +'+eur(payout(o)));
+    go('Earn');
+  } else {
+    toast('Status: '+nx.t);
+    render();
+  }
+}
+function giveBack(id){
+  /* zurück zu 'bestaetigt' – die Küche hat ja schon zugesagt, das gilt weiter */
+  bxUpdate(id, x=>{ x.status='bestaetigt'; x.driver=null; x.hist=(x.hist||[]).concat([{s:'zurueck',t:Date.now()}]); });
+  toast('Auftrag zurückgegeben');
+  go('Jobs');
+}
+
+/* ---------- Verdienst ---------- */
+function renderEarn(){
+  const all = bxLoad().filter(o=> o.status==='geliefert' && isMine(o));
+  const d0 = new Date(); d0.setHours(0,0,0,0);
+  const today = all.filter(o=> (o.doneAt||o.at) >= d0.getTime());
+  const sum = a => a.reduce((s,o)=>s+payout(o),0);
+  const tips = a => a.reduce((s,o)=>s+(Number(o.tip)||0),0);
+
+  let h = '<div class="ea-hero">'+
+      '<div class="ea-big">'+eur(sum(today))+'</div>'+
+      '<div class="ea-l">heute verdient</div>'+
+    '</div>'+
+    '<div class="ea-grid">'+
+      '<div class="ea-c"><b>'+today.length+'</b><span>Lieferungen</span></div>'+
+      '<div class="ea-c"><b>'+eur(tips(today))+'</b><span>Trinkgeld</span></div>'+
+      '<div class="ea-c"><b>'+eur(sum(all))+'</b><span>gesamt</span></div>'+
+    '</div>'+
+    /* Damit keine Frage offen bleibt: so kommt der Betrag zustande. */
+    '<div class="ea-note">So rechnet sich das: von der Liefergebühr bekommst du '+
+      '<b>die Hälfte</b> – bei 4,00 € sind das <b>2,00 €</b>. Dazu kommt das '+
+      '<b>Trinkgeld, das gehört zu 100 % dir</b>.</div>';
+
+  if(!all.length){
+    h += '<div class="empty"><div class="e-ic">💶</div><b>Noch nichts geliefert</b>'+
+         '<p>Jede abgeschlossene Lieferung<br>erscheint hier sofort.</p></div>';
+  } else {
+    h += '<div class="hist"><div class="sec-h"><h2 style="font-size:14px">Letzte Lieferungen</h2></div>'+
+      all.slice(0,25).map(o=>{
+        const t = new Date(o.doneAt||o.at);
+        const hh = t.getHours().toString().padStart(2,'0')+':'+t.getMinutes().toString().padStart(2,'0');
+        const names = (o.stops||[]).map(s=>s.name).join(' + ') || o.town;
+        return '<div class="hi"><div class="hi-ic">✓</div>'+
+          '<div class="hi-tx"><b>'+esc(names)+'</b><span>'+esc(o.id)+' · '+hh+' Uhr · '+esc(o.town)+'</span></div>'+
+          '<span class="hi-eur">'+eur(payout(o))+'</span></div>';
+      }).join('') + '</div>';
+  }
+  document.getElementById('earnBox').innerHTML = h;
+}
+
+/* ---------- Profil ---------- */
+function renderProf(){
+  const all = bxLoad().filter(o=> o.status==='geliefert' && isMine(o));
+  document.getElementById('profBox').innerHTML =
+    '<div class="pf-card">'+
+      '<div class="pf-top">'+
+        '<div class="pf-av">'+esc(ME.ini)+'</div>'+
+        '<div><b>'+esc(ME.name)+'</b><span>'+esc(ME.phone||'ohne Nummer')+'</span>'+
+        '<span>'+(ME.online?'🟢 Online':'⚪ Offline')+' · '+all.length+' Lieferungen</span></div>'+
+      '</div>'+
+      '<div class="fld"><label>Fahrzeug</label>'+
+        '<select id="pfVeh" onchange="setVeh(this.value)">'+
+        ['E-Bike','Auto','Roller'].map(v=>'<option'+(ME.veh===v?' selected':'')+'>'+v+'</option>').join('')+
+        '</select></div>'+
+      '<div class="fld"><label>Ich bin gerade in</label>'+
+        '<select id="pfTown" onchange="setTown(this.value)">'+
+        ['Langwedel','Etelsen','Verden'].map(t=>'<option'+(ME.town===t?' selected':'')+'>'+t+'</option>').join('')+
+        '</select>'+
+        '<p style="margin:7px 0 0;font-size:11.5px;color:var(--tx3);line-height:1.5">'+
+        'Der Kunde sieht, dass ein Fahrer aus deinem Ort das Essen abholt.</p></div>'+
+    '</div>'+
+    '<button class="b b-gray b-wide" style="margin-bottom:9px" onclick="demoOrder()">🧪 Test-Bestellung erzeugen</button>'+
+    '<button class="b b-red b-wide" onclick="logout()">Abmelden</button>'+
+    /* Versionsstempel: wer wissen will, ob das Handy die neue Fassung
+       geladen hat, schaut hier nach – ganz unten, stört niemanden. */
+    '<div id="pfVer" style="margin:14px 0 4px;text-align:center;font-size:11px;'+
+      'color:var(--tx3);line-height:1.6">Bestellux Fahrer · '+esc(APP_VERSION)+'</div>';
+}
+function setVeh(v){ ME.veh=v; saveMe(); startApp(); go('Prof'); toast('Fahrzeug: '+v); }
+function setTown(t){ ME.town=t; saveMe(); startApp(); go('Prof'); toast('Standort: '+t); }
+
+/* ---------- Test-Bestellung ---------- */
+const DEMO = [
+  { st:[{id:'berlin-doener',name:'Berlin Döner',initials:'BD',color:'#D01E2C',town:'Langwedel',
+        address:'Große Straße 54, 27299 Langwedel',
+        items:[{qty:2,name:'Drehspieß-Pita',price:7.50,note:'ohne Zwiebeln'},{qty:1,name:'Pommes',price:3.00,note:''}]}],
+    town:'Etelsen', street:'Bahnhofstraße 12', plz:'27299', pay:'Bargeld', cash:30, tip:1.5 },
+  { st:[{id:'pizza-hawaii',name:'Pizza Hawaii',initials:'PH',color:'#E09E00',town:'Verden',
+        address:'Große Straße 8, 27283 Verden',
+        items:[{qty:1,name:'Pizza Salami (groß)',price:11.50,note:''},{qty:1,name:'Tiramisu',price:4.00,note:''}]},
+       {id:'getraenke-express',name:'Getränke Express',initials:'GE',color:'#3D8BF2',town:'Verden',
+        address:'Lindhooper Straße 30, 27283 Verden',
+        items:[{qty:6,name:'Wasser 0,5 l',price:1.20,note:''}]}],
+    town:'Verden', street:'Nordertorstraße 5', plz:'27283', pay:'Karte', cash:null, tip:2 }
+];
+let demoN = 0;
+function demoOrder(){
+  const d = DEMO[demoN % DEMO.length]; demoN++;
+  const sub = d.st.reduce((s,r)=> s + r.items.reduce((a,i)=>a+i.qty*i.price,0), 0);
+  const fee = d.st.length>1 ? 3.90 : 2.90;
+  const a = bxLoad();
+  /* Test-Auftrag: so tun, als hätte die Küche schon bestätigt (15 Min) */
+  const okAt = Date.now();
+  d.st.forEach(function(s){ s.ok = 1; s.prep = 15; s.okAt = okAt; });
+  const o = {
+    id:'BX-T'+String(Date.now()).slice(-8),
+    at:Date.now(), town:d.town, street:d.street, plz:d.plz, extra:'', phone:'0176 20660723',
+    coords:null, mapsUrl:'https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(d.street+', '+d.plz+' '+d.town+', Deutschland'),
+    pay:d.pay, cash:d.cash, subtotal:sub, fee:fee, tip:d.tip, total:sub+fee+d.tip,
+    vehicle:'E-Bike', km:0, etaLo:25, etaHi:40,
+    stops:d.st, status:'bestaetigt', driver:null, prepEnd: okAt + 15*60000,
+    hist:[{s:'neu',t:okAt},{s:'bestaetigt',t:okAt}], demo:true
+  };
+  a.unshift(o); bxSave(a);
+  toast('🧪 Test-Bestellung '+o.id);
+  go('Jobs');
+  ping(o);
+}
+
+/* ---------- Alarm bei neuer Bestellung ---------- */
+function ping(o){
+  try{ if(navigator.vibrate) navigator.vibrate([120,70,120]); }catch(e){}
+  try{
+    const C = window.AudioContext || window.webkitAudioContext;
+    if(C){
+      const ctx = new C();
+      [0,0.22].forEach(d=>{
+        const g = ctx.createGain(), os = ctx.createOscillator();
+        os.type='sine'; os.frequency.value = d?1180:880;
+        g.gain.setValueAtTime(0.0001, ctx.currentTime+d);
+        g.gain.exponentialRampToValueAtTime(0.28, ctx.currentTime+d+0.03);
+        g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime+d+0.19);
+        os.connect(g); g.connect(ctx.destination);
+        os.start(ctx.currentTime+d); os.stop(ctx.currentTime+d+0.21);
+      });
+      setTimeout(()=>{ try{ ctx.close(); }catch(e){} }, 900);
+    }
+  }catch(e){}
+  if(o) showAlert(o);
+}
+function showAlert(o){
+  const names = (o.stops||[]).map(s=>s.name).join(' + ') || o.town;
+  const ov = document.getElementById('alertOv');
+  ov.innerHTML = '<div class="box" onclick="event.stopPropagation()">'+
+    '<div class="ring">🔔</div>'+
+    '<h3>Neue Bestellung!</h3>'+
+    '<p>'+esc(names)+' → '+esc(o.town)+'</p>'+
+    '<div class="amt">'+eur(payout(o))+'</div>'+
+    '<p>dein Verdienst · '+km(totalKm(o))+'</p>'+
+    '<div class="oc-bar" style="padding:0">'+
+      '<button class="b b-ok" onclick="closeAlert();accept(\''+o.id+'\')">✓ Annehmen</button>'+
+      '<button class="b b-no" onclick="closeAlert()">Später</button>'+
+    '</div></div>';
+  ov.classList.remove('hide');
+}
+function closeAlert(){ document.getElementById('alertOv').classList.add('hide'); }
+
+/* ---------- Live: neue Bestellungen erkennen ---------- */
+let seen = null;
+function watch(){
+  /* Geklingelt wird nur für Aufträge, die ich AUCH ANNEHMEN DARF.
+     Ist gerade noch ein Fahrer vor Ort dran, klingelt es nicht – aber
+     30 Sekunden später taucht der Auftrag hier auf und es klingelt dann. */
+  const jobs = freieJobs();
+  const ids = jobs.map(o=>o.id).join('|');
+  if(seen === null){ seen = ids; render(); return; }
+  if(ids !== seen){
+    const fresh = jobs.filter(o=> seen.indexOf(o.id) < 0);
+    seen = ids;
+    render();
+    if(fresh.length && ME && ME.online && !myActive()){
+      if(document.getElementById('alertOv').classList.contains('hide')) ping(fresh[0]);
+      else render();
+    }
+  } else {
+    render();
+  }
+}
+window.addEventListener('storage', e=>{ if(e.key===BX_ORDERS && ME) watch(); });
+setInterval(()=>{ if(ME) watch(); }, FB_OK ? 8000 : 1800);
+/* Läuft irgendwo eine Sperre, muss die Sekundenzahl auch wirklich
+   runterzählen – darum jede Sekunde neu zeichnen, aber NUR dann.
+   Liegt keine gesperrte Karte da, passiert hier gar nichts. */
+setInterval(()=>{
+  if(ME && TAB==='Jobs' && openJobs().some(o=> wartetNoch(o) > 0)) watch();
+}, 1000);
+
+/* ---------- Anmeldung steuert alles ---------- */
+var APP_ON = false, drvRef = null, meSig = '';
+function onAuth(u){
+  if(drvRef){ try{ drvRef.off(); }catch(e){} drvRef = null; }
+  if(!u){
+    AUTH_UID = null; AUTH_MAIL = ''; ME = null; APP_ON = false; meSig = '';
+    geoStop(); showStage('lgAuth'); return;
+  }
+  AUTH_UID = u.uid; AUTH_MAIL = u.email || '';
+  var wm = document.getElementById('waitMail'); if(wm) wm.textContent = AUTH_MAIL;
+  drvRef = FB_DB.ref('drivers/'+u.uid);
+  drvRef.on('value', function(snap){
+    var d = snap.val();
+    if(!d || !d.name){
+      ME = { uid:AUTH_UID, email:AUTH_MAIL, online:false };
+      meSig = ''; APP_ON = false; showStage('lgProf'); return;
+    }
+    d.uid = AUTH_UID; d.email = d.email || AUTH_MAIL;
+    var sig = [d.name,d.ini,d.phone,d.veh,d.town,!!d.active,!!d.online].join('|');
+    ME = d;
+    if(!d.active){
+      meSig = sig; APP_ON = false; geoStop(); showStage('lgWait'); return;
+    }
+    if(!APP_ON){
+      APP_ON = true; seen = null; fbStart();
+      toast('Willkommen zurück, '+String(d.name).split(' ')[0]);
+    }
+    if(sig !== meSig){ meSig = sig; startApp(); }
+  }, function(){ showStage('lgAuth'); authErr('Kein Zugriff. Bitte melde dich neu an.'); });
+}
+
+/* ---------- Start ---------- */
+if(FB_OK && FB_AUTH){
+  FB_AUTH.onAuthStateChanged(onAuth);
+} else {
+  /* Notfall ohne Firebase (kein Netz): alter lokaler Modus, damit nichts blockiert */
+  fbStart();
+  if(ME && ME.name){ startApp(); seen = openJobs().map(o=>o.id).join('|'); }
+  else showStage('lgProf');
+  var pn = document.getElementById('profNote');
+  if(pn) pn.innerHTML = '⚠️ Offline-Modus: keine Verbindung zum Server.<br>Bestellungen kommen nur aus diesem Gerät.';
+}
+</script>
+</body>
+</html>

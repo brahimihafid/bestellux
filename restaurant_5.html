@@ -1,0 +1,1244 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<title>Bestellux Restaurant</title>
+<meta name="theme-color" content="#12100B">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="apple-touch-icon" href="icon-180.png">
+<style>
+:root{
+  --yellow:#FFB800; --yellow-dark:#E09E00; --gold:#C9A24B;
+  --red:#A0152C; --red-dark:#7C0F21;
+  --bg:#12100B; --bg2:#1B1810; --card:#221E14; --card2:#2B2618;
+  --line:rgba(255,184,0,0.16);
+  --tx:#F6F1E4; --tx2:#B7AE99; --tx3:#7E7767;
+  --green:#2BB673; --green-dark:#1E8C57;
+  --blue:#3D8BF2;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html,body{margin:0;padding:0;}
+body{
+  background:var(--bg);color:var(--tx);
+  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;
+  font-size:15px;line-height:1.45;
+  padding-bottom:calc(30px + env(safe-area-inset-bottom));
+  overscroll-behavior-y:contain;
+}
+button{font-family:inherit;cursor:pointer;border:none;}
+input,select{font-family:inherit;}
+.hide{display:none !important;}
+
+/* ================= LOGIN ================= */
+#login{
+  position:fixed;inset:0;z-index:999;overflow-y:auto;
+  background:radial-gradient(120% 80% at 50% 0%,#2A2415 0%,var(--bg) 62%);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:26px 20px calc(30px + env(safe-area-inset-bottom));
+}
+.lg-logo{
+  margin-bottom:16px;display:flex;align-items:center;justify-content:center;
+  animation:lgFloat 3.4s ease-in-out infinite;
+}
+@keyframes lgFloat{0%,100%{transform:translateY(0);}50%{transform:translateY(-7px);}}
+.lg-title{font-size:26px;font-weight:900;letter-spacing:-0.4px;margin:0;}
+.lg-title b{color:var(--yellow);}
+.lg-sub{color:var(--tx2);font-size:13.5px;margin:5px 0 26px;text-align:center;}
+.lg-card{
+  width:100%;max-width:400px;background:var(--card);border:1px solid var(--line);
+  border-radius:22px;padding:20px 18px;box-shadow:0 18px 40px rgba(0,0,0,0.45);
+}
+.fld{margin-bottom:15px;}
+.fld label{display:block;font-size:12px;font-weight:800;color:var(--tx2);
+  text-transform:uppercase;letter-spacing:0.6px;margin-bottom:7px;}
+.fld input,.fld select{
+  width:100%;background:var(--bg2);border:1.5px solid var(--line);border-radius:13px;
+  padding:13px 14px;color:var(--tx);font-size:15.5px;font-weight:600;outline:none;
+  transition:border-color .16s;
+}
+.fld input:focus,.fld select:focus{border-color:var(--yellow);}
+.btn-main{
+  width:100%;background:linear-gradient(140deg,var(--yellow),var(--yellow-dark));
+  color:#241C00;font-size:16.5px;font-weight:900;border-radius:15px;padding:15px;
+  box-shadow:0 10px 26px rgba(255,184,0,0.30);transition:transform .14s;
+}
+.btn-main:active{transform:scale(0.975);}
+.lg-note{color:var(--tx3);font-size:11.5px;text-align:center;margin:14px 0 0;max-width:400px;}
+.lg-err{background:rgba(224,60,60,.13);border:1px solid rgba(224,60,60,.45);color:#FF8A8A;
+  border-radius:12px;padding:11px 13px;font-size:13px;font-weight:700;margin-top:12px;}
+.lg-pick{display:flex;flex-direction:column;gap:9px;margin-top:4px;}
+.lg-pick button{
+  background:var(--bg2);border:1.5px solid var(--line);border-radius:14px;
+  padding:14px 15px;color:var(--tx);font-size:15px;font-weight:800;text-align:left;
+  display:flex;align-items:center;gap:11px;transition:border-color .14s;
+}
+.lg-pick button:active{border-color:var(--yellow);}
+.lg-pick .bdg{width:34px;height:34px;border-radius:11px;display:flex;align-items:center;
+  justify-content:center;font-size:12.5px;font-weight:900;color:#fff;flex:0 0 auto;}
+.lnk{background:none;color:var(--tx3);font-size:12.5px;font-weight:700;
+  text-decoration:underline;padding:12px;display:block;margin:6px auto 0;}
+
+/* ================= HEADER ================= */
+header{
+  position:sticky;top:0;z-index:40;background:rgba(18,16,11,0.94);
+  backdrop-filter:blur(14px);border-bottom:1px solid var(--line);
+  padding:calc(10px + env(safe-area-inset-top)) 15px 11px;
+}
+/* Bestellux-Zeile ganz oben: Logo und Name der Plattform stehen über dem
+   Namen des Lokals. So sieht jeder auf einen Blick, in welcher App er ist –
+   und das Lokal behält trotzdem sein eigenes Schild darunter. */
+.bxbar{display:flex;align-items:center;gap:8px;margin-bottom:11px;}
+.bxbar-lg{height:26px;width:auto;flex:0 0 auto;display:block;}
+.bxbar-tx{font-size:15px;font-weight:900;letter-spacing:-0.3px;color:var(--gold);}
+.bxbar-tx b{color:var(--yellow);font-weight:900;}
+.bxbar-tag{font-size:10px;font-weight:900;letter-spacing:.9px;text-transform:uppercase;
+  color:var(--tx3);border:1px solid var(--line);border-radius:999px;padding:3px 9px;}
+.bxbar-sw{margin-left:auto;background:var(--card2);border:1px solid var(--line);
+  border-radius:999px;padding:6px 11px;color:var(--yellow);font-size:11.5px;font-weight:900;}
+
+.hd-row{display:flex;align-items:center;gap:11px;}
+.hd-av{
+  width:42px;height:42px;border-radius:13px;flex:0 0 auto;
+  display:flex;align-items:center;justify-content:center;
+  font-size:14.5px;font-weight:900;color:#fff;
+}
+.hd-txt{flex:1;min-width:0;}
+.hd-name{font-size:16px;font-weight:900;letter-spacing:-0.2px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.hd-state{font-size:12px;font-weight:800;color:var(--tx3);margin-top:1px;}
+body.open .hd-state{color:var(--green);}
+.hd-exit{background:var(--card2);border:1px solid var(--line);border-radius:11px;
+  padding:9px 11px;color:var(--tx2);font-size:12px;font-weight:800;flex:0 0 auto;}
+
+/* ---- Öffnen / Schließen ---- */
+.sw{
+  margin-top:12px;border-radius:17px;padding:14px 15px;
+  border:1.5px solid rgba(255,255,255,0.09);
+  background:linear-gradient(140deg,#332B18,#241F14);
+  display:flex;align-items:center;gap:13px;
+}
+body.open .sw{border-color:rgba(43,182,115,.45);
+  background:linear-gradient(140deg,rgba(43,182,115,.20),rgba(43,182,115,.06));}
+.sw-dot{width:14px;height:14px;border-radius:50%;background:var(--tx3);flex:0 0 auto;}
+body.open .sw-dot{background:var(--green);box-shadow:0 0 0 0 rgba(43,182,115,.6);
+  animation:pulse 2s infinite;}
+@keyframes pulse{70%{box-shadow:0 0 0 11px rgba(43,182,115,0);}100%{box-shadow:0 0 0 0 rgba(43,182,115,0);}}
+.sw-txt{flex:1;min-width:0;}
+.sw-t{font-size:15.5px;font-weight:900;}
+.sw-s{font-size:11.5px;color:var(--tx2);font-weight:700;margin-top:1px;}
+.sw-b{
+  border-radius:13px;padding:12px 16px;font-size:14px;font-weight:900;flex:0 0 auto;
+  background:linear-gradient(140deg,var(--green),var(--green-dark));color:#fff;
+  box-shadow:0 8px 20px rgba(43,182,115,.28);
+}
+body.open .sw-b{background:var(--card2);color:var(--tx2);border:1px solid var(--line);box-shadow:none;}
+.sw-more{display:flex;gap:7px;margin-top:9px;flex-wrap:wrap;}
+.sw-more button{
+  flex:1 1 0;min-width:88px;background:var(--card2);border:1px solid var(--line);
+  border-radius:11px;padding:9px 6px;color:var(--tx2);font-size:12px;font-weight:800;
+}
+.sw-more button:active{border-color:var(--yellow);color:var(--tx);}
+
+/* ================= TABS ================= */
+.tabs{display:flex;gap:6px;padding:13px 15px 0;}
+.tab{
+  flex:1;background:var(--card);border:1px solid var(--line);border-radius:13px;
+  padding:10px 3px;color:var(--tx2);font-size:12px;font-weight:800;white-space:nowrap;
+  display:flex;align-items:center;justify-content:center;gap:5px;
+}
+.tab.on{background:linear-gradient(140deg,var(--yellow),var(--yellow-dark));
+  border-color:var(--yellow);color:#241C00;}
+.tab .n{background:var(--red);color:#fff;border-radius:9px;min-width:19px;height:19px;
+  font-size:11px;font-weight:900;display:flex;align-items:center;justify-content:center;padding:0 5px;}
+.tab.on .n{background:#241C00;color:var(--yellow);}
+
+/* ================= ORDER CARDS ================= */
+main{padding:13px 15px 30px;}
+.oc{
+  background:var(--card);border:1px solid var(--line);border-radius:19px;
+  margin-bottom:13px;overflow:hidden;box-shadow:0 8px 22px rgba(0,0,0,.30);
+}
+.oc.neu{border-color:rgba(255,184,0,.55);box-shadow:0 10px 28px rgba(255,184,0,.14);}
+.oc-top{padding:13px 15px 11px;border-bottom:1px solid rgba(255,255,255,.055);
+  display:flex;align-items:center;gap:11px;}
+.oc-id{font-size:13px;font-weight:900;letter-spacing:.2px;}
+.oc-when{font-size:11.5px;color:var(--tx3);font-weight:700;margin-top:1px;}
+.oc-sum{margin-left:auto;text-align:right;flex:0 0 auto;}
+.oc-sum b{font-size:17px;font-weight:900;color:var(--yellow);display:block;}
+.oc-sum span{font-size:10.5px;color:var(--tx3);font-weight:800;
+  text-transform:uppercase;letter-spacing:.5px;}
+/* ===== ZUBEREITUNGS-ZETTEL ==============================================
+   Der wichtigste Teil der Karte: die Küche muss auf einen Blick sehen,
+   WAS sie machen soll. Darum große Zahl, großer Name – und ein
+   Sonderwunsch ("ohne scharf") als leuchtender Balken, nicht als
+   kleine graue Zeile, die man beim Arbeiten übersieht.
+   ===================================================================== */
+.oc-items{padding:11px 15px 13px;}
+.zu-h{display:flex;align-items:center;padding:1px 0 9px;
+  font-size:11.5px;font-weight:900;color:var(--tx3);
+  text-transform:uppercase;letter-spacing:.7px;}
+.zu-h em{margin-left:auto;font-style:normal;color:var(--tx2);}
+.it{display:flex;gap:11px;padding:9px 0;align-items:flex-start;
+  border-bottom:1px solid rgba(255,255,255,.045);}
+.it:last-child{border-bottom:none;}
+.it .q{background:rgba(255,184,0,.14);border:1px solid rgba(255,184,0,.36);
+  border-radius:11px;min-width:42px;height:37px;flex:0 0 auto;
+  display:flex;align-items:center;justify-content:center;gap:1px;
+  font-size:21px;font-weight:900;color:var(--yellow);letter-spacing:-.6px;}
+.it .q span{font-size:12px;font-weight:800;opacity:.7;}
+.it .n{flex:1;min-width:0;padding-top:2px;}
+.it .n b{display:block;font-size:17px;font-weight:800;line-height:1.3;letter-spacing:-.2px;}
+.it .p{font-size:13px;font-weight:800;color:var(--tx3);flex:0 0 auto;padding-top:9px;}
+.it .note{display:inline-block;margin-top:6px;padding:5px 11px;border-radius:9px;
+  background:var(--yellow);color:#241C00;font-size:14px;font-weight:900;line-height:1.3;}
+.oc-note{margin:0 15px 12px;background:rgba(255,184,0,.09);
+  border:1px solid rgba(255,184,0,.28);border-radius:12px;padding:9px 11px;
+  font-size:12.5px;font-weight:700;color:#FFD466;}
+.oc-meta{padding:0 15px 12px;font-size:12px;color:var(--tx3);font-weight:700;
+  display:flex;flex-wrap:wrap;gap:5px 12px;}
+.oc-bar{display:flex;gap:9px;padding:0 15px 14px;}
+.b{flex:1;border-radius:13px;padding:14px 8px;font-size:14.5px;font-weight:900;transition:transform .13s;}
+.b:active{transform:scale(.975);}
+.b-ok{background:linear-gradient(140deg,var(--green),var(--green-dark));color:#fff;
+  box-shadow:0 8px 20px rgba(43,182,115,.28);}
+.b-no{background:var(--card2);color:var(--tx2);border:1px solid var(--line);flex:0 0 42%;}
+.b-y{background:linear-gradient(140deg,var(--yellow),var(--yellow-dark));color:#241C00;
+  box-shadow:0 8px 20px rgba(255,184,0,.26);}
+.st{
+  margin:0 15px 14px;border-radius:12px;padding:11px 13px;font-size:13px;font-weight:800;
+  display:flex;align-items:center;gap:9px;
+}
+.st.wait{background:rgba(61,139,242,.12);border:1px solid rgba(61,139,242,.34);color:#9CC5FF;}
+.st.go{background:rgba(43,182,115,.12);border:1px solid rgba(43,182,115,.34);color:#8BE0B7;}
+.st.bad{background:rgba(224,60,60,.12);border:1px solid rgba(224,60,60,.40);color:#FF9E9E;}
+.empty{text-align:center;color:var(--tx3);font-size:13.5px;padding:46px 20px;font-weight:700;}
+.empty .ic{font-size:40px;display:block;margin-bottom:10px;opacity:.6;}
+
+/* Überschrift zwischen den beiden Blöcken auf dem ersten Bildschirm:
+   oben das Neue, unten das, was schon in der Küche steht. */
+.lst-h{margin:4px 2px 9px;font-size:13px;font-weight:900;color:var(--tx2);
+  letter-spacing:.2px;display:flex;flex-direction:column;gap:3px;}
+.lst-h small{font-size:11.5px;font-weight:700;color:var(--tx3);letter-spacing:0;}
+.lst-h.kueche{margin-top:20px;padding-top:15px;border-top:1px solid var(--line);color:var(--green);}
+
+/* Der Fertig-Knopf ist der einzige Knopf auf der Küchenkarte – also darf
+   er auch aussehen wie der einzige: über die ganze Breite, gut zu treffen. */
+.oc-bar .b-fertig{padding:16px 8px;font-size:16px;}
+
+/* ===== EIN-TIPP-ANNAHME =================================================
+   Das Lokal soll NICHT erst "Annehmen" und dann die Zeit tippen.
+   Ein einziger Tipp auf "15 Min" heißt: angenommen UND Zeit gesetzt.
+   ===================================================================== */
+.qa-h{padding:2px 15px 8px;font-size:12.5px;font-weight:900;color:var(--tx2);
+  text-transform:uppercase;letter-spacing:.5px;}
+.qa{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;padding:0 15px 10px;}
+.qa button{
+  background:linear-gradient(140deg,var(--green),var(--green-dark));color:#fff;
+  border-radius:14px;padding:15px 4px;font-size:19px;font-weight:900;line-height:1.05;
+  box-shadow:0 8px 20px rgba(43,182,115,.26);transition:transform .13s;
+}
+.qa button:active{transform:scale(.95);}
+.qa button small{display:block;font-size:10.5px;font-weight:800;opacity:.9;margin-top:2px;}
+.qa-foot{display:flex;gap:9px;padding:0 15px 14px;}
+.qa-foot button{
+  flex:1;background:none;border:none;color:var(--tx3);font-size:12.5px;font-weight:800;
+  padding:9px 4px;text-decoration:underline;
+}
+.qa-foot button:active{color:var(--tx);}
+
+/* ===== UMSATZ ===== */
+.money{
+  margin:0 0 13px;border-radius:20px;padding:20px 18px;
+  background:linear-gradient(140deg,#3A3014,#241F14);
+  border:1.5px solid rgba(255,184,0,.34);
+  box-shadow:0 10px 28px rgba(0,0,0,.34);
+}
+.money .lb{font-size:11.5px;font-weight:900;color:var(--yellow);
+  text-transform:uppercase;letter-spacing:1px;}
+.money .big{font-size:40px;font-weight:900;letter-spacing:-1.4px;line-height:1.05;margin:5px 0 3px;}
+.money .sm{font-size:12.5px;color:var(--tx2);font-weight:700;}
+.m2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:13px;}
+.mbox{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px 14px;}
+.mbox .lb{font-size:11px;font-weight:900;color:var(--tx3);
+  text-transform:uppercase;letter-spacing:.7px;}
+.mbox .v{font-size:22px;font-weight:900;margin-top:3px;letter-spacing:-.5px;}
+.mbox .s{font-size:11.5px;color:var(--tx3);font-weight:700;margin-top:1px;}
+.mrow{background:var(--card);border:1px solid var(--line);border-radius:16px;
+  padding:4px 15px;margin-bottom:13px;}
+.mrow .r{display:flex;align-items:center;gap:10px;padding:12px 0;
+  border-bottom:1px solid rgba(255,255,255,.05);font-size:14px;font-weight:700;}
+.mrow .r:last-child{border-bottom:none;}
+.mrow .r b{margin-left:auto;font-size:16px;font-weight:900;}
+.mnote{font-size:11.5px;color:var(--tx3);font-weight:700;line-height:1.6;
+  padding:0 4px 8px;text-align:center;}
+
+/* ================= SHEET ================= */
+#sheet{position:fixed;inset:0;z-index:800;background:rgba(0,0,0,.66);
+  display:flex;align-items:flex-end;padding:0;}
+#sheet .bx{width:100%;background:var(--bg2);border-top:1px solid var(--line);
+  border-radius:24px 24px 0 0;padding:20px 18px calc(22px + env(safe-area-inset-bottom));
+  box-shadow:0 -14px 40px rgba(0,0,0,.5);}
+#sheet h3{margin:0 0 3px;font-size:19px;font-weight:900;}
+#sheet p{margin:0 0 16px;font-size:13px;color:var(--tx2);font-weight:700;}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:9px;}
+.gb{background:var(--card);border:1.5px solid var(--line);border-radius:15px;
+  padding:16px 8px;color:var(--tx);font-size:16px;font-weight:900;text-align:center;}
+.gb:active{border-color:var(--yellow);}
+.gb small{display:block;font-size:11px;font-weight:800;color:var(--tx3);margin-top:2px;}
+
+/* ================= ALERT ================= */
+#alertOv{position:fixed;inset:0;z-index:900;background:rgba(0,0,0,.80);
+  display:flex;align-items:center;justify-content:center;padding:24px;}
+#alertOv .box{background:var(--card);border:1px solid var(--line);border-radius:24px;
+  padding:26px 22px 20px;max-width:360px;width:100%;text-align:center;
+  box-shadow:0 22px 60px rgba(0,0,0,.6);}
+#alertOv .ring{width:78px;height:78px;border-radius:50%;margin:0 auto 14px;
+  background:linear-gradient(140deg,var(--yellow),var(--yellow-dark));
+  display:flex;align-items:center;justify-content:center;font-size:36px;
+  animation:shake .7s ease-in-out infinite;}
+@keyframes shake{0%,100%{transform:rotate(-9deg);}50%{transform:rotate(9deg);}}
+#alertOv h3{margin:0 0 4px;font-size:21px;font-weight:900;}
+#alertOv p{margin:0 0 16px;font-size:13.5px;color:var(--tx2);}
+#alertOv .amt{font-size:32px;font-weight:900;color:var(--yellow);margin-bottom:2px;}
+/* Die Küche soll schon im Klingel-Fenster sehen, was zu machen ist –
+   nicht erst, nachdem sie es weggetippt hat. */
+#alertOv .zu{text-align:left;background:var(--bg2);border:1px solid rgba(255,255,255,.06);
+  border-radius:16px;padding:4px 13px 6px;margin:14px 0 16px;max-height:34vh;overflow:auto;}
+#alertOv .zu .zu-h{padding-top:9px;}
+
+/* ================= TOAST ================= */
+#toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom));
+  transform:translate(-50%,26px);z-index:950;background:var(--card2);
+  border:1px solid var(--line);border-radius:14px;padding:12px 18px;
+  font-size:13.5px;font-weight:800;opacity:0;transition:all .22s;pointer-events:none;
+  box-shadow:0 12px 30px rgba(0,0,0,.5);max-width:88vw;text-align:center;}
+#toast.on{opacity:1;transform:translate(-50%,0);}
+</style>
+<script src="https://www.gstatic.com/firebasejs/12.15.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/12.15.0/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/12.15.0/firebase-auth-compat.js"></script>
+</head>
+<body>
+
+<!-- ========== LOGIN ========== -->
+<div id="login">
+  <!-- Das echte Logo statt eines Emojis: die Anmeldeseite ist das Erste,
+       was ein neues Lokal von Bestellux sieht. -->
+  <div class="lg-logo"><img src="logo-wort-dunkel.png" alt="Bestellux"
+       style="height:58px;width:auto;display:block"></div>
+  <h1 class="lg-title">Restaurant</h1>
+
+  <!-- Stufe 1: Anmelden -->
+  <div id="lgAuth">
+    <p class="lg-sub">Melde dich mit den Zugangsdaten deines Lokals an.</p>
+    <div class="lg-card">
+      <div class="fld">
+        <label>E-Mail</label>
+        <input id="inMail" type="email" placeholder="lokal@bestellux.com" autocomplete="username" inputmode="email">
+      </div>
+      <div class="fld">
+        <label>Passwort</label>
+        <input id="inPw" type="password" placeholder="••••••••" autocomplete="current-password">
+      </div>
+      <button class="btn-main" onclick="doAuth()">Anmelden →</button>
+      <div class="lg-err hide" id="authErr"></div>
+    </div>
+    <p class="lg-note">Die Zugangsdaten bekommst du von Bestellux.<br>Eine eigene Registrierung gibt es hier nicht.</p>
+  </div>
+
+  <!-- Es gibt hier bewusst KEINE Liste aller Lokale mehr.
+       Eine Anmeldung öffnet genau ein Lokal – das Lokal, zu dem die
+       E-Mail gehört. Wer die Liste sehen will, nimmt admin.html. -->
+
+  <!-- Stufe 3: E-Mail gehört zu keinem Lokal -->
+  <div id="lgNo" class="hide">
+    <p class="lg-sub">Diese E-Mail ist noch keinem Lokal zugeordnet.</p>
+    <div class="lg-card">
+      <div class="lg-err" id="noMail" style="margin-top:0"></div>
+      <p style="font-size:12.5px;color:var(--tx2);font-weight:700;margin:14px 0 0;">
+        Melde dich bei Bestellux – wir schalten dein Lokal frei.</p>
+    </div>
+    <button class="lnk" onclick="logout()">Abmelden</button>
+  </div>
+
+  <!-- Stufe 4: keine Verbindung zum Server.
+       Früher ist die Seite in diesem Fall einfach ins zuletzt geöffnete
+       Lokal gesprungen – ohne Anmeldung. Das war ein offenes Tor: wer das
+       Handy in die Hand bekam, war drin. Jetzt geht ohne Verbindung gar
+       nichts, denn nur der Server kann die Anmeldung prüfen. -->
+  <div id="lgOff" class="hide">
+    <p class="lg-sub">Keine Verbindung zum Server.</p>
+    <div class="lg-card">
+      <div class="lg-err" style="margin-top:0">Anmeldung gerade nicht möglich.</div>
+      <p style="font-size:12.5px;color:var(--tx2);font-weight:700;margin:14px 0 0;line-height:1.6">
+        Prüfe WLAN oder mobile Daten und lade die Seite neu.<br>
+        Ohne Verbindung kann niemand angemeldet werden – das schützt eure Bestellungen.</p>
+      <button class="btn-main" style="margin-top:14px" onclick="location.reload()">Neu laden</button>
+    </div>
+  </div>
+</div>
+
+<!-- ========== APP ========== -->
+<div id="app" class="hide">
+  <header>
+    <!-- Bestellux oben, das Lokal darunter. "Lokal wechseln" erscheint nur
+         für den Betreiber – ein normales Lokal hat nichts zu wechseln. -->
+    <div class="bxbar">
+      <img class="bxbar-lg" src="logo-wort-dunkel.png" alt="Bestellux">
+      <div class="bxbar-tag">Restaurant</div>
+    </div>
+    <div class="hd-row">
+      <div class="hd-av" id="hdAv">BD</div>
+      <div class="hd-txt">
+        <div class="hd-name" id="hdName">Restaurant</div>
+        <div class="hd-state" id="hdState">Geschlossen</div>
+      </div>
+      <button class="hd-exit" onclick="logout()">Abmelden</button>
+    </div>
+
+    <div class="sw">
+      <div class="sw-dot"></div>
+      <div class="sw-txt">
+        <div class="sw-t" id="swT">Geschlossen</div>
+        <div class="sw-s" id="swS">Kunden können gerade nicht bestellen.</div>
+      </div>
+      <button class="sw-b" id="swB" onclick="toggleOpen()">Öffnen</button>
+    </div>
+    <div class="sw-more" id="swMore"></div>
+  </header>
+
+  <div class="tabs">
+    <button class="tab on" id="tbNeu"  onclick="go('neu')">Neu <span class="n hide" id="nNeu">0</span></button>
+    <button class="tab"    id="tbRun"  onclick="go('run')">Küche <span class="n hide" id="nRun">0</span></button>
+    <button class="tab"    id="tbDone" onclick="go('done')">Erledigt</button>
+    <button class="tab"    id="tbGeld" onclick="go('geld')">💰 Umsatz</button>
+  </div>
+
+  <main id="list"></main>
+</div>
+
+<div id="sheet" class="hide" onclick="closeSheet()"></div>
+<div id="alertOv" class="hide" onclick="closeAlert()"></div>
+<div id="toast"></div>
+
+<script>
+/* =====================================================================
+   BESTELLUX – RESTAURANT-APP
+   ---------------------------------------------------------------------
+   Was diese Seite macht:
+     1. Das Lokal meldet sich an und sieht NUR seine eigenen Bestellungen.
+     2. Es schaltet sich selbst auf "geöffnet" – erst dann kann ein Kunde
+        in der Kunden-App bei diesem Lokal bestellen.
+     3. Kommt eine Bestellung, klingelt es. Das Lokal tippt "Annehmen"
+        und wählt, in wie vielen Minuten das Essen fertig ist.
+     4. Erst NACH dem Annehmen taucht der Auftrag in der Fahrer-App auf.
+        So fährt kein Fahrer umsonst los.
+
+   Alles läuft über dieselbe Firebase-Datenbank wie Kunden- und Fahrer-App.
+   Ohne Netz schaltet die Seite auf localStorage zurück und blockiert nicht.
+   ===================================================================== */
+
+const BX_ORDERS = 'bx_orders';
+const BX_SHOP   = 'bx_shop';
+
+/* ---- Welche E-Mail gehört zu welchem Lokal? ----
+   Diese Zuordnung steht bewusst hier und nicht in der Datenbank:
+   du legst den Zugang in der Firebase-Konsole an (Authentication → Users),
+   trägst die E-Mail hier ein – fertig. Kein zweiter Schritt.
+   Die id MUSS exakt der id in der Kunden-App entsprechen. */
+const SHOP_USERS = {
+  'berlin-doener@bestellux.com'     : 'berlin-doener',
+  'pizza-hawaii@bestellux.com'      : 'pizza-hawaii',
+  'getraenke@bestellux.com'         : 'getraenke-express'
+};
+
+/* Nur Namen/Farben zum Anzeigen – die Speisekarte lebt in der Kunden-App. */
+const SHOPS = [
+  {id:'berlin-doener',     name:'Berlin Döner',     ini:'BD', color:'#D01E2C', town:'Langwedel'},
+  {id:'pizza-hawaii',      name:'Pizza Hawaii',     ini:'PH', color:'#F0193C', town:'Verden'},
+  {id:'getraenke-express', name:'Getränke Express', ini:'GE', color:'#1E6FB0', town:'Langwedel'}
+];
+/* Betreiber-Konten: dürfen jedes Lokal öffnen (zum Testen und für den Notfall). */
+/* Kein Betreiber-Zugang mehr auf dieser Seite. Eine Anmeldung = ein Lokal.
+   Die Übersicht über alle Lokale liegt in admin.html. */
+
+const FB_CONFIG = {
+  apiKey: "AIzaSyBsCEXpAKJwYI3Zg_8XHUE8CeIyjo7zX2c",
+  authDomain: "bestellux.firebaseapp.com",
+  databaseURL: "https://bestellux-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "bestellux",
+  storageBucket: "bestellux.firebasestorage.app",
+  messagingSenderId: "19751728202",
+  appId: "1:19751728202:web:a7daa8f4d57b01730ce2b3"
+};
+var FB_DB = null, FB_OK = false;
+try{
+  if(window.firebase && firebase.initializeApp){
+    if(!firebase.apps || !firebase.apps.length) firebase.initializeApp(FB_CONFIG);
+    FB_DB = firebase.database();
+    FB_OK = true;
+  }
+}catch(e){ FB_DB = null; FB_OK = false; }
+
+var FB_AUTH = null;
+try{ if(FB_OK && firebase.auth) FB_AUTH = firebase.auth(); }catch(e){ FB_AUTH = null; }
+var AUTH_UID = null, AUTH_MAIL = '';
+
+var SHOP_ID = null, SHOP = null;      /* welches Lokal ist gerade angemeldet */
+var SHOP_STATE = null;                /* {open, until, t, by} aus shops/<id> */
+var shopRef = null;
+
+/* ---------- Auftrags-Brücke (identisch zur Fahrer-App) ---------- */
+var FB_CACHE = [];
+var FB_SNAP  = {};
+
+function bxLoad(){
+  if(FB_OK) return FB_CACHE;
+  try{ return JSON.parse(localStorage.getItem(BX_ORDERS)||'[]'); }catch(e){ return []; }
+}
+function bxSave(a){
+  try{ localStorage.setItem(BX_ORDERS, JSON.stringify(a.slice(0,80))); }catch(e){}
+  if(!FB_OK) return;
+  try{
+    var up = {}, n = 0;
+    for(var i=0;i<a.length;i++){
+      var o = a[i]; if(!o || !o.id) continue;
+      var js = JSON.stringify(o);
+      if(FB_SNAP[o.id] !== js){ FB_SNAP[o.id] = js; up['orders/'+o.id] = o; n++; }
+    }
+    if(n) FB_DB.ref().update(up);
+  }catch(e){}
+}
+function bxUpdate(id, fn){
+  var a = bxLoad(), i = -1;
+  for(var k=0;k<a.length;k++) if(a[k].id===id){ i=k; break; }
+  if(i<0) return null;
+  fn(a[i]); a[i].upd = Date.now(); bxSave(a); return a[i];
+}
+function fbStart(){
+  if(!FB_OK) return;
+  FB_DB.ref('orders').on('value', function(snap){
+    var v = snap.val() || {}, arr = [];
+    for(var k in v){ if(v[k] && v[k].id) arr.push(v[k]); }
+    arr.sort(function(x,y){ return (y.at||0)-(x.at||0); });
+    FB_CACHE = arr;
+    FB_SNAP = {};
+    for(var i=0;i<arr.length;i++) FB_SNAP[arr[i].id] = JSON.stringify(arr[i]);
+    try{ localStorage.setItem(BX_ORDERS, JSON.stringify(arr.slice(0,80))); }catch(e){}
+    if(SHOP_ID) watch();
+  }, function(){ /* kein Zugriff -> lokal weiter */ });
+}
+
+/* ---------- kleine Helfer ---------- */
+const eur = n => (Number(n)||0).toFixed(2).replace('.',',')+' €';
+const esc = s => String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function uhr(ts){ var d=new Date(ts||Date.now());
+  return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0'); }
+function vorMin(ts){
+  var m = Math.floor((Date.now()-(ts||0))/60000);
+  if(m<1) return 'gerade eben';
+  if(m<60) return 'vor '+m+' Min';
+  return 'vor '+Math.floor(m/60)+' Std';
+}
+function toast(t){
+  var el = document.getElementById('toast');
+  el.textContent = t; el.classList.add('on');
+  clearTimeout(el._t); el._t = setTimeout(function(){ el.classList.remove('on'); }, 2400);
+}
+
+/* =====================================================================
+   ÖFFNEN / SCHLIESSEN
+   ---------------------------------------------------------------------
+   In der Datenbank steht pro Lokal nur:  { open:true/false, until:0 }
+     open  = der Zustand JETZT
+     until = 0        → bleibt so, bis jemand tippt
+             Zeitpunkt→ zu diesem Zeitpunkt kippt der Zustand automatisch
+   Damit deckt ein einziges Feld beides ab:
+     "geöffnet bis 22:00"  und  "Pause 30 Minuten".
+   Genau dieselbe Funktion steckt in der Kunden-App – sonst würden sich
+   die beiden Seiten widersprechen.
+   ===================================================================== */
+function isOpen(s){
+  if(!s) return true;                                   /* nie gesetzt = geöffnet */
+  var st = !!s.open;
+  if(s.until && Date.now() >= s.until) st = !st;        /* Zeit abgelaufen → kippt */
+  return st;
+}
+/* =====================================================================
+   ÖFFNUNGSZEITEN – der Regelfall (2.10)
+   ---------------------------------------------------------------------
+   ZEICHENGLEICH mit index.html. Wird hier etwas geändert, muss es dort
+   mitgeändert werden – sonst widersprechen sich die beiden Apps.
+   0 = Sonntag, 1 = Montag … 6 = Samstag.
+     ['11:00','22:00'] = an diesem Tag von … bis geöffnet
+     null              = Ruhetag
+   ===================================================================== */
+const REST_HOURS = {
+  'berlin-doener':     { 0:['12:00','22:00'], 1:['11:00','22:00'], 2:['11:00','22:00'], 3:['11:00','22:00'], 4:['11:00','22:00'], 5:['11:00','23:00'], 6:['11:00','23:00'] },
+  'pizza-hawaii':      { 0:['12:00','22:00'], 1:null,              2:['11:30','22:00'], 3:['11:30','22:00'], 4:['11:30','22:00'], 5:['11:30','23:00'], 6:['11:30','23:00'] },
+  'getraenke-express': { 0:null,              1:['09:00','20:00'], 2:['09:00','20:00'], 3:['09:00','20:00'], 4:['09:00','20:00'], 5:['09:00','21:00'], 6:['09:00','18:00'] }
+};
+var WOCHENTAG = ['Sonntag','Montag','Dienstag','Mittwoch','Donnerstag','Freitag','Samstag'];
+function hmToMin(t){ var p = String(t).split(':'); return (+p[0])*60 + (+p[1]); }
+function dayWindow(id, d){
+  var h = REST_HOURS[id];
+  if(!h) return null;
+  var t = h[d];
+  if(!t || !t[0] || !t[1]) return null;
+  return [hmToMin(t[0]), hmToMin(t[1])];
+}
+function hoursOpen(id, now){
+  if(!REST_HOURS[id]) return true;
+  now = now || new Date();
+  var day = now.getDay();
+  var min = now.getHours()*60 + now.getMinutes();
+  var w = dayWindow(id, day);
+  if(w){
+    if(w[1] > w[0]){ if(min >= w[0] && min < w[1]) return true; }
+    else if(min >= w[0]) return true;
+  }
+  var y = dayWindow(id, (day+6)%7);
+  if(y && y[1] <= y[0] && min < y[1]) return true;
+  return false;
+}
+function nextOpenText(id, now){
+  if(!REST_HOURS[id]) return '';
+  now = now || new Date();
+  var day = now.getDay();
+  var min = now.getHours()*60 + now.getMinutes();
+  var w = dayWindow(id, day);
+  if(w && min < w[0]) return 'öffnet heute um ' + REST_HOURS[id][day][0];
+  for(var i=1;i<=7;i++){
+    var d = (day+i)%7;
+    if(dayWindow(id, d)) return 'öffnet ' + (i===1 ? 'morgen' : WOCHENTAG[d]) + ' um ' + REST_HOURS[id][d][0];
+  }
+  return '';
+}
+
+function setShop(open, untilTs){
+  SHOP_STATE = { open:!!open, until:untilTs||0, t:Date.now(),
+                 by:(AUTH_MAIL||''), name:(SHOP?SHOP.name:'') };
+  try{ localStorage.setItem(BX_SHOP+'_'+SHOP_ID, JSON.stringify(SHOP_STATE)); }catch(e){}
+  if(FB_OK){ try{ FB_DB.ref('shops/'+SHOP_ID).set(SHOP_STATE); }catch(e){} }
+  paintShop();
+}
+function toggleOpen(){
+  if(isOpen(SHOP_STATE)){ setShop(false, 0); toast('⚪ Geschlossen – Kunden können nicht bestellen'); }
+  else { setShop(true, 0); toast('🟢 Geöffnet – Kunden können jetzt bestellen'); }
+}
+/* "Geöffnet bis HH:00" – ist die Uhrzeit heute schon vorbei, gilt sie morgen. */
+function openBis(h){
+  var d = new Date(); d.setHours(h,0,0,0);
+  if(d.getTime() <= Date.now()) d.setDate(d.getDate()+1);
+  setShop(true, d.getTime());
+  toast('🟢 Geöffnet bis '+String(h).padStart(2,'0')+':00');
+}
+function pause(min){
+  setShop(false, Date.now()+min*60000);
+  toast('⏸️ Pause – wieder offen um '+uhr(Date.now()+min*60000));
+}
+function paintShop(){
+  var on = isOpen(SHOP_STATE);
+  document.body.classList.toggle('open', on);
+  var s = SHOP_STATE || {};
+  var bis = (s.until && Date.now() < s.until) ? uhr(s.until) : '';
+
+  document.getElementById('swT').textContent = on ? 'Geöffnet' : 'Geschlossen';
+  /* Öffnungszeiten (2.10): der Schalter allein reicht nicht – ausserhalb
+     der eingetragenen Zeiten bleibt das Lokal für Kunden zu. */
+  var inZeit = hoursOpen(SHOP_ID);
+  document.getElementById('swS').textContent = !inZeit
+    ? ('Ausserhalb deiner Öffnungszeiten – Kunden sehen dich als geschlossen. ' + (nextOpenText(SHOP_ID) || ''))
+    : (on
+      ? (bis ? 'Kunden können bestellen – bis '+bis+' Uhr.' : 'Kunden können jetzt bestellen.')
+      : (bis ? 'Pause – wieder offen um '+bis+' Uhr.'       : 'Kunden können gerade nicht bestellen.'));
+  document.getElementById('swB').textContent = on ? 'Schließen' : 'Öffnen';
+  document.getElementById('hdState').textContent = on
+    ? ('● Geöffnet'+(bis?' bis '+bis:'')) : ('Geschlossen'+(bis?' · offen um '+bis:''));
+
+  document.getElementById('swMore').innerHTML = on
+    ? '<button onclick="pause(30)">⏸️ Pause 30 Min</button>'+
+      '<button onclick="openBis(21)">bis 21:00</button>'+
+      '<button onclick="openBis(22)">bis 22:00</button>'
+    : '<button onclick="setShop(true,0);toast(\'🟢 Geöffnet\')">🟢 Jetzt öffnen</button>'+
+      '<button onclick="openBis(21)">öffnen bis 21:00</button>'+
+      '<button onclick="openBis(22)">öffnen bis 22:00</button>';
+}
+/* Läuft eine Pause ab, soll die Anzeige von selbst umspringen. */
+setInterval(function(){ if(SHOP_ID) paintShop(); }, 20000);
+
+/* =====================================================================
+   BESTELLUNGEN
+   ---------------------------------------------------------------------
+   Eine Bestellung kann mehrere Lokale enthalten (stops[]). Jedes Lokal
+   bestätigt nur SEINEN Stopp. Erst wenn alle Stopps bestätigt sind,
+   springt die ganze Bestellung auf "bestaetigt" – und erst dann sieht
+   der Fahrer sie.
+   ===================================================================== */
+function myIdx(o){
+  var st = o.stops || [];
+  for(var i=0;i<st.length;i++) if(st[i].id === SHOP_ID) return i;
+  return -1;
+}
+function myStop(o){ var i = myIdx(o); return i<0 ? null : o.stops[i]; }
+function mine(){ return bxLoad().filter(function(o){ return myIdx(o) >= 0; }); }
+
+function listNeu(){
+  return mine().filter(function(o){
+    var s = myStop(o);
+    return o.status==='neu' && s && s.ok===undefined;   /* storniert faellt hier automatisch raus */
+  });
+}
+/* In der Küche = angenommen, aber noch nicht auf "Fertig" getippt.
+   Sobald das Lokal "Fertig" drückt, ist die Karte hier weg. */
+function listRun(){
+  return mine().filter(function(o){
+    var s = myStop(o);
+    return s && s.ok===1 && !s.fertig &&
+           o.status!=='geliefert' && o.status!=='abgelehnt' && o.status!=='storniert';
+  });
+}
+/* Erledigt = fertig gemacht, ausgeliefert oder abgelehnt – von heute. */
+function listDone(){
+  var t0 = new Date(); t0.setHours(0,0,0,0);
+  return mine().filter(function(o){
+    if((o.at||0) < t0.getTime()) return false;
+    var s = myStop(o);
+    return (s && s.fertig) || o.status==='geliefert' || o.status==='abgelehnt' || o.status==='storniert';
+  }).sort(function(a,b){ return (b.at||0) - (a.at||0); });
+}
+/* Summe nur für DIESES Lokal – nicht der Gesamtbetrag der Bestellung. */
+function stopSum(o){
+  var s = myStop(o); if(!s) return 0;
+  var t = 0, it = s.items||[];
+  for(var i=0;i<it.length;i++) t += (it[i].qty||0) * (it[i].price||0);
+  return t;
+}
+function fertigUm(o){
+  var s = myStop(o); if(!s || !s.okAt) return '';
+  return uhr(s.okAt + (s.prep||15)*60000);
+}
+
+function annehmen(id, prep){
+  var raus = false;                 /* ging der Auftrag jetzt an die Fahrer raus? */
+  bxUpdate(id, function(o){
+    var i = myIdx(o); if(i<0) return;
+    o.stops[i].ok = 1; o.stops[i].prep = prep; o.stops[i].okAt = Date.now();
+    var alle = o.stops.every(function(s){ return s.ok === 1; });
+    raus = alle;
+    if(alle){
+      o.status = 'bestaetigt';
+      var ende = 0;
+      o.stops.forEach(function(s){
+        var e = (s.okAt||Date.now()) + (s.prep||15)*60000;
+        if(e > ende) ende = e;
+      });
+      o.prepEnd = ende;
+      o.hist = (o.hist||[]).concat([{s:'bestaetigt', t:Date.now()}]);
+    }
+  });
+  closeSheet(); closeAlert();
+  /* Klare Rückmeldung: das war schon alles. Der Fahrer ist informiert. */
+  toast(raus ? '✓ Angenommen · der Fahrer sieht sie jetzt'
+             : '✓ Angenommen · wir warten noch auf das andere Lokal');
+  render();
+}
+function ablehnen(id, grund){
+  bxUpdate(id, function(o){
+    var i = myIdx(o); if(i<0) return;
+    o.stops[i].ok = 0; o.stops[i].grund = grund; o.stops[i].okAt = Date.now();
+    o.status = 'abgelehnt';
+    o.grund  = grund;
+    o.grundVon = SHOP ? SHOP.name : '';
+    o.hist = (o.hist||[]).concat([{s:'abgelehnt', t:Date.now()}]);
+  });
+  closeSheet(); closeAlert();
+  toast('Bestellung abgelehnt');
+  render();
+}
+/* =====================================================================
+   FERTIG  –  das Essen steht abholbereit da
+   ---------------------------------------------------------------------
+   Damit ist die Arbeit der Küche an dieser Bestellung erledigt: sie
+   verschwindet aus "In der Küche" und wandert nach "Erledigt".
+   Für den Fahrer heißt das: nicht mehr warten, sofort losfahren –
+   darum wird prepEnd neu gerechnet.
+   Zwei Tipps hat das Lokal also insgesamt: die Minuten und "Fertig".
+   ===================================================================== */
+function fertig(id){
+  bxUpdate(id, function(o){
+    var i = myIdx(o); if(i<0) return;
+    o.stops[i].fertig = Date.now();
+    /* Neue Abholzeit: das späteste Lokal bestimmt sie. Wer schon fertig
+       ist, zählt mit "jetzt" – wer noch kocht, mit seiner Minutenzahl. */
+    var ende = 0;
+    o.stops.forEach(function(s){
+      var e = s.fertig ? s.fertig : ((s.okAt || Date.now()) + (s.prep || 15)*60000);
+      if(e > ende) ende = e;
+    });
+    o.prepEnd = ende;
+    o.hist = (o.hist||[]).concat([{s:'fertig', t:Date.now(), von:(SHOP ? SHOP.name : '')}]);
+  });
+  toast('✓ Fertig – der Fahrer ist unterwegs zu euch');
+  render();
+}
+
+/* ---------- Bogen von unten: mehr Zeit / Grund wählen ---------- */
+function closeSheet(){ document.getElementById('sheet').classList.add('hide'); }
+/* Standard sind die vier Knöpfe direkt auf der Karte (10/15/20/30 Min).
+   Braucht die Küche länger, kommt hier der Rest. */
+function sheetZeit(id){
+  var el = document.getElementById('sheet');
+  el.innerHTML =
+    '<div class="bx" onclick="event.stopPropagation()">'+
+      '<h3>Wie lange braucht ihr?</h3>'+
+      '<p>Ein Tipp genügt – damit ist die Bestellung angenommen.</p>'+
+      '<div class="grid2">'+
+        [40,50,60,75].map(function(m){
+          return '<button class="gb" onclick="annehmen(\''+id+'\','+m+')">'+m+' Min'+
+                 '<small>fertig um '+uhr(Date.now()+m*60000)+'</small></button>';
+        }).join('')+
+      '</div>'+
+    '</div>';
+  el.classList.remove('hide');
+}
+function sheetGrund(id){
+  var el = document.getElementById('sheet');
+  var g = ['Zu viel los','Ausverkauft','Wir haben geschlossen','Küche defekt'];
+  el.innerHTML =
+    '<div class="bx" onclick="event.stopPropagation()">'+
+      '<h3>Warum geht es nicht?</h3>'+
+      '<p>Der Kunde bekommt den Grund angezeigt und sein Geld zurück.</p>'+
+      '<div class="grid2">'+
+        g.map(function(x){
+          return '<button class="gb" style="font-size:14px" onclick="ablehnen(\''+id+'\',\''+x+'\')">'+x+'</button>';
+        }).join('')+
+      '</div>'+
+    '</div>';
+  el.classList.remove('hide');
+}
+
+/* ---------- Karten zeichnen ---------- */
+
+/* Gleiche Sachen werden zu EINER Zeile zusammengefasst.
+   Zweimal "Drehspieß-Pita, ohne scharf" plus noch einmal dasselbe
+   steht dann als "3× Drehspieß-Pita · ohne scharf" da – die Küche
+   soll eine Zahl lesen und nicht dreimal dieselbe Zeile abzählen.
+   Verschiedene Wünsche bleiben natürlich getrennte Zeilen. */
+function itemsList(o){
+  var s = myStop(o); if(!s) return [];
+  var out = [], map = {};
+  (s.items||[]).forEach(function(it){
+    var note = String(it.note || '').trim();
+    var qty  = Number(it.qty)   || 1;
+    var sum  = qty * (Number(it.price) || 0);
+    var k = String(it.name||'') + '|' + note.toLowerCase();
+    if(map[k]){ map[k].qty += qty; map[k].sum += sum; return; }
+    map[k] = { name: it.name, note: note, qty: qty, sum: sum };
+    out.push(map[k]);
+  });
+  return out;
+}
+function itemsHtml(o){
+  var li = itemsList(o); if(!li.length) return '';
+  var teile = li.reduce(function(a, x){ return a + x.qty; }, 0);
+  var wuensche = li.filter(function(x){ return x.note; }).length;
+  return '<div class="zu-h">🍳 Das ist zu machen'+
+           '<em>'+teile+' Stück'+(wuensche ? ' · '+wuensche+(wuensche===1?' Sonderwunsch':' Sonderwünsche') : '')+'</em>'+
+         '</div>'+
+    li.map(function(it){
+      return '<div class="it">'+
+        '<div class="q">'+it.qty+'<span>×</span></div>'+
+        '<div class="n"><b>'+esc(it.name)+'</b>'+
+          (it.note ? '<span class="note">✏️ '+esc(it.note)+'</span>' : '')+
+        '</div>'+
+        '<div class="p">'+eur(it.sum)+'</div>'+
+      '</div>';
+    }).join('');
+}
+function card(o, mode){
+  var s = myStop(o);
+  var mehr = (o.stops||[]).length > 1;
+  var h = '<div class="oc '+(mode==='neu'?'neu':'')+'">'+
+    '<div class="oc-top">'+
+      '<div><div class="oc-id">'+esc(o.id)+'</div>'+
+      '<div class="oc-when">'+uhr(o.at)+' Uhr · '+vorMin(o.at)+'</div></div>'+
+      '<div class="oc-sum"><b>'+eur(stopSum(o))+'</b><span>dein Anteil</span></div>'+
+    '</div>'+
+    '<div class="oc-items">'+itemsHtml(o)+'</div>';
+
+  if(mehr) h += '<div class="oc-note">🧺 Sammelbestellung: der Fahrer holt noch bei '+
+                ((o.stops.length-1))+' weiteren Lokal'+(o.stops.length>2?'en':'')+' ab.</div>';
+
+  h += '<div class="oc-meta">'+
+         '<span>📍 Lieferung nach '+esc(o.town||'-')+'</span>'+
+         '<span>'+(o.pay==='Bar' ? '💶 Bar beim Kunden' : '💳 '+esc(o.pay||'-'))+'</span>'+
+       '</div>';
+
+  if(mode==='neu'){
+    /* EIN Tipp = angenommen + Zeit gesagt. Kein zweiter Bildschirm. */
+    h += '<div class="qa-h">✓ Annehmen – in wie vielen Minuten fertig?</div>'+
+         '<div class="qa">'+
+           [10,15,20,30].map(function(m){
+             return '<button onclick="annehmen(\''+o.id+'\','+m+')">'+m+
+                    '<small>Min · '+uhr(Date.now()+m*60000)+'</small></button>';
+           }).join('')+
+         '</div>'+
+         '<div class="qa-foot">'+
+           '<button onclick="sheetZeit(\''+o.id+'\')">Wir brauchen länger</button>'+
+           '<button onclick="sheetGrund(\''+o.id+'\')">Geht heute nicht</button>'+
+         '</div>';
+  } else if(mode==='run'){
+    /* Das Lokal soll SEHEN, dass die Annahme sofort beim Fahrer landet –
+       sonst denkt es, es müsse noch irgendwo etwas drücken. Es muss nicht:
+       zwei Tipps insgesamt, die Minuten und "Fertig". */
+    var wartetAufAndere = o.status === 'neu';
+    if(wartetAufAndere){
+      /* Nur bei einer Sammelbestellung. Wir sagen auch, auf WEN gewartet wird. */
+      var offen = (o.stops||[]).filter(function(s){ return s.ok !== 1; })
+                               .map(function(s){ return s.name; });
+      h += '<div class="st wait">⏳ Ihr habt angenommen. Der Fahrer bekommt den Auftrag, '+
+           'sobald '+(offen.length ? esc(offen.join(' und ')) : 'das andere Lokal')+
+           ' auch angenommen hat.</div>';
+    } else if(o.status==='bestaetigt'){
+      h += '<div class="st go">✅ Der Fahrer sieht die Bestellung jetzt · fertig um '+
+           fertigUm(o)+' Uhr</div>';
+    } else {
+      var d = o.driver ? o.driver.name : 'Der Fahrer';
+      var txt = {
+        'angenommen'   : '🛵 '+esc(d)+' ist auf dem Weg zu euch.',
+        'am_restaurant': '🧍 '+esc(d)+' steht bei euch und wartet.',
+        'abgeholt'     : '📦 '+esc(d)+' hat abgeholt.',
+        'unterwegs'    : '🚀 '+esc(d)+' ist unterwegs zum Kunden.'
+      }[o.status] || '…';
+      h += '<div class="st go">'+txt+' · fertig um '+fertigUm(o)+' Uhr</div>';
+    }
+    /* Der EINZIGE Knopf, der hier noch steht: das Essen ist fertig.
+       Damit ist die Bestellung für die Küche erledigt und verschwindet. */
+    h += '<div class="oc-bar"><button class="b b-ok b-fertig" onclick="fertig(\''+o.id+'\')">'+
+         '✓ Essen ist fertig</button></div>';
+  } else {
+    var sf = myStop(o);
+    h += (o.status==='geliefert')
+       ? '<div class="st go">✅ Geliefert'+(sf&&sf.fertig?' · fertig gemacht um '+uhr(sf.fertig)+' Uhr':'')+'</div>'
+       : (o.status==='storniert')
+       ? '<div class="st bad">🚫 Vom Kunden storniert</div>'
+       : (o.status==='abgelehnt')
+       ? '<div class="st bad">✕ Abgelehnt'+(o.grund?' · '+esc(o.grund):'')+'</div>'
+       : '<div class="st go">✓ Fertig um '+uhr(sf.fertig)+' Uhr · wartet auf den Fahrer</div>';
+  }
+  return h + '</div>';
+}
+
+/* =====================================================================
+   UMSATZ  –  was ist bei DIESEM Lokal hereingekommen?
+   ---------------------------------------------------------------------
+   Gezählt wird nur, was wirklich beim Kunden angekommen ist (geliefert)
+   und nur der eigene Anteil (stopSum) – nicht die Liefergebühr, die
+   gehört nicht dem Lokal, und nicht das, was ein anderes Lokal in
+   derselben Sammelbestellung geliefert hat.
+   ===================================================================== */
+function tagStart(d){ var x = new Date(d); x.setHours(0,0,0,0); return x.getTime(); }
+function wocheStart(){
+  var x = new Date(); x.setHours(0,0,0,0);
+  var wt = (x.getDay() + 6) % 7;            /* Montag = 0 */
+  x.setDate(x.getDate() - wt);
+  return x.getTime();
+}
+function monatStart(){
+  var x = new Date(); x.setHours(0,0,0,0); x.setDate(1);
+  return x.getTime();
+}
+/* Liefert {umsatz, geliefert, angenommen, abgelehnt} ab einem Zeitpunkt. */
+function bilanz(ab){
+  var r = {umsatz:0, geliefert:0, angenommen:0, abgelehnt:0};
+  mine().forEach(function(o){
+    if((o.at||0) < ab) return;
+    var s = myStop(o); if(!s) return;
+    if(s.ok === 1){
+      r.angenommen++;
+      if(o.status === 'geliefert'){ r.geliefert++; r.umsatz += stopSum(o); }
+    } else if(s.ok === 0 || o.status === 'abgelehnt' || o.status === 'storniert'){
+      r.abgelehnt++;
+    }
+  });
+  return r;
+}
+function renderGeld(){
+  var heute = bilanz(tagStart(Date.now()));
+  var woche = bilanz(wocheStart());
+  var monat = bilanz(monatStart());
+  var mn = ['Januar','Februar','März','April','Mai','Juni','Juli',
+            'August','September','Oktober','November','Dezember'][new Date().getMonth()];
+  var quote = (monat.angenommen + monat.abgelehnt) > 0
+    ? Math.round(monat.angenommen * 100 / (monat.angenommen + monat.abgelehnt)) : 100;
+
+  document.getElementById('list').innerHTML =
+    '<div class="money">'+
+      '<div class="lb">Umsatz heute</div>'+
+      '<div class="big">'+eur(heute.umsatz)+'</div>'+
+      '<div class="sm">'+heute.geliefert+' gelieferte Bestellung'+(heute.geliefert===1?'':'en')+
+        (heute.geliefert ? ' · Ø '+eur(heute.umsatz/heute.geliefert)+' pro Bestellung' : '')+'</div>'+
+    '</div>'+
+
+    '<div class="m2">'+
+      '<div class="mbox"><div class="lb">Diese Woche</div>'+
+        '<div class="v">'+eur(woche.umsatz)+'</div>'+
+        '<div class="s">'+woche.geliefert+' geliefert · seit Montag</div></div>'+
+      '<div class="mbox"><div class="lb">'+mn+'</div>'+
+        '<div class="v">'+eur(monat.umsatz)+'</div>'+
+        '<div class="s">'+monat.geliefert+' geliefert · seit dem 1.</div></div>'+
+    '</div>'+
+
+    '<div class="mrow">'+
+      '<div class="r">✅ <span>Angenommen (Monat)</span><b>'+monat.angenommen+'</b></div>'+
+      '<div class="r">📦 <span>Geliefert (Monat)</span><b>'+monat.geliefert+'</b></div>'+
+      '<div class="r">✕ <span>Abgelehnt (Monat)</span><b style="color:#FF9E9E">'+monat.abgelehnt+'</b></div>'+
+      '<div class="r">📈 <span>Annahme-Quote</span><b style="color:var(--green)">'+quote+' %</b></div>'+
+    '</div>'+
+
+    '<div class="mnote">Gezählt wird nur euer eigener Anteil an gelieferten Bestellungen.<br>'+
+      'Die Liefergebühr ist nicht enthalten – die gehört zur Lieferung.</div>';
+}
+
+var TAB = 'neu';
+function go(t){
+  TAB = t;
+  document.getElementById('tbNeu').classList.toggle('on', t==='neu');
+  document.getElementById('tbRun').classList.toggle('on', t==='run');
+  document.getElementById('tbDone').classList.toggle('on', t==='done');
+  document.getElementById('tbGeld').classList.toggle('on', t==='geld');
+  render();
+}
+function render(){
+  if(!SHOP_ID) return;
+  var neu = listNeu(), run = listRun(), done = listDone();
+
+  var bn = document.getElementById('nNeu');
+  bn.textContent = neu.length; bn.classList.toggle('hide', neu.length===0);
+  var br = document.getElementById('nRun');
+  br.textContent = run.length; br.classList.toggle('hide', run.length===0);
+
+  if(TAB === 'geld'){ renderGeld(); return; }
+
+  var el = document.getElementById('list');
+
+  /* =====================================================================
+     ZWEI TIPPS – MEHR NICHT
+     ---------------------------------------------------------------------
+     Früher musste die Küche nach dem Annehmen erst auf den Reiter "Küche"
+     wechseln, um "Essen ist fertig" zu drücken. Das war ein Umweg, den
+     niemand im Stress findet.
+     Jetzt stehen auf dem ERSTEN Bildschirm beide Sachen untereinander:
+       oben  – was neu hereingekommen ist   -> Tipp 1: Minuten wählen
+       unten – was gerade gekocht wird      -> Tipp 2: "Essen ist fertig"
+     Die Bestellung rutscht nach dem Annehmen einfach nach unten und ist
+     nach "Fertig" verschwunden. Der Reiter "Küche" bleibt trotzdem, für
+     den, der nur die Küche sehen will.
+     ===================================================================== */
+  if(TAB === 'neu'){
+    var h = '';
+    if(neu.length){
+      if(run.length) h += '<div class="lst-h">🔔 Neu hereingekommen</div>';
+      h += neu.map(function(o){ return card(o, 'neu'); }).join('');
+    } else {
+      h += '<div class="empty"><span class="ic">🔔</span>Keine neue Bestellung.'+
+        (isOpen(SHOP_STATE) ? '<br>Ihr seid geöffnet – es kann jederzeit klingeln.'
+                            : '<br><b style="color:var(--yellow)">Ihr seid geschlossen.</b> Solange kann niemand bei euch bestellen.')+
+        '</div>';
+    }
+    if(run.length){
+      h += '<div class="lst-h kueche">👨‍🍳 In der Küche · '+run.length+
+           (run.length===1?' Bestellung' : ' Bestellungen')+
+           '<small>Wenn das Essen fertig ist: unten auf den grünen Knopf tippen.</small></div>'+
+           run.map(function(o){ return card(o, 'run'); }).join('');
+    }
+    el.innerHTML = h;
+    return;
+  }
+
+  var arr = TAB==='run' ? run : done;
+
+  if(!arr.length){
+    el.innerHTML = '<div class="empty">'+
+      (TAB==='run'
+        ? '<span class="ic">👨‍🍳</span>Nichts in der Küche.<br>Alles abgearbeitet.'
+        : '<span class="ic">📋</span>Heute noch nichts fertig gemacht.')+
+      '</div>';
+    return;
+  }
+  el.innerHTML = arr.map(function(o){ return card(o, TAB); }).join('');
+}
+
+/* ---------- Klingeln bei neuer Bestellung ---------- */
+function ping(o){
+  try{ if(navigator.vibrate) navigator.vibrate([140,80,140,80,140]); }catch(e){}
+  try{
+    var C = window.AudioContext || window.webkitAudioContext;
+    if(C){
+      var ctx = new C();
+      [0,0.24,0.48].forEach(function(d){
+        var g = ctx.createGain(), os = ctx.createOscillator();
+        os.type='sine'; os.frequency.value = d===0?880:(d<0.4?1180:1480);
+        g.gain.setValueAtTime(0.0001, ctx.currentTime+d);
+        g.gain.exponentialRampToValueAtTime(0.30, ctx.currentTime+d+0.03);
+        g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime+d+0.20);
+        os.connect(g); g.connect(ctx.destination);
+        os.start(ctx.currentTime+d); os.stop(ctx.currentTime+d+0.22);
+      });
+      setTimeout(function(){ try{ ctx.close(); }catch(e){} }, 1200);
+    }
+  }catch(e){}
+  if(o) showAlert(o);
+}
+function showAlert(o){
+  var ov = document.getElementById('alertOv');
+  var li = itemsList(o);
+  var teile = li.reduce(function(a, x){ return a + x.qty; }, 0);
+  /* Auch hier: EIN Tipp auf die Minutenzahl nimmt die Bestellung an. */
+  ov.innerHTML = '<div class="box" onclick="event.stopPropagation()">'+
+    '<div class="ring">🔔</div>'+
+    '<h3>Neue Bestellung!</h3>'+
+    '<p>'+teile+' Stück · Lieferung nach '+esc(o.town||'-')+' · '+eur(stopSum(o))+'</p>'+
+    '<div class="zu">'+itemsHtml(o)+'</div>'+
+    '<div class="qa-h" style="padding:0 0 8px;text-align:left">✓ Annehmen – in wie vielen Minuten?</div>'+
+    '<div class="qa" style="padding:0 0 10px">'+
+      [10,15,20,30].map(function(m){
+        return '<button onclick="annehmen(\''+o.id+'\','+m+')">'+m+
+               '<small>Min</small></button>';
+      }).join('')+
+    '</div>'+
+    '<div class="qa-foot" style="padding:0">'+
+      '<button onclick="closeAlert()">Später ansehen</button>'+
+      '<button onclick="closeAlert();sheetGrund(\''+o.id+'\')">Geht heute nicht</button>'+
+    '</div></div>';
+  ov.classList.remove('hide');
+}
+function closeAlert(){ document.getElementById('alertOv').classList.add('hide'); }
+
+var seen = null;
+function watch(){
+  var neu = listNeu();
+  var ids = neu.map(function(o){ return o.id; }).join('|');
+  if(seen === null){ seen = ids; render(); return; }
+  if(ids !== seen){
+    var fresh = neu.filter(function(o){ return seen.indexOf(o.id) < 0; });
+    seen = ids;
+    render();
+    if(fresh.length && document.getElementById('alertOv').classList.contains('hide')){
+      if(TAB!=='neu') go('neu');
+      ping(fresh[0]);
+    }
+  } else {
+    render();
+  }
+}
+window.addEventListener('storage', function(e){ if(e.key===BX_ORDERS && SHOP_ID) watch(); });
+setInterval(function(){ if(SHOP_ID) watch(); }, FB_OK ? 8000 : 1800);
+
+/* =====================================================================
+   ANMELDUNG
+   ===================================================================== */
+function stage(id){
+  ['lgAuth','lgNo','lgOff'].forEach(function(k){
+    var el = document.getElementById(k); if(el) el.classList.toggle('hide', k!==id);
+  });
+  document.getElementById('login').classList.remove('hide');
+  document.getElementById('app').classList.add('hide');
+}
+function authErr(msg){
+  var el = document.getElementById('authErr');
+  if(!el) return;
+  el.textContent = msg || '';
+  el.classList.toggle('hide', !msg);
+}
+function doAuth(){
+  var m = document.getElementById('inMail').value.trim();
+  var pw = document.getElementById('inPw').value;
+  if(!m || !pw){ authErr('Bitte E-Mail und Passwort eingeben.'); return; }
+  if(!FB_AUTH){ authErr('Keine Verbindung zum Server. Prüfe dein Internet.'); return; }
+  authErr('');
+  /* Der Klick schaltet den Ton frei – Handys erlauben Töne nur nach einer Geste. */
+  try{ var C=window.AudioContext||window.webkitAudioContext; if(C){ var c=new C(); c.resume&&c.resume(); setTimeout(function(){try{c.close();}catch(e){}},400); } }catch(e){}
+  FB_AUTH.signInWithEmailAndPassword(m, pw).catch(function(e){
+    var c = (e && e.code) || '';
+    authErr(
+      (c.indexOf('wrong-password')>=0 || c.indexOf('invalid-credential')>=0) ? 'E-Mail oder Passwort ist falsch.' :
+      (c.indexOf('user-not-found')>=0) ? 'Für diese E-Mail gibt es noch keinen Zugang.' :
+      (c.indexOf('invalid-email')>=0)  ? 'Diese E-Mail-Adresse sieht nicht richtig aus.' :
+      (c.indexOf('too-many-requests')>=0) ? 'Zu viele Versuche. Bitte ein paar Minuten warten.' :
+      (c.indexOf('network')>=0) ? 'Keine Internetverbindung.' :
+      'Anmeldung nicht möglich. Bitte nochmal versuchen.'
+    );
+  });
+}
+function logout(){
+  if(shopRef){ try{ shopRef.off(); }catch(e){} shopRef = null; }
+  SHOP_ID = null; SHOP = null; seen = null;
+  try{ localStorage.removeItem('bx_shop_pick'); }catch(e){}
+  if(FB_AUTH){ FB_AUTH.signOut().then(function(){ location.reload(); }).catch(function(){ location.reload(); }); }
+  else location.reload();
+}
+
+function startShop(id){
+  SHOP_ID = id;
+  SHOP = SHOPS.filter(function(s){ return s.id===id; })[0] ||
+         {id:id, name:id, ini:'??', color:'#666', town:''};
+  /* Nichts mehr merken: die Seite darf nie von selbst in ein Lokal springen.
+     Nur die Anmeldung entscheidet, welches Lokal sich öffnet. */
+  try{ localStorage.removeItem('bx_shop_pick'); }catch(e){}
+
+  document.getElementById('login').classList.add('hide');
+  document.getElementById('app').classList.remove('hide');
+  document.getElementById('hdAv').textContent = SHOP.ini;
+  document.getElementById('hdAv').style.background = SHOP.color;
+  document.getElementById('hdName').textContent = SHOP.name;
+
+  /* Öffnungszustand live mitlesen – auch wenn ihn ein Kollege am anderen
+     Gerät umstellt, springt diese Seite sofort mit. */
+  if(shopRef){ try{ shopRef.off(); }catch(e){} shopRef = null; }
+  if(FB_OK){
+    shopRef = FB_DB.ref('shops/'+SHOP_ID);
+    shopRef.on('value', function(sn){ SHOP_STATE = sn.val(); paintShop(); },
+                        function(){ paintShop(); });
+  } else {
+    try{ SHOP_STATE = JSON.parse(localStorage.getItem(BX_SHOP+'_'+SHOP_ID)||'null'); }catch(e){ SHOP_STATE = null; }
+    paintShop();
+  }
+  seen = null;
+  fbStart();
+  watch();
+  paintShop();
+}
+
+function onAuth(u){
+  if(!u){
+    AUTH_UID = null; AUTH_MAIL = ''; SHOP_ID = null; SHOP = null;
+    stage('lgAuth'); return;
+  }
+  AUTH_UID = u.uid;
+  AUTH_MAIL = (u.email || '').toLowerCase();
+
+  /* Eine E-Mail gehört zu genau einem Lokal. Passt sie zu keinem, gibt es
+     keinen Zugang – und vor allem keine Liste der anderen Lokale. */
+  var id = SHOP_USERS[AUTH_MAIL];
+  if(id){ startShop(id); return; }
+
+  document.getElementById('noMail').textContent = AUTH_MAIL;
+  stage('lgNo');
+}
+
+/* ---------- Start ----------
+   Ohne Firebase gibt es keine Anmeldung – und damit auch keinen Zugang.
+   Vorher ist die Seite hier ins zuletzt geöffnete Lokal gesprungen; das
+   war eine Hintertür an der Anmeldung vorbei und ist jetzt zu. */
+if(FB_OK && FB_AUTH){
+  FB_AUTH.onAuthStateChanged(onAuth);
+} else {
+  stage('lgOff');
+}
+</script>
+</body>
+</html>
