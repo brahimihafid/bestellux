@@ -230,6 +230,55 @@ h2.sec em{font-style:normal;color:var(--tx3);text-transform:none;letter-spacing:
   justify-content:center;padding:0 4px;
 }
 
+/* ============ BOGEN VON UNTEN: EIN AUFTRAG IM DETAIL ============
+   Eine Zeile in der Liste sagt, DASS etwas hängt. Dieser Bogen sagt,
+   WAS drin ist und lässt dich handeln: anrufen, freigeben, stornieren,
+   löschen. Ohne ihn müsstest du jedes Problem am Telefon raten. */
+#sheet{position:fixed;inset:0;z-index:300;background:rgba(0,0,0,.66);
+  backdrop-filter:blur(3px);display:flex;align-items:flex-end;}
+#sheet .bx{width:100%;max-height:90vh;overflow-y:auto;background:var(--bg2);
+  border-top:1px solid var(--line);border-radius:22px 22px 0 0;
+  padding:8px 16px calc(22px + env(safe-area-inset-bottom));
+  animation:up .22s cubic-bezier(.2,.9,.3,1);}
+@keyframes up{from{transform:translateY(40px);opacity:.4}to{transform:none;opacity:1}}
+#sheet .grip{width:40px;height:4px;border-radius:3px;background:var(--line);margin:6px auto 14px;}
+#sheet h3{margin:0 0 2px;font-size:19px;font-weight:900;letter-spacing:-.4px;}
+#sheet .sh-sub{font-size:12.5px;font-weight:700;color:var(--tx2);margin-bottom:14px;}
+.sh-box{background:var(--card);border:1px solid var(--line);border-radius:14px;
+  padding:13px 14px;margin-bottom:9px;}
+.sh-box h4{margin:0 0 8px;font-size:11px;font-weight:900;color:var(--tx3);
+  text-transform:uppercase;letter-spacing:.8px;}
+.sh-it{display:flex;gap:10px;font-size:14px;font-weight:700;padding:5px 0;
+  border-bottom:1px solid rgba(255,255,255,.05);}
+.sh-it:last-child{border-bottom:none;}
+.sh-it b{color:var(--yellow);flex:0 0 30px;}
+.sh-it span{flex:1;}
+.sh-it em{font-style:normal;color:var(--tx2);font-weight:800;}
+.sh-note{display:block;font-size:11.5px;color:var(--yellow);font-weight:700;margin-top:2px;}
+.sh-kv{display:flex;justify-content:space-between;gap:12px;font-size:13.5px;
+  font-weight:700;padding:4px 0;}
+.sh-kv span{color:var(--tx2);}
+.sh-kv b{text-align:right;}
+.sh-time{display:flex;gap:9px;font-size:12.5px;font-weight:700;padding:3px 0;color:var(--tx2);}
+.sh-time b{color:var(--tx);flex:0 0 46px;font-weight:900;}
+.sh-btns{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px;}
+.sh-btns a,.sh-btns button{display:block;text-align:center;text-decoration:none;
+  background:var(--card);border:1px solid var(--line);color:var(--tx);
+  border-radius:12px;padding:13px 8px;font-size:13.5px;font-weight:800;}
+.sh-btns .wide{grid-column:1 / -1;}
+.sh-btns .danger{background:rgba(224,60,60,.12);border-color:rgba(224,60,60,.42);color:#FF9E9E;}
+.sh-btns .warn{background:rgba(255,184,0,.11);border-color:rgba(255,184,0,.38);color:var(--yellow);}
+.sh-btns button:active,.sh-btns a:active{transform:scale(.98);}
+
+/* Suche + Werkzeuge im Archiv */
+.tools{display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;}
+.tools input{flex:1;min-width:150px;background:var(--bg2);border:1.5px solid var(--line);
+  border-radius:11px;padding:11px 13px;color:var(--tx);font-size:14px;font-weight:700;outline:none;}
+.tools input:focus{border-color:var(--yellow);}
+.tools button{background:var(--card);border:1px solid var(--line);color:var(--tx);
+  border-radius:11px;padding:11px 14px;font-size:13px;font-weight:800;}
+.tools button.gold{background:linear-gradient(140deg,var(--yellow),var(--yellow-dark));color:#241C00;border:none;}
+
 #toast{
   position:fixed;left:50%;bottom:calc(90px + env(safe-area-inset-bottom));transform:translateX(-50%) translateY(16px);
   background:var(--card2);border:1px solid var(--line);color:var(--tx);
@@ -319,6 +368,7 @@ h2.sec em{font-style:normal;color:var(--tx3);text-transform:none;letter-spacing:
   </div>
 </div>
 
+<div id="sheet" class="hide" onclick="closeSheet()"></div>
 <div id="toast"></div>
 
 <script src="https://www.gstatic.com/firebasejs/12.15.0/firebase-app-compat.js"></script>
@@ -461,6 +511,14 @@ function stopOf(o, id){
 function warenkorb(s){
   var t = 0, it = (s && s.items) || [];
   for(var i=0;i<it.length;i++) t += (Number(it[i].qty)||0) * (Number(it[i].price)||0);
+  return t;
+}
+/* Was bringen mir die Lokale dieser einen Bestellung an Provision? */
+function ordProv(o){
+  var t = 0;
+  ((o && o.stops) || []).forEach(function(s){
+    if(s.ok === 1) t += warenkorb(s) * rateOf(s.id) / 100;
+  });
   return t;
 }
 
@@ -686,6 +744,9 @@ function renderJetzt(){
         return '<div class="row no" style="opacity:1;font-size:13.5px;font-weight:700;line-height:1.5">'+a+'</div>';
       }).join('');
   }
+  /* Im Browser-Tab sichtbar machen, wie viel hängt. So siehst du es auch,
+     wenn die Zentrale nur im Hintergrund offen liegt. */
+  document.title = (alarm.length ? '('+alarm.length+') ' : '') + 'Bestellux Zentrale';
 
   /* -- Alles, was gerade läuft --------------------------------------- */
   out += '<h2 class="sec">Läuft gerade<em>'+lauf.length+
@@ -698,7 +759,8 @@ function renderJetzt(){
       var lage   = (o.status === 'bestaetigt' && istFertig(o))
                  ? '✅ Essen fertig · Fahrer gesucht'
                  : (ST_TXT[o.status] || o.status);
-      return '<div class="row '+stClass(o.status)+'">'+
+      return '<div class="row '+stClass(o.status)+'" style="cursor:pointer" '+
+        'onclick="openOrder(\''+esc(o.id)+'\')">'+
         '<div class="av" style="font-size:17px">'+(o.status==='neu'?'🔔':(o.status==='bestaetigt'?'👨‍🍳':'🛵'))+'</div>'+
         '<div class="mid">'+
           '<div class="nm"><b>'+esc(lokaleVon(o))+' → '+esc(o.town||'–')+'</b></div>'+
@@ -820,6 +882,146 @@ function setActive(uid, on){
     .catch(function(){ toast('Ging nicht – bist du mit dem Betreiber-Konto angemeldet?'); });
 }
 
+/* =====================================================================
+   EIN AUFTRAG IM DETAIL – UND WAS DU DAMIT MACHEN KANNST
+   ---------------------------------------------------------------------
+   Vier Sachen kann die Zentrale mit einem Auftrag tun. Jede hat einen
+   ganz bestimmten Fall aus dem echten Betrieb:
+
+     Anrufen      – der Kunde fragt nach, oder du musst absagen.
+     Freigeben    – ein Fahrer hat angenommen und ist dann verschwunden
+                    (Handy leer, Panne, Feierabend vergessen). Der
+                    Auftrag geht zurück in die Liste und ein anderer
+                    Fahrer kann ihn nehmen. OHNE das bleibt er ewig
+                    hängen und der Kunde wartet umsonst.
+     Stornieren   – das Lokal antwortet nicht mehr oder kann nicht
+                    liefern. Der Auftrag ist damit sauber beendet und
+                    verschwindet aus "läuft gerade".
+     Löschen      – die Zeile ganz aus der Datenbank werfen. NUR für
+                    Testbestellungen und für sehr alte Sachen, und erst
+                    nachdem du exportiert hast.
+   ===================================================================== */
+function ordById(id){
+  for(var i=0;i<ORDERS.length;i++) if(ORDERS[i].id === id) return ORDERS[i];
+  return null;
+}
+function closeSheet(){ document.getElementById('sheet').classList.add('hide'); }
+
+function openOrder(id){
+  var o = ordById(id); if(!o) return;
+  var el = document.getElementById('sheet');
+  var offen = ['geliefert','abgelehnt','storniert'].indexOf(o.status) < 0;
+  var adr   = [o.street, [o.plz, o.town].filter(Boolean).join(' ')].filter(Boolean).join(', ');
+  var maps  = o.mapsUrl || ('https://www.google.com/maps/search/?api=1&query='+
+              encodeURIComponent((adr || o.town || '')+', Deutschland'));
+
+  /* Was ist bestellt? Pro Lokal, damit man am Telefon vorlesen kann. */
+  var waren = (o.stops||[]).map(function(s){
+    return '<div class="sh-box"><h4>'+esc(s.name||'Lokal')+' · '+esc(s.town||'')+
+      (s.fertig ? ' · ✅ fertig' : (s.ok===1 ? ' · 👨‍🍳 kocht' : (s.ok===0 ? ' · ✕ abgelehnt' : ' · wartet')))+'</h4>'+
+      (s.items||[]).map(function(it){
+        return '<div class="sh-it"><b>'+(it.qty||1)+'×</b><span>'+esc(it.name||'')+
+          (it.note ? '<em class="sh-note">✏️ '+esc(it.note)+'</em>' : '')+'</span>'+
+          '<em>'+eur((it.qty||1)*(it.price||0))+'</em></div>';
+      }).join('')+
+      '<div class="sh-kv" style="margin-top:7px;border-top:1px solid var(--line);padding-top:8px">'+
+        '<span>Warenwert</span><b>'+eur(warenkorb(s))+'</b></div>'+
+    '</div>';
+  }).join('');
+
+  var verlauf = (o.hist||[]).map(function(x){
+    return '<div class="sh-time"><b>'+uhr(x.t)+'</b><span>'+
+      esc(ST_TXT[x.s] || x.s)+(x.von ? ' ('+esc(x.von)+')' : '')+'</span></div>';
+  }).join('') || '<div class="sh-time"><span>Kein Verlauf gespeichert.</span></div>';
+
+  el.innerHTML = '<div class="bx" onclick="event.stopPropagation()">'+
+    '<div class="grip"></div>'+
+    '<h3>'+esc(o.id)+'</h3>'+
+    '<div class="sh-sub">'+esc(ST_TXT[o.status]||o.status)+' · '+uhr(o.at)+' Uhr · seit '+
+      minSeit(o.at)+' Min</div>'+
+
+    waren +
+
+    '<div class="sh-box"><h4>Kunde</h4>'+
+      '<div class="sh-kv"><span>Adresse</span><b>'+esc(adr || o.town || '–')+'</b></div>'+
+      (o.extra ? '<div class="sh-kv"><span>Hinweis</span><b>'+esc(o.extra)+'</b></div>' : '')+
+      '<div class="sh-kv"><span>Telefon</span><b>'+esc(o.phone||'–')+'</b></div>'+
+      '<div class="sh-kv"><span>Zahlung</span><b>'+esc(o.pay||'–')+'</b></div>'+
+    '</div>'+
+
+    '<div class="sh-box"><h4>Geld</h4>'+
+      '<div class="sh-kv"><span>Waren</span><b>'+eur(o.subtotal)+'</b></div>'+
+      '<div class="sh-kv"><span>Liefergebühr</span><b>'+eur(o.fee)+'</b></div>'+
+      (Number(o.tip) ? '<div class="sh-kv"><span>Trinkgeld</span><b>'+eur(o.tip)+'</b></div>' : '')+
+      (Number(o.rabatt) ? '<div class="sh-kv"><span>Gutschein</span><b>−'+eur(o.rabatt)+'</b></div>' : '')+
+      '<div class="sh-kv" style="border-top:1px solid var(--line);margin-top:6px;padding-top:8px">'+
+        '<span>Kunde zahlt</span><b style="color:var(--yellow);font-size:15px">'+eur(o.total)+'</b></div>'+
+      '<div class="sh-kv"><span>davon Fahrer</span><b style="color:var(--green)">'+eur(payout(o))+'</b></div>'+
+      '<div class="sh-kv"><span>davon Bestellux</span><b>'+eur(ordProv(o) + bxFee(o))+'</b></div>'+
+    '</div>'+
+
+    '<div class="sh-box"><h4>Fahrer</h4>'+
+      (o.driver
+        ? '<div class="sh-kv"><span>Name</span><b>'+esc(o.driver.name||'–')+'</b></div>'+
+          '<div class="sh-kv"><span>Fahrzeug</span><b>'+esc(o.driver.veh||'–')+'</b></div>'+
+          '<div class="sh-kv"><span>Telefon</span><b>'+esc(o.driver.phone||'–')+'</b></div>'
+        : '<div class="sh-kv"><span>Noch kein Fahrer</span><b>–</b></div>')+
+    '</div>'+
+
+    '<div class="sh-box"><h4>Verlauf</h4>'+verlauf+'</div>'+
+
+    '<div class="sh-btns">'+
+      (o.phone ? '<a href="tel:'+esc(String(o.phone).replace(/\s/g,''))+'">📞 Kunde anrufen</a>' : '')+
+      '<a href="'+esc(maps)+'" target="_blank" rel="noopener">🗺️ Adresse öffnen</a>'+
+      (o.driver && o.driver.phone
+        ? '<a class="wide" href="tel:'+esc(String(o.driver.phone).replace(/\s/g,''))+'">📞 Fahrer anrufen ('+esc(o.driver.name||'')+')</a>' : '')+
+      (offen && o.driver
+        ? '<button class="wide warn" onclick="freigeben(\''+esc(o.id)+'\')">↩︎ Fahrer abziehen – Auftrag wieder freigeben</button>' : '')+
+      (offen
+        ? '<button class="wide danger" onclick="stornieren(\''+esc(o.id)+'\')">✕ Auftrag stornieren</button>' : '')+
+      (!offen
+        ? '<button class="wide danger" onclick="loeschen(\''+esc(o.id)+'\')">🗑 Endgültig löschen</button>' : '')+
+      '<button class="wide" onclick="closeSheet()">Schließen</button>'+
+    '</div>'+
+  '</div>';
+  el.classList.remove('hide');
+}
+
+function freigeben(id){
+  var o = ordById(id); if(!o) return;
+  if(!confirm('Fahrer '+((o.driver&&o.driver.name)||'')+' von '+id+' abziehen?\n\n'+
+     'Der Auftrag geht zurück in die Liste und jeder freie Fahrer kann ihn nehmen.')) return;
+  FB_DB.ref('orders/'+id).update({
+    status:'bestaetigt', driver:null,
+    hist:(o.hist||[]).concat([{s:'bestaetigt', t:Date.now(), von:'Zentrale'}]),
+    upd:Date.now()
+  }).then(function(){ closeSheet(); toast('↩︎ '+id+' ist wieder frei'); })
+    .catch(function(){ toast('Ging nicht – Verbindung prüfen'); });
+}
+
+function stornieren(id){
+  var o = ordById(id); if(!o) return;
+  var grund = prompt('Warum wird '+id+' storniert?\n\n'+
+    'Der Grund wird gespeichert – schreib etwas, das du in drei Monaten noch verstehst.',
+    'Lokal hat nicht geantwortet');
+  if(grund === null) return;
+  FB_DB.ref('orders/'+id).update({
+    status:'storniert', grund:(grund||'Von der Zentrale storniert'), grundVon:'Zentrale',
+    hist:(o.hist||[]).concat([{s:'storniert', t:Date.now(), von:'Zentrale'}]),
+    upd:Date.now()
+  }).then(function(){ closeSheet(); toast('✕ '+id+' storniert'); })
+    .catch(function(){ toast('Ging nicht – Verbindung prüfen'); });
+}
+
+function loeschen(id){
+  if(!confirm('Bestellung '+id+' ENDGÜLTIG aus der Datenbank löschen?\n\n'+
+     'Das kann niemand rückgängig machen. Exportier vorher die CSV, wenn '+
+     'du die Zahlen noch brauchst.')) return;
+  FB_DB.ref('orders/'+id).remove()
+    .then(function(){ closeSheet(); toast('🗑 '+id+' gelöscht'); })
+    .catch(function(){ toast('Ging nicht – Verbindung prüfen'); });
+}
+
 /* ============================================================
    BILDSCHIRM 3 – GELD
    ------------------------------------------------------------
@@ -936,11 +1138,174 @@ function renderGeld(){
     }).join('');
   }
 
-  out += '<p class="note">Alle Zahlen sind aus den Bestellungen dieser App gerechnet, '+
-    'nicht aus einer Buchhaltung. Für Steuer und Jahresabschluss zählt allein das, '+
-    'was dein Steuerberater aus den echten Belegen macht.</p>';
+  /* =====================================================================
+     ARCHIV – ALLE BESTELLUNGEN, EXPORT, AUFRÄUMEN
+     ---------------------------------------------------------------------
+     Die Reihenfolge der Knöpfe ist Absicht: erst Export, dann Löschen.
+     Ein Löschen-Knopf ohne Export daneben ist eine Falle.
+     ===================================================================== */
+  var arch = ORDERS.filter(function(o){ return (o.at||0) >= von; });
+  if(SUCHE){
+    var q = SUCHE.toLowerCase();
+    arch = arch.filter(function(o){
+      return String(o.id||'').toLowerCase().indexOf(q) >= 0 ||
+             String(o.phone||'').toLowerCase().indexOf(q) >= 0 ||
+             String(o.town||'').toLowerCase().indexOf(q) >= 0 ||
+             String(o.street||'').toLowerCase().indexOf(q) >= 0 ||
+             lokaleVon(o).toLowerCase().indexOf(q) >= 0 ||
+             String(o.driver && o.driver.name || '').toLowerCase().indexOf(q) >= 0;
+    });
+  }
+
+  out += '<h2 class="sec">Alle Bestellungen'+
+    '<em>'+arch.length+' im gewählten Zeitraum · tipp eine an, um alles zu sehen</em></h2>'+
+    '<div class="tools">'+
+      '<input id="qSuche" placeholder="Suchen: Nummer, Telefon, Ort, Fahrer …" '+
+        'value="'+esc(SUCHE)+'" oninput="setSuche(this.value)">'+
+      '<button class="gold" onclick="exportCSV()">⬇︎ CSV</button>'+
+    '</div>';
+
+  if(!arch.length){
+    out += '<div class="empty"><span class="ic">📭</span>'+
+      (SUCHE ? 'Nichts gefunden.' : 'In diesem Zeitraum gibt es keine Bestellungen.')+'</div>';
+  } else {
+    out += arch.slice(0, 120).map(function(o){
+      return '<div class="row '+stClass(o.status)+'" style="cursor:pointer" '+
+        'onclick="openOrder(\''+esc(o.id)+'\')">'+
+        '<div class="av" style="font-size:16px">'+
+          (o.status==='geliefert'?'✅':(o.status==='storniert'||o.status==='abgelehnt'?'✕':'🛵'))+'</div>'+
+        '<div class="mid">'+
+          '<div class="nm"><b>'+esc(lokaleVon(o))+' → '+esc(o.town||'–')+'</b></div>'+
+          '<span class="sub">'+esc(ST_TXT[o.status]||o.status)+' · '+datum(o.at)+' '+uhr(o.at)+
+            (o.driver ? ' · '+esc(o.driver.name) : '')+'</span>'+
+        '</div>'+
+        '<div class="rt"><b>'+eur(o.total)+'</b><span>'+esc(String(o.id).replace('BX-',''))+'</span></div>'+
+      '</div>';
+    }).join('');
+    if(arch.length > 120)
+      out += '<p class="note">Es werden die 120 neuesten angezeigt. Die CSV enthält alle '+
+             arch.length+'.</p>';
+  }
+
+  /* -- Aufräumen ------------------------------------------------------- */
+  var altGrenze = tagStart(90);
+  var alt = ORDERS.filter(function(o){
+    return (o.at||0) < altGrenze &&
+           ['geliefert','abgelehnt','storniert'].indexOf(o.status) >= 0;
+  });
+  out += '<h2 class="sec">Aufräumen</h2>'+
+    '<div class="sh-box" style="margin:0">'+
+      '<div class="sh-kv"><span>Abgeschlossen und älter als 90 Tage</span><b>'+alt.length+'</b></div>'+
+      '<div class="sh-btns" style="grid-template-columns:1fr">'+
+        '<button class="'+(alt.length?'danger':'')+'" '+(alt.length?'':'disabled ')+
+          'onclick="aufraeumen()">🗑 Diese '+alt.length+' endgültig löschen</button>'+
+      '</div>'+
+      '<p class="note" style="margin-top:10px">Gelöscht werden nur Bestellungen, die <b>fertig '+
+      'abgeschlossen</b> und <b>älter als 90 Tage</b> sind. Was gerade läuft, wird nie angefasst. '+
+      'Eine einzelne Bestellung löschst du, indem du sie oben antippst.</p>'+
+    '</div>';
+
+  out += '<p class="note"><b>Bevor du löschst: exportier die CSV.</b> In Deutschland musst du '+
+    'geschäftliche Aufzeichnungen mehrere Jahre aufbewahren – wie lange genau und in welcher '+
+    'Form, sagt dir dein Steuerberater. Diese App ist keine Buchhaltung und ersetzt sie nicht. '+
+    'Die Zahlen hier sind aus den Bestellungen gerechnet; für Steuer und Jahresabschluss zählt '+
+    'allein das, was dein Steuerberater aus den echten Belegen macht.<br><br>'+
+    'Beim Export stehen Kundenadresse und Telefonnummer in der Datei. Bewahr sie so auf, dass '+
+    'kein Fremder drankommt, und lösch sie, wenn du sie nicht mehr brauchst (DSGVO).</p>';
 
   $('tab-Geld').innerHTML = out;
+  /* Der Cursor soll beim Tippen im Suchfeld nicht wegspringen. */
+  if(SUCHE){
+    var q = $('qSuche');
+    if(q){ q.focus(); q.setSelectionRange(SUCHE.length, SUCHE.length); }
+  }
+}
+
+var SUCHE = '';
+function setSuche(v){ SUCHE = v || ''; renderGeld(); }
+
+function datum(t){
+  if(!t) return '—';
+  var d = new Date(t);
+  return ('0'+d.getDate()).slice(-2)+'.'+('0'+(d.getMonth()+1)).slice(-2)+'.';
+}
+
+/* =====================================================================
+   CSV-EXPORT
+   ---------------------------------------------------------------------
+   Semikolon als Trenner und Komma als Dezimalzeichen – so öffnet Excel
+   auf einem deutschen Rechner die Datei richtig, ohne Import-Assistent.
+   Das BOM am Anfang sorgt dafür, dass Umlaute nicht zu Kraut werden.
+   ===================================================================== */
+function csvFeld(v){
+  var s = (v === null || v === undefined) ? '' : String(v);
+  return '"' + s.replace(/"/g, '""').replace(/[\r\n]+/g, ' ') + '"';
+}
+function csvZahl(n){ return String((Number(n)||0).toFixed(2)).replace('.', ','); }
+
+function exportCSV(){
+  var von = (RANGE >= 999) ? 0 : tagStart(RANGE);
+  var rows = ORDERS.filter(function(o){ return (o.at||0) >= von; })
+                   .sort(function(a,b){ return (a.at||0)-(b.at||0); });
+  if(!rows.length){ toast('In diesem Zeitraum gibt es nichts zu exportieren'); return; }
+
+  var kopf = ['Nummer','Datum','Uhrzeit','Status','Lokale','Ort','Strasse','PLZ','Telefon',
+              'Zahlung','Warenwert','Liefergebuehr','Trinkgeld','Rabatt','Kunde zahlt',
+              'Fahrer','Fahrerlohn','Provision Bestellux','Lieferanteil Bestellux',
+              'Verdienst Bestellux','Artikel'];
+  var zeilen = rows.map(function(o){
+    var d = new Date(o.at||0);
+    var artikel = (o.stops||[]).map(function(s){
+      return s.name+': '+(s.items||[]).map(function(it){
+        return (it.qty||1)+'x '+it.name+(it.note ? ' ('+it.note+')' : '');
+      }).join(', ');
+    }).join(' | ');
+    var waren = (o.stops||[]).reduce(function(a,s){ return a + warenkorb(s); }, 0);
+    var prov  = (o.status === 'geliefert') ? ordProv(o) : 0;
+    var fee   = (o.status === 'geliefert') ? bxFee(o)   : 0;
+    return [
+      o.id,
+      ('0'+d.getDate()).slice(-2)+'.'+('0'+(d.getMonth()+1)).slice(-2)+'.'+d.getFullYear(),
+      uhr(o.at),
+      ST_TXT[o.status] || o.status,
+      lokaleVon(o), o.town||'', o.street||'', o.plz||'', o.phone||'', o.pay||'',
+      csvZahl(waren), csvZahl(o.fee), csvZahl(o.tip), csvZahl(o.rabatt), csvZahl(o.total),
+      (o.driver && o.driver.name) || '',
+      csvZahl(o.status === 'geliefert' ? payout(o) : 0),
+      csvZahl(prov), csvZahl(fee), csvZahl(prov + fee),
+      artikel
+    ].map(csvFeld).join(';');
+  });
+
+  var csv = '﻿' + kopf.map(csvFeld).join(';') + '\r\n' + zeilen.join('\r\n') + '\r\n';
+  var d = new Date();
+  var name = 'Bestellux-Bestellungen-' + d.getFullYear() +
+             ('0'+(d.getMonth()+1)).slice(-2) + ('0'+d.getDate()).slice(-2) + '.csv';
+  try{
+    var url = URL.createObjectURL(new Blob([csv], {type:'text/csv;charset=utf-8;'}));
+    var a = document.createElement('a');
+    a.href = url; a.download = name; document.body.appendChild(a); a.click();
+    setTimeout(function(){ URL.revokeObjectURL(url); a.remove(); }, 1500);
+    toast('⬇︎ '+rows.length+' Bestellungen exportiert');
+  }catch(e){ toast('Export ging nicht auf diesem Gerät'); }
+}
+
+/* Massenlöschen – nur abgeschlossen UND älter als 90 Tage. */
+function aufraeumen(){
+  var altGrenze = tagStart(90);
+  var alt = ORDERS.filter(function(o){
+    return (o.at||0) < altGrenze &&
+           ['geliefert','abgelehnt','storniert'].indexOf(o.status) >= 0;
+  });
+  if(!alt.length){ toast('Es gibt nichts aufzuräumen'); return; }
+  if(!confirm(alt.length+' abgeschlossene Bestellungen, die älter als 90 Tage sind,\n'+
+     'ENDGÜLTIG löschen?\n\nHast du vorher die CSV exportiert? Danach ist es weg.')) return;
+  if(!confirm('Wirklich sicher? Das kann niemand rückgängig machen.')) return;
+  var up = {};
+  alt.forEach(function(o){ up['orders/'+o.id] = null; });
+  FB_DB.ref().update(up)
+    .then(function(){ toast('🗑 '+alt.length+' alte Bestellungen gelöscht'); })
+    .catch(function(){ toast('Ging nicht – Verbindung prüfen'); });
 }
 function shopAuf(id){
   var s = SHOPSTATE[id];

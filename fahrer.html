@@ -623,20 +623,21 @@ function fbStart(){
     FB_SNAP = {};
     for(var i=0;i<arr.length;i++) FB_SNAP[arr[i].id] = JSON.stringify(arr[i]);
     try{ localStorage.setItem(BX_ORDERS, JSON.stringify(arr.slice(0,80))); }catch(e){}
-    if(!fbPurged){ fbPurged = true; fbPurge(arr); }
     if(ME) watch();
   }, function(){ /* kein Zugriff -> App laeuft lokal weiter */ });
 }
-/* Alte Auftraege (aelter als 5 Tage) aufraeumen, damit die Datenbank klein bleibt. */
-function fbPurge(arr){
-  try{
-    var grenze = Date.now() - 5*24*60*60*1000, del = {}, n = 0;
-    for(var i=0;i<arr.length;i++){
-      if((arr[i].at||0) < grenze){ del['orders/'+arr[i].id] = null; n++; }
-    }
-    if(n) FB_DB.ref().update(del);
-  }catch(e){}
-}
+/* =====================================================================
+   HIER WURDE FRUEHER GELOESCHT – UND DAS WAR EIN FEHLER
+   ---------------------------------------------------------------------
+   An dieser Stelle stand eine Funktion, die beim Start der Fahrer-App
+   ALLE Auftraege aelter als 5 Tage aus der Datenbank geworfen hat.
+   Das heisst: das Handy eines Fahrers hat die Geschaeftsunterlagen der
+   Firma geloescht, ohne dass es jemand gemerkt haette. In der Zentrale
+   waere "30 Tage" darum immer leer gewesen, und fuer den Steuerberater
+   waere am Jahresende nichts mehr da.
+   Geloescht wird ab jetzt NUR in der Zentrale, von Hand, und erst nach
+   einem CSV-Export. Ein Fahrer-Handy loescht gar nichts mehr.
+   ===================================================================== */
 
 const DIST = {
   'Verden-Verden':1.4,'Verden-Langwedel':7.4,'Verden-Etelsen':9.6,
@@ -866,7 +867,7 @@ function toast(msg){
 /* Steht unten im Profil. Damit sieht man auf dem Handy sofort, ob wirklich
    die neue Fassung läuft – oder ob das Telefon noch eine alte Datei zeigt.
    Bei jedem Hochladen mit der Zahl in sw.js gleichziehen. */
-const APP_VERSION = 'v23 · Angemeldet bleiben, 2 Knöpfe im Lokal, neue Zentrale';
+const APP_VERSION = 'v24 · Zentrale: Auftrag öffnen, stornieren, CSV, löschen';
 
 const FAHRER_ANTEIL = 0.50;                 /* die Hälfte der Liefergebühr */
 function fahrerLohn(o){
