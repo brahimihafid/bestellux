@@ -340,7 +340,9 @@ h2.sec em{font-style:normal;color:var(--tx3);text-transform:none;letter-spacing:
 
   <div class="top">
     <img src="logo-wort-dunkel.png" alt="Bestellux">
-    <div class="top-tag">Zentrale</div>
+    <!-- Die Version steht bewusst OBEN und immer sichtbar. Sonst rätselt
+         man bei jedem Update, ob der Browser noch die alte Seite zeigt. -->
+    <div class="top-tag">Zentrale <b id="verTag" style="color:var(--tx3)">–</b></div>
     <div class="top-sp"></div>
     <div class="top-live"><span class="dot" id="liveDot"></span><span id="liveTx">live</span></div>
     <button class="top-exit" onclick="logout()">Abmelden</button>
@@ -389,6 +391,10 @@ h2.sec em{font-style:normal;color:var(--tx3);text-transform:none;letter-spacing:
 /* Wer hier rein darf. Steht GENAUSO in den Firebase-Regeln – diese Liste
    ist nur die Anzeige, die Sicherheit macht der Server. */
 const ADMIN_EMAILS = ['bestellux1@gmail.com', 'ibrahimi.hafid22@gmail.com'];
+
+/* Steht oben in der Kopfzeile. Zeigt die Seite eine alte Nummer, hat der
+   Browser noch die alte Datei – dann Strg+Shift+R oder ?v=… anhängen. */
+const ZENTRALE_VERSION = 'v24';
 
 const FB_CONFIG = {
   apiKey: "AIzaSyBsCEXpAKJwYI3Zg_8XHUE8CeIyjo7zX2c",
@@ -979,8 +985,10 @@ function openOrder(id){
         ? '<button class="wide warn" onclick="freigeben(\''+esc(o.id)+'\')">↩︎ Fahrer abziehen – Auftrag wieder freigeben</button>' : '')+
       (offen
         ? '<button class="wide danger" onclick="stornieren(\''+esc(o.id)+'\')">✕ Auftrag stornieren</button>' : '')+
-      (!offen
-        ? '<button class="wide danger" onclick="loeschen(\''+esc(o.id)+'\')">🗑 Endgültig löschen</button>' : '')+
+      /* Löschen geht IMMER. Es ist deine Datenbank und es sind deine
+         Testbestellungen. Bei einem Auftrag, der noch läuft, kommt aber
+         eine deutlichere Warnung – da wartet vielleicht ein echter Kunde. */
+      '<button class="wide danger" onclick="loeschen(\''+esc(o.id)+'\')">🗑 Endgültig löschen</button>'+
       '<button class="wide" onclick="closeSheet()">Schließen</button>'+
     '</div>'+
   '</div>';
@@ -1014,11 +1022,50 @@ function stornieren(id){
 }
 
 function loeschen(id){
+  var o = ordById(id);
+  var laeuft = o && ['geliefert','abgelehnt','storniert'].indexOf(o.status) < 0;
+  if(laeuft && !confirm('ACHTUNG: '+id+' LÄUFT NOCH ('+((o&&ST_TXT[o.status])||'')+').\n\n'+
+     'Wenn das eine echte Bestellung ist, wartet gerade ein Kunde darauf. '+
+     'Er bekommt dann nie eine Antwort und du hast auch keine Spur mehr davon.\n\n'+
+     'War das nur ein Test? Dann weiter.')) return;
   if(!confirm('Bestellung '+id+' ENDGÜLTIG aus der Datenbank löschen?\n\n'+
      'Das kann niemand rückgängig machen. Exportier vorher die CSV, wenn '+
      'du die Zahlen noch brauchst.')) return;
   FB_DB.ref('orders/'+id).remove()
     .then(function(){ closeSheet(); toast('🗑 '+id+' gelöscht'); })
+    .catch(function(){ toast('Ging nicht – Verbindung prüfen'); });
+}
+
+/* =====================================================================
+   MEHRERE AUF EINMAL LÖSCHEN
+   ---------------------------------------------------------------------
+   Nach einer Testrunde liegen zehn Fantasie-Bestellungen herum. Die eine
+   nach der anderen zu öffnen wäre eine Strafe. Darum: Häkchen setzen,
+   einmal löschen.
+   ===================================================================== */
+var AUSWAHL = false, SEL = {};
+function selAn(){ AUSWAHL = true;  SEL = {}; renderGeld(); }
+function selAus(){ AUSWAHL = false; SEL = {}; renderGeld(); }
+function selTog(id){ if(SEL[id]) delete SEL[id]; else SEL[id] = 1; renderGeld(); }
+function selAlle(ids){ ids.forEach(function(i){ SEL[i] = 1; }); renderGeld(); }
+function selKeine(){ SEL = {}; renderGeld(); }
+function selAnzahl(){ return Object.keys(SEL).length; }
+
+function selLoeschen(){
+  var ids = Object.keys(SEL);
+  if(!ids.length){ toast('Nichts ausgewählt'); return; }
+  var laufen = ids.filter(function(i){
+    var o = ordById(i);
+    return o && ['geliefert','abgelehnt','storniert'].indexOf(o.status) < 0;
+  });
+  if(laufen.length && !confirm('ACHTUNG: '+laufen.length+' davon LAUFEN NOCH.\n\n'+
+     'Sind das alles Testbestellungen? Bei einer echten wartet gerade ein Kunde.')) return;
+  if(!confirm(ids.length+' Bestellungen ENDGÜLTIG löschen?\n\n'+
+     'Das kann niemand rückgängig machen. CSV vorher exportiert?')) return;
+  var up = {};
+  ids.forEach(function(i){ up['orders/'+i] = null; });
+  FB_DB.ref().update(up)
+    .then(function(){ SEL = {}; AUSWAHL = false; toast('🗑 '+ids.length+' gelöscht'); })
     .catch(function(){ toast('Ging nicht – Verbindung prüfen'); });
 }
 
@@ -1157,23 +1204,42 @@ function renderGeld(){
     });
   }
 
+  var zeige = arch.slice(0, 120);
+  var zeigeIds = zeige.map(function(o){ return o.id; });
+
   out += '<h2 class="sec">Alle Bestellungen'+
-    '<em>'+arch.length+' im gewählten Zeitraum · tipp eine an, um alles zu sehen</em></h2>'+
+    '<em>'+arch.length+' im gewählten Zeitraum · '+
+      (AUSWAHL ? 'Häkchen setzen und unten löschen' : 'tipp eine an, um alles zu sehen')+'</em></h2>'+
     '<div class="tools">'+
       '<input id="qSuche" placeholder="Suchen: Nummer, Telefon, Ort, Fahrer …" '+
         'value="'+esc(SUCHE)+'" oninput="setSuche(this.value)">'+
       '<button class="gold" onclick="exportCSV()">⬇︎ CSV</button>'+
+      (AUSWAHL
+        ? '<button onclick="selAus()">Abbrechen</button>'
+        : '<button onclick="selAn()">🗑 Mehrere löschen</button>')+
     '</div>';
+
+  if(AUSWAHL){
+    out += '<div class="tools">'+
+      '<button onclick=\'selAlle('+JSON.stringify(zeigeIds)+')\'>Alle '+zeige.length+'</button>'+
+      '<button onclick="selKeine()">Keine</button>'+
+      '<button class="'+(selAnzahl()?'gold':'')+'" '+(selAnzahl()?'':'disabled ')+
+        'onclick="selLoeschen()" style="flex:1">🗑 '+selAnzahl()+' löschen</button>'+
+    '</div>';
+  }
 
   if(!arch.length){
     out += '<div class="empty"><span class="ic">📭</span>'+
       (SUCHE ? 'Nichts gefunden.' : 'In diesem Zeitraum gibt es keine Bestellungen.')+'</div>';
   } else {
-    out += arch.slice(0, 120).map(function(o){
-      return '<div class="row '+stClass(o.status)+'" style="cursor:pointer" '+
-        'onclick="openOrder(\''+esc(o.id)+'\')">'+
-        '<div class="av" style="font-size:16px">'+
-          (o.status==='geliefert'?'✅':(o.status==='storniert'||o.status==='abgelehnt'?'✕':'🛵'))+'</div>'+
+    out += zeige.map(function(o){
+      var an = !!SEL[o.id];
+      return '<div class="row '+stClass(o.status)+'" style="cursor:pointer'+
+        (an ? ';border-color:var(--yellow);background:rgba(255,184,0,.07)' : '')+'" '+
+        'onclick="'+(AUSWAHL ? 'selTog(\''+esc(o.id)+'\')' : 'openOrder(\''+esc(o.id)+'\')')+'">'+
+        '<div class="av" style="font-size:16px'+(an?';background:var(--yellow);color:#241C00':'')+'">'+
+          (AUSWAHL ? (an ? '✓' : '') :
+            (o.status==='geliefert'?'✅':(o.status==='storniert'||o.status==='abgelehnt'?'✕':'🛵')))+'</div>'+
         '<div class="mid">'+
           '<div class="nm"><b>'+esc(lokaleVon(o))+' → '+esc(o.town||'–')+'</b></div>'+
           '<span class="sub">'+esc(ST_TXT[o.status]||o.status)+' · '+datum(o.at)+' '+uhr(o.at)+
@@ -1336,6 +1402,7 @@ function render(){
 function startApp(){
   $('login').classList.add('hide');
   $('app').classList.remove('hide');
+  $('verTag').textContent = ZENTRALE_VERSION;
 
   FB_DB.ref('.info/connected').on('value', function(s){
     var on = !!s.val();
