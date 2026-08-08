@@ -400,8 +400,20 @@ body.online .sw::after{transform:translateX(28px);}
        style="height:58px;width:auto;display:block"></div>
   <h1 class="lg-title">Fahrer</h1>
 
+  <!-- ===== Stufe 0: Sitzung wird geprueft =====
+       Firebase braucht einen kurzen Moment, um die gespeicherte Anmeldung
+       zu laden. Ohne diese Zwischenstufe blitzt so lange das Login-Formular
+       auf – und der Fahrer denkt, er sei rausgeflogen. -->
+  <div id="lgBoot">
+    <div class="lg-card lg-wait">
+      <div class="wi">🔄</div>
+      <h2>Einen Moment</h2>
+      <p>Deine Schicht wird geladen …</p>
+    </div>
+  </div>
+
   <!-- ===== Stufe 1: Anmelden ===== -->
-  <div id="lgAuth">
+  <div id="lgAuth" class="hide">
     <p class="lg-sub">Melde dich mit deinen Zugangsdaten an.</p>
     <div class="lg-card">
       <div class="fld">
@@ -556,6 +568,22 @@ var FB_AUTH = null;
 try{ if(FB_OK && firebase.auth) FB_AUTH = firebase.auth(); }catch(e){ FB_AUTH = null; }
 var AUTH_UID = null, AUTH_MAIL = '';
 
+/* =====================================================================
+   DIE ANMELDUNG BLEIBT BESTEHEN
+   ---------------------------------------------------------------------
+   Ein Fahrer soll sich EINMAL anmelden – und dann nie wieder, solange er
+   sich nicht selbst abmeldet. Wechselt er kurz in WhatsApp oder Maps und
+   kommt zurueck, muss die App genau da weitermachen, wo sie war.
+   Darum wird die Anmeldung ausdruecklich dauerhaft im Geraet gespeichert
+   (LOCAL). Ohne diese Zeile entscheidet der Browser selbst – und manche
+   Handys werfen die Sitzung dann beim naechsten Start weg.
+   ===================================================================== */
+try{
+  if(FB_AUTH && firebase.auth.Auth && firebase.auth.Auth.Persistence){
+    FB_AUTH.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
+  }
+}catch(e){}
+
 var FB_CACHE = [];   /* alle Auftraege, neueste zuerst */
 var FB_SNAP  = {};   /* id -> zuletzt bekannter Stand, damit wir nur Aenderungen senden */
 
@@ -672,7 +700,7 @@ document.getElementById('townChips').addEventListener('click', e=>{
   b.classList.add('on'); pickTown = b.dataset.t;
 });
 function showStage(id){
-  ['lgAuth','lgProf','lgWait'].forEach(function(k){
+  ['lgBoot','lgAuth','lgProf','lgWait'].forEach(function(k){
     var el = document.getElementById(k); if(el) el.classList.toggle('hide', k!==id);
   });
   document.getElementById('login').classList.remove('hide');
@@ -715,8 +743,9 @@ function doProfile(){
   if(!FB_OK){ ME.online = true; startApp(); }
 }
 function logout(){
+  if(!confirm('Wirklich abmelden?\n\nDu musst dich danach neu mit E-Mail und Passwort anmelden. Zum Feierabend reicht der Schalter "Schicht beenden".')) return;
   if(ME){ ME.online=false; saveMe(); }
-  geoStop();
+  geoStop(); hbStop();
   try{ if(FB_OK && AUTH_UID) FB_DB.ref('drivers/'+AUTH_UID+'/online').set(false); }catch(e){}
   localStorage.removeItem(BX_DRIVER);
   if(FB_AUTH){ FB_AUTH.signOut().then(function(){ location.reload(); }).catch(function(){ location.reload(); }); }
@@ -756,24 +785,51 @@ function startApp(){
   document.getElementById('tName').textContent = ME.name;
   document.body.classList.toggle('online', !!ME.online);
   document.getElementById('tState').textContent = ME.online ? '● Online · '+ME.veh+' · '+ME.town : 'Offline';
-  if(ME.online) geoStart(); else geoStop();
+  if(ME.online){ geoStart(); hbStart(); } else { geoStop(); hbStop(); }
   render();
 }
+/* =====================================================================
+   ONLINE BLEIBT ONLINE
+   ---------------------------------------------------------------------
+   Frueher hat der Server den Fahrer bei jedem Verbindungsabriss auf
+   offline gesetzt (onDisconnect). In der U-Bahn, im Fahrstuhl oder beim
+   Wechsel in eine andere App war die Schicht damit weg – der Fahrer kam
+   zurueck und stand ploetzlich auf "Offline".
+   Jetzt gilt: NUR der Fahrer selbst beendet seine Schicht.
+   Damit die Zentrale trotzdem sieht, wer wirklich erreichbar ist, meldet
+   sich das Handy alle 25 Sekunden mit "lastSeen". Wer sich laenger als
+   2 Minuten nicht gemeldet hat, gilt als "nicht erreichbar" – seine
+   Schicht bleibt aber stehen und laeuft sofort weiter, wenn er zurueck
+   ist. Nichts geht mehr verloren.
+   ===================================================================== */
+var hbT = null;
+function heartbeat(){
+  if(!FB_OK || !AUTH_UID || !ME || !ME.online) return;
+  try{ FB_DB.ref('drivers/'+AUTH_UID).update({ online:true, lastSeen:Date.now() }); }catch(e){}
+}
+function hbStart(){ if(hbT===null){ heartbeat(); hbT = setInterval(heartbeat, 25000); } }
+function hbStop(){ if(hbT!==null){ clearInterval(hbT); hbT = null; } }
+
 function toggleShift(){
   ME.online = !ME.online; saveMe();
   document.body.classList.toggle('online', ME.online);
   document.getElementById('tState').textContent = ME.online ? '● Online · '+ME.veh+' · '+ME.town : 'Offline';
-  if(ME.online){
-    geoStart();
-    /* Verliert das Handy die Verbindung, setzt der Server den Fahrer auf offline. */
-    try{ if(FB_OK && AUTH_UID) FB_DB.ref('drivers/'+AUTH_UID+'/online').onDisconnect().set(false); }catch(e){}
-  } else {
-    geoStop();
-    try{ if(FB_OK && AUTH_UID) FB_DB.ref('drivers/'+AUTH_UID+'/online').onDisconnect().cancel(); }catch(e){}
-  }
+  if(ME.online){ geoStart(); hbStart(); }
+  else         { geoStop();  hbStop();  }
   toast(ME.online ? '🟢 Du bist online' : '⚪ Schicht beendet');
   render();
 }
+
+/* Kommt der Fahrer aus einer anderen App zurueck: sofort melden und neu
+   zeichnen, damit er keine Sekunde auf veraltete Auftraege schaut. */
+function wakeUp(){
+  if(!ME || !ME.name) return;
+  if(ME.online){ heartbeat(); geoStart(); }
+  if(typeof watch === 'function') watch();
+}
+document.addEventListener('visibilitychange', function(){ if(!document.hidden) wakeUp(); });
+window.addEventListener('pageshow', wakeUp);
+window.addEventListener('online',  wakeUp);
 
 /* ---------- Tabs ---------- */
 let TAB = 'Jobs';
@@ -810,7 +866,7 @@ function toast(msg){
 /* Steht unten im Profil. Damit sieht man auf dem Handy sofort, ob wirklich
    die neue Fassung läuft – oder ob das Telefon noch eine alte Datei zeigt.
    Bei jedem Hochladen mit der Zahl in sw.js gleichziehen. */
-const APP_VERSION = 'v22 · Öffnungszeiten, Gutschein, Stornieren';
+const APP_VERSION = 'v23 · Angemeldet bleiben, 2 Knöpfe im Lokal, neue Zentrale';
 
 const FAHRER_ANTEIL = 0.50;                 /* die Hälfte der Liefergebühr */
 function fahrerLohn(o){
@@ -901,30 +957,43 @@ function istFertig(o){
   for(let i=0;i<st.length;i++) if(!st[i].fertig) return false;
   return true;
 }
-/* Wann ist das Essen fertig? (aus prepEnd oder aus den Stops) */
+/* =====================================================================
+   KOCHT NOCH  ODER  STEHT SCHON DA?
+   ---------------------------------------------------------------------
+   Es gibt keine geschätzte Küchenzeit mehr. Das Lokal hat nur zwei
+   Knöpfe: "Annehmen" und "Essen ist fertig". Der Fahrer bekommt deshalb
+   keine Uhrzeit zum Raten, sondern genau zwei ehrliche Zustände:
+     👨‍🍳 wird zubereitet   – losfahren, aber es kann noch dauern
+     ✅ steht abholbereit  – Tüte mitnehmen und weiter
+   Das ist besser als eine Schätzung, die sowieso nie stimmt.
+   ===================================================================== */
 function prepEndOf(o){
   if(!o) return 0;
-  if(o.prepEnd) return o.prepEnd;
   var st = o.stops||[], ende = 0;
   for(var i=0;i<st.length;i++){
-    /* Hat das Lokal schon auf "Fertig" getippt, gilt dieser Zeitpunkt –
-       dann muss der Fahrer nicht mehr auf die Küchenzeit warten. */
-    if(st[i].fertig){
-      if(st[i].fertig > ende) ende = st[i].fertig;
-    }else if(st[i].okAt){
-      var e = st[i].okAt + ((st[i].prep||15)*60000);
-      if(e>ende) ende = e;
-    }
+    if(!st[i].fertig) return 0;                 /* eines kocht noch */
+    if(st[i].fertig > ende) ende = st[i].fertig;
   }
   return ende;
 }
+/* Seit wann kocht die Küche? Ehrliche Zahl statt erfundener Restzeit. */
+function kochtSeit(o){
+  var st = (o && o.stops) || [], erst = 0;
+  for(var i=0;i<st.length;i++){
+    if(st[i].okAt && (!erst || st[i].okAt < erst)) erst = st[i].okAt;
+  }
+  if(!erst) return 0;
+  return Math.max(0, Math.round((Date.now()-erst)/60000));
+}
 function fertigTxt(o){
-  var e = prepEndOf(o); if(!e) return '';
-  var d = new Date(e);
-  var hh = ('0'+d.getHours()).slice(-2), mm = ('0'+d.getMinutes()).slice(-2);
-  var min = Math.round((e - Date.now())/60000);
-  if(min <= 0) return 'Essen ist fertig';
-  return 'fertig um '+hh+':'+mm+' ('+min+' Min)';
+  if(istFertig(o)) return 'Essen steht bereit';
+  var m = kochtSeit(o);
+  return m ? ('wird zubereitet · seit '+m+' Min') : 'wird zubereitet';
+}
+/* Welche Lokale sind noch nicht fertig? Bei Sammelbestellungen wichtig. */
+function offeneLokale(o){
+  return ((o && o.stops) || []).filter(function(s){ return !s.fertig; })
+                               .map(function(s){ return s.name; });
 }
 
 function render(){
@@ -972,10 +1041,10 @@ function stopsHtml(o, withItems){
     if(s.fertig){
       ok = '<span class="rw-ok">✅ steht bereit</span>';
     }else if(s.ok === 1){
-      const e = (s.okAt||0) + ((s.prep||15)*60000);
-      const d = new Date(e);
-      ok = '<span class="rw-ok warte">👨‍🍳 zugesagt · fertig um '+
-           ('0'+d.getHours()).slice(-2)+':'+('0'+d.getMinutes()).slice(-2)+'</span>';
+      /* Keine erfundene Uhrzeit mehr – nur die ehrliche Kochdauer.
+         Das Lokal meldet selbst, sobald die Tüte fertig ist. */
+      const m = s.okAt ? Math.max(0, Math.round((Date.now()-s.okAt)/60000)) : 0;
+      ok = '<span class="rw-ok warte">👨‍🍳 kocht'+(m ? ' · seit '+m+' Min' : '')+'</span>';
     }
     /* Die Adresse ohne "Deutschland" am Ende – das weiß der Fahrer selbst.
        Steht in der Adresse nur der Name des Lokals, zeigen wir den Ort. */
@@ -1055,9 +1124,8 @@ function renderJobs(jobs, act){
          Essen schon fertig dasteht oder noch gekocht wird. */
       (istFertig(o)
         ? '<div class="okban jetzt">✅ Essen steht bereit · sofort abholen</div>'
-        : (fertigTxt(o)
-           ? '<div class="okban">👨‍🍳 Lokal hat angenommen · '+esc(fertigTxt(o))+'</div>'
-           : '<div class="okban">👨‍🍳 Lokal hat angenommen</div>'))+
+        : '<div class="okban">👨‍🍳 Lokal kocht · '+esc(fertigTxt(o))+
+          '<br><small style="opacity:.85">Du kannst schon losfahren – du bekommst hier sofort Bescheid, wenn die Tüte fertig ist.</small></div>')+
       '<div class="oc-route">'+stopsHtml(o,false)+'</div>'+
       '<div class="oc-bar">'+
         (warte > 0
@@ -1152,10 +1220,20 @@ function renderActive(o){
     '<div class="oc-route">'+stopsHtml(o,true)+'</div>'+
   '</div>';
 
-  if(i<=1 && fertigTxt(o)){
-    h += '<div style="margin:10px 0 0;padding:10px 12px;border-radius:12px;'+
-      'background:rgba(43,182,115,.13);border:1px solid rgba(43,182,115,.35);'+
-      'color:#2BB673;font-weight:800;font-size:14px">👨‍🍳 Essen '+esc(fertigTxt(o))+'</div>';
+  /* Der wichtigste Satz für den Fahrer, solange er noch am Lokal ist:
+     kann ich schon mitnehmen, oder muss ich warten? Er aktualisiert sich
+     in der Sekunde, in der die Küche auf "Essen ist fertig" tippt. */
+  if(i<=1){
+    var offen = offeneLokale(o);
+    h += istFertig(o)
+      ? '<div style="margin:10px 0 0;padding:13px 14px;border-radius:12px;'+
+        'background:rgba(43,182,115,.16);border:1px solid rgba(43,182,115,.45);'+
+        'color:#2BB673;font-weight:900;font-size:15px">✅ Essen steht bereit – mitnehmen</div>'
+      : '<div style="margin:10px 0 0;padding:13px 14px;border-radius:12px;'+
+        'background:rgba(240,180,40,.13);border:1px solid rgba(240,180,40,.38);'+
+        'color:#F0B428;font-weight:900;font-size:15px">👨‍🍳 '+esc(fertigTxt(o))+
+        (offen.length ? '<br><small style="font-weight:700;opacity:.9">Offen: '+esc(offen.join(', '))+'</small>' : '')+
+        '<br><small style="font-weight:700;opacity:.9">Sobald die Küche fertig meldet, wird das hier grün.</small></div>';
   }
 
   h += '<div style="margin:14px 0 4px">' + STEPS.map((s,k)=>
@@ -1392,6 +1470,20 @@ function watch(){
   } else {
     render();
   }
+  meldeFertig();
+}
+
+/* Meldung, wenn die Küche waehrend meiner Fahrt "Essen ist fertig" tippt.
+   Ohne diese Meldung muesste der Fahrer staendig auf den Schirm schauen. */
+var fertigGemeldet = {};
+function meldeFertig(){
+  var a = myActive();
+  if(!a){ return; }
+  if(!istFertig(a)){ fertigGemeldet[a.id] = false; return; }
+  if(fertigGemeldet[a.id]) return;
+  fertigGemeldet[a.id] = true;
+  try{ if(navigator.vibrate) navigator.vibrate([90,60,90]); }catch(e){}
+  toast('✅ Essen ist fertig – du kannst mitnehmen');
 }
 window.addEventListener('storage', e=>{ if(e.key===BX_ORDERS && ME) watch(); });
 setInterval(()=>{ if(ME) watch(); }, FB_OK ? 8000 : 1800);

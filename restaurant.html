@@ -223,14 +223,18 @@ main{padding:13px 15px 30px;}
 .lst-h small{font-size:11.5px;font-weight:700;color:var(--tx3);letter-spacing:0;}
 .lst-h.kueche{margin-top:20px;padding-top:15px;border-top:1px solid var(--line);color:var(--green);}
 
-/* Der Fertig-Knopf ist der einzige Knopf auf der Küchenkarte – also darf
-   er auch aussehen wie der einzige: über die ganze Breite, gut zu treffen. */
-.oc-bar .b-fertig{padding:16px 8px;font-size:16px;}
-
-/* ===== EIN-TIPP-ANNAHME =================================================
-   Das Lokal soll NICHT erst "Annehmen" und dann die Zeit tippen.
-   Ein einziger Tipp auf "15 Min" heißt: angenommen UND Zeit gesetzt.
+/* ===== DIE ZWEI KNÖPFE ==================================================
+   Die ganze Restaurant-App kennt nur zwei Tipps:
+     1. "Annehmen"          – die Bestellung wird gekocht, Fahrer wird gerufen
+     2. "Essen ist fertig"  – die Tüte steht abholbereit da
+   Beide gehen über die volle Breite und sind absichtlich groß: sie werden
+   im Stress, mit fettigen Händen, auf einem Tablet an der Wand getroffen.
    ===================================================================== */
+.oc-bar .b-fertig,
+.oc-bar .b-annehmen{padding:19px 8px;font-size:17.5px;letter-spacing:.2px;}
+.oc-bar .b-annehmen{box-shadow:0 10px 26px rgba(43,182,115,.30);}
+
+
 .qa-h{padding:2px 15px 8px;font-size:12.5px;font-weight:900;color:var(--tx2);
   text-transform:uppercase;letter-spacing:.5px;}
 .qa{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;padding:0 15px 10px;}
@@ -330,8 +334,20 @@ main{padding:13px 15px 30px;}
        style="height:58px;width:auto;display:block"></div>
   <h1 class="lg-title">Restaurant</h1>
 
+  <!-- Stufe 0: gespeicherte Anmeldung wird geladen.
+       Ohne diese Zwischenstufe blitzt beim Zurueckkommen kurz das
+       Login-Formular auf und das Lokal denkt, es sei abgemeldet. -->
+  <div id="lgBoot">
+    <div class="lg-card" style="text-align:center">
+      <div style="font-size:34px;margin-bottom:8px">🔄</div>
+      <p style="font-size:15px;font-weight:800;margin:0">Einen Moment</p>
+      <p style="font-size:12.5px;color:var(--tx2);font-weight:700;margin:8px 0 0">
+        Dein Lokal wird geladen …</p>
+    </div>
+  </div>
+
   <!-- Stufe 1: Anmelden -->
-  <div id="lgAuth">
+  <div id="lgAuth" class="hide">
     <p class="lg-sub">Melde dich mit den Zugangsdaten deines Lokals an.</p>
     <div class="lg-card">
       <div class="fld">
@@ -410,8 +426,7 @@ main{padding:13px 15px 30px;}
   </header>
 
   <div class="tabs">
-    <button class="tab on" id="tbNeu"  onclick="go('neu')">Neu <span class="n hide" id="nNeu">0</span></button>
-    <button class="tab"    id="tbRun"  onclick="go('run')">Küche <span class="n hide" id="nRun">0</span></button>
+    <button class="tab on" id="tbNeu"  onclick="go('neu')">Bestellungen <span class="n hide" id="nNeu">0</span></button>
     <button class="tab"    id="tbDone" onclick="go('done')">Erledigt</button>
     <button class="tab"    id="tbGeld" onclick="go('geld')">💰 Umsatz</button>
   </div>
@@ -485,6 +500,21 @@ try{
 var FB_AUTH = null;
 try{ if(FB_OK && firebase.auth) FB_AUTH = firebase.auth(); }catch(e){ FB_AUTH = null; }
 var AUTH_UID = null, AUTH_MAIL = '';
+
+/* =====================================================================
+   DIE ANMELDUNG BLEIBT BESTEHEN
+   ---------------------------------------------------------------------
+   Ein Lokal meldet sich morgens EINMAL an. Danach darf die Seite nie
+   wieder nach E-Mail und Passwort fragen – auch nicht, wenn jemand kurz
+   in eine andere App wechselt oder das Tablet neu startet.
+   "Geoeffnet" oder "Geschlossen" entscheidet ab jetzt AUSSCHLIESSLICH
+   das Lokal selbst ueber den Schalter oben. Nichts anderes.
+   ===================================================================== */
+try{
+  if(FB_AUTH && firebase.auth.Auth && firebase.auth.Auth.Persistence){
+    FB_AUTH.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
+  }
+}catch(e){}
 
 var SHOP_ID = null, SHOP = null;      /* welches Lokal ist gerade angemeldet */
 var SHOP_STATE = null;                /* {open, until, t, by} aus shops/<id> */
@@ -716,32 +746,37 @@ function stopSum(o){
   for(var i=0;i<it.length;i++) t += (it[i].qty||0) * (it[i].price||0);
   return t;
 }
-function fertigUm(o){
-  var s = myStop(o); if(!s || !s.okAt) return '';
-  return uhr(s.okAt + (s.prep||15)*60000);
+/* Wie lange steht die Bestellung schon in der Küche? */
+function seitMin(o){
+  var s = myStop(o); if(!s || !s.okAt) return 0;
+  return Math.max(0, Math.round((Date.now() - s.okAt)/60000));
 }
 
-function annehmen(id, prep){
+/* =====================================================================
+   KNOPF 1 VON 2:  ANNEHMEN
+   ---------------------------------------------------------------------
+   Ein Tipp. Keine Minutenauswahl mehr – die Küche weiß selbst am besten,
+   wann es fertig ist, und soll dafür nicht raten müssen.
+   Sobald angenommen ist, geht der Auftrag SOFORT an die Fahrer raus.
+   Der Fahrer fährt schon los, während gekocht wird – das spart bei jeder
+   Bestellung die Zeit, die er sonst wartend verliert.
+   ===================================================================== */
+function annehmen(id){
   var raus = false;                 /* ging der Auftrag jetzt an die Fahrer raus? */
   bxUpdate(id, function(o){
     var i = myIdx(o); if(i<0) return;
-    o.stops[i].ok = 1; o.stops[i].prep = prep; o.stops[i].okAt = Date.now();
+    o.stops[i].ok = 1; o.stops[i].okAt = Date.now();
+    delete o.stops[i].prep;
     var alle = o.stops.every(function(s){ return s.ok === 1; });
     raus = alle;
     if(alle){
       o.status = 'bestaetigt';
-      var ende = 0;
-      o.stops.forEach(function(s){
-        var e = (s.okAt||Date.now()) + (s.prep||15)*60000;
-        if(e > ende) ende = e;
-      });
-      o.prepEnd = ende;
+      o.prepEnd = 0;                /* keine geschätzte Zeit mehr – nur echte Meldungen */
       o.hist = (o.hist||[]).concat([{s:'bestaetigt', t:Date.now()}]);
     }
   });
   closeSheet(); closeAlert();
-  /* Klare Rückmeldung: das war schon alles. Der Fahrer ist informiert. */
-  toast(raus ? '✓ Angenommen · der Fahrer sieht sie jetzt'
+  toast(raus ? '✓ Angenommen · ein Fahrer wird gerufen'
              : '✓ Angenommen · wir warten noch auf das andere Lokal');
   render();
 }
@@ -759,51 +794,29 @@ function ablehnen(id, grund){
   render();
 }
 /* =====================================================================
-   FERTIG  –  das Essen steht abholbereit da
+   KNOPF 2 VON 2:  ESSEN IST FERTIG
    ---------------------------------------------------------------------
-   Damit ist die Arbeit der Küche an dieser Bestellung erledigt: sie
-   verschwindet aus "In der Küche" und wandert nach "Erledigt".
-   Für den Fahrer heißt das: nicht mehr warten, sofort losfahren –
-   darum wird prepEnd neu gerechnet.
-   Zwei Tipps hat das Lokal also insgesamt: die Minuten und "Fertig".
+   Mehr macht die Küche nicht. Dieser Tipp sagt dem Fahrer in derselben
+   Sekunde: die Tüte steht da, du kannst sie mitnehmen.
+   Steht der Fahrer schon im Laden, verschwindet damit sein "warten" –
+   er sieht sofort einen grünen Balken.
    ===================================================================== */
 function fertig(id){
   bxUpdate(id, function(o){
     var i = myIdx(o); if(i<0) return;
     o.stops[i].fertig = Date.now();
-    /* Neue Abholzeit: das späteste Lokal bestimmt sie. Wer schon fertig
-       ist, zählt mit "jetzt" – wer noch kocht, mit seiner Minutenzahl. */
-    var ende = 0;
-    o.stops.forEach(function(s){
-      var e = s.fertig ? s.fertig : ((s.okAt || Date.now()) + (s.prep || 15)*60000);
-      if(e > ende) ende = e;
-    });
-    o.prepEnd = ende;
+    /* Abholbereit ist die ganze Bestellung erst, wenn ALLE Lokale fertig
+       sind. Bei einer Sammelbestellung zählt also das langsamste Lokal. */
+    var alle = (o.stops||[]).every(function(s){ return !!s.fertig; });
+    o.prepEnd = alle ? Date.now() : 0;
     o.hist = (o.hist||[]).concat([{s:'fertig', t:Date.now(), von:(SHOP ? SHOP.name : '')}]);
   });
-  toast('✓ Fertig – der Fahrer ist unterwegs zu euch');
+  toast('✓ Fertig gemeldet – der Fahrer weiß Bescheid');
   render();
 }
 
-/* ---------- Bogen von unten: mehr Zeit / Grund wählen ---------- */
+/* ---------- Bogen von unten: Grund wählen ---------- */
 function closeSheet(){ document.getElementById('sheet').classList.add('hide'); }
-/* Standard sind die vier Knöpfe direkt auf der Karte (10/15/20/30 Min).
-   Braucht die Küche länger, kommt hier der Rest. */
-function sheetZeit(id){
-  var el = document.getElementById('sheet');
-  el.innerHTML =
-    '<div class="bx" onclick="event.stopPropagation()">'+
-      '<h3>Wie lange braucht ihr?</h3>'+
-      '<p>Ein Tipp genügt – damit ist die Bestellung angenommen.</p>'+
-      '<div class="grid2">'+
-        [40,50,60,75].map(function(m){
-          return '<button class="gb" onclick="annehmen(\''+id+'\','+m+')">'+m+' Min'+
-                 '<small>fertig um '+uhr(Date.now()+m*60000)+'</small></button>';
-        }).join('')+
-      '</div>'+
-    '</div>';
-  el.classList.remove('hide');
-}
 function sheetGrund(id){
   var el = document.getElementById('sheet');
   var g = ['Zu viel los','Ausverkauft','Wir haben geschlossen','Küche defekt'];
@@ -878,18 +891,11 @@ function card(o, mode){
        '</div>';
 
   if(mode==='neu'){
-    /* EIN Tipp = angenommen + Zeit gesagt. Kein zweiter Bildschirm. */
-    h += '<div class="qa-h">✓ Annehmen – in wie vielen Minuten fertig?</div>'+
-         '<div class="qa">'+
-           [10,15,20,30].map(function(m){
-             return '<button onclick="annehmen(\''+o.id+'\','+m+')">'+m+
-                    '<small>Min · '+uhr(Date.now()+m*60000)+'</small></button>';
-           }).join('')+
-         '</div>'+
-         '<div class="qa-foot">'+
-           '<button onclick="sheetZeit(\''+o.id+'\')">Wir brauchen länger</button>'+
-           '<button onclick="sheetGrund(\''+o.id+'\')">Geht heute nicht</button>'+
-         '</div>';
+    /* EIN einziger großer Knopf. Keine Minuten, keine Auswahl, kein
+       zweiter Bildschirm. Daneben nur die Notbremse "Geht heute nicht". */
+    h += '<div class="oc-bar"><button class="b b-ok b-annehmen" onclick="annehmen(\''+o.id+'\')">'+
+         '✓ Annehmen</button></div>'+
+         '<div class="qa-foot"><button onclick="sheetGrund(\''+o.id+'\')">Geht heute nicht</button></div>';
   } else if(mode==='run'){
     /* Das Lokal soll SEHEN, dass die Annahme sofort beim Fahrer landet –
        sonst denkt es, es müsse noch irgendwo etwas drücken. Es muss nicht:
@@ -903,8 +909,8 @@ function card(o, mode){
            'sobald '+(offen.length ? esc(offen.join(' und ')) : 'das andere Lokal')+
            ' auch angenommen hat.</div>';
     } else if(o.status==='bestaetigt'){
-      h += '<div class="st go">✅ Der Fahrer sieht die Bestellung jetzt · fertig um '+
-           fertigUm(o)+' Uhr</div>';
+      h += '<div class="st go">✅ Angenommen · ein Fahrer wird gerufen'+
+           (seitMin(o) ? ' · seit '+seitMin(o)+' Min bei euch' : '')+'</div>';
     } else {
       var d = o.driver ? o.driver.name : 'Der Fahrer';
       var txt = {
@@ -913,10 +919,10 @@ function card(o, mode){
         'abgeholt'     : '📦 '+esc(d)+' hat abgeholt.',
         'unterwegs'    : '🚀 '+esc(d)+' ist unterwegs zum Kunden.'
       }[o.status] || '…';
-      h += '<div class="st go">'+txt+' · fertig um '+fertigUm(o)+' Uhr</div>';
+      h += '<div class="st '+(o.status==='am_restaurant'?'wait':'go')+'">'+txt+
+           (seitMin(o) ? ' · seit '+seitMin(o)+' Min bei euch' : '')+'</div>';
     }
-    /* Der EINZIGE Knopf, der hier noch steht: das Essen ist fertig.
-       Damit ist die Bestellung für die Küche erledigt und verschwindet. */
+    /* Der EINZIGE Knopf, der hier noch steht: das Essen ist fertig. */
     h += '<div class="oc-bar"><button class="b b-ok b-fertig" onclick="fertig(\''+o.id+'\')">'+
          '✓ Essen ist fertig</button></div>';
   } else {
@@ -1007,7 +1013,6 @@ var TAB = 'neu';
 function go(t){
   TAB = t;
   document.getElementById('tbNeu').classList.toggle('on', t==='neu');
-  document.getElementById('tbRun').classList.toggle('on', t==='run');
   document.getElementById('tbDone').classList.toggle('on', t==='done');
   document.getElementById('tbGeld').classList.toggle('on', t==='geld');
   render();
@@ -1016,60 +1021,50 @@ function render(){
   if(!SHOP_ID) return;
   var neu = listNeu(), run = listRun(), done = listDone();
 
+  var offen = neu.length + run.length;
   var bn = document.getElementById('nNeu');
-  bn.textContent = neu.length; bn.classList.toggle('hide', neu.length===0);
-  var br = document.getElementById('nRun');
-  br.textContent = run.length; br.classList.toggle('hide', run.length===0);
+  bn.textContent = offen; bn.classList.toggle('hide', offen===0);
 
   if(TAB === 'geld'){ renderGeld(); return; }
 
   var el = document.getElementById('list');
 
   /* =====================================================================
-     ZWEI TIPPS – MEHR NICHT
+     EIN BILDSCHIRM – ZWEI KNÖPFE
      ---------------------------------------------------------------------
-     Früher musste die Küche nach dem Annehmen erst auf den Reiter "Küche"
-     wechseln, um "Essen ist fertig" zu drücken. Das war ein Umweg, den
-     niemand im Stress findet.
-     Jetzt stehen auf dem ERSTEN Bildschirm beide Sachen untereinander:
-       oben  – was neu hereingekommen ist   -> Tipp 1: Minuten wählen
-       unten – was gerade gekocht wird      -> Tipp 2: "Essen ist fertig"
-     Die Bestellung rutscht nach dem Annehmen einfach nach unten und ist
-     nach "Fertig" verschwunden. Der Reiter "Küche" bleibt trotzdem, für
-     den, der nur die Küche sehen will.
+     Es gibt keinen Reiter "Küche" mehr. Alles Offene steht untereinander
+     auf demselben Schirm:
+       oben  – was neu hereingekommen ist  -> Knopf 1: "Annehmen"
+       unten – was gerade gekocht wird     -> Knopf 2: "Essen ist fertig"
+     Die Bestellung rutscht nach dem Annehmen nach unten und ist nach
+     "Fertig" verschwunden. Niemand muss im Stress einen Reiter suchen.
      ===================================================================== */
   if(TAB === 'neu'){
     var h = '';
     if(neu.length){
-      if(run.length) h += '<div class="lst-h">🔔 Neu hereingekommen</div>';
+      if(run.length) h += '<div class="lst-h">🔔 Neu · bitte annehmen</div>';
       h += neu.map(function(o){ return card(o, 'neu'); }).join('');
-    } else {
-      h += '<div class="empty"><span class="ic">🔔</span>Keine neue Bestellung.'+
+    } else if(!run.length){
+      h += '<div class="empty"><span class="ic">🔔</span>Keine offene Bestellung.'+
         (isOpen(SHOP_STATE) ? '<br>Ihr seid geöffnet – es kann jederzeit klingeln.'
                             : '<br><b style="color:var(--yellow)">Ihr seid geschlossen.</b> Solange kann niemand bei euch bestellen.')+
         '</div>';
     }
     if(run.length){
-      h += '<div class="lst-h kueche">👨‍🍳 In der Küche · '+run.length+
+      h += '<div class="lst-h kueche">👨‍🍳 Wird zubereitet · '+run.length+
            (run.length===1?' Bestellung' : ' Bestellungen')+
-           '<small>Wenn das Essen fertig ist: unten auf den grünen Knopf tippen.</small></div>'+
+           '<small>Wenn die Tüte fertig dasteht: auf den grünen Knopf tippen.</small></div>'+
            run.map(function(o){ return card(o, 'run'); }).join('');
     }
     el.innerHTML = h;
     return;
   }
 
-  var arr = TAB==='run' ? run : done;
-
-  if(!arr.length){
-    el.innerHTML = '<div class="empty">'+
-      (TAB==='run'
-        ? '<span class="ic">👨‍🍳</span>Nichts in der Küche.<br>Alles abgearbeitet.'
-        : '<span class="ic">📋</span>Heute noch nichts fertig gemacht.')+
-      '</div>';
+  if(!done.length){
+    el.innerHTML = '<div class="empty"><span class="ic">📋</span>Heute noch nichts fertig gemacht.</div>';
     return;
   }
-  el.innerHTML = arr.map(function(o){ return card(o, TAB); }).join('');
+  el.innerHTML = done.map(function(o){ return card(o, 'done'); }).join('');
 }
 
 /* ---------- Klingeln bei neuer Bestellung ---------- */
@@ -1097,18 +1092,14 @@ function showAlert(o){
   var ov = document.getElementById('alertOv');
   var li = itemsList(o);
   var teile = li.reduce(function(a, x){ return a + x.qty; }, 0);
-  /* Auch hier: EIN Tipp auf die Minutenzahl nimmt die Bestellung an. */
+  /* Ein Tipp auf den grünen Knopf nimmt die Bestellung an. Sonst nichts. */
   ov.innerHTML = '<div class="box" onclick="event.stopPropagation()">'+
     '<div class="ring">🔔</div>'+
     '<h3>Neue Bestellung!</h3>'+
     '<p>'+teile+' Stück · Lieferung nach '+esc(o.town||'-')+' · '+eur(stopSum(o))+'</p>'+
     '<div class="zu">'+itemsHtml(o)+'</div>'+
-    '<div class="qa-h" style="padding:0 0 8px;text-align:left">✓ Annehmen – in wie vielen Minuten?</div>'+
-    '<div class="qa" style="padding:0 0 10px">'+
-      [10,15,20,30].map(function(m){
-        return '<button onclick="annehmen(\''+o.id+'\','+m+')">'+m+
-               '<small>Min</small></button>';
-      }).join('')+
+    '<div class="oc-bar" style="padding:0 0 10px">'+
+      '<button class="b b-ok b-annehmen" onclick="annehmen(\''+o.id+'\')">✓ Annehmen</button>'+
     '</div>'+
     '<div class="qa-foot" style="padding:0">'+
       '<button onclick="closeAlert()">Später ansehen</button>'+
@@ -1138,11 +1129,18 @@ function watch(){
 window.addEventListener('storage', function(e){ if(e.key===BX_ORDERS && SHOP_ID) watch(); });
 setInterval(function(){ if(SHOP_ID) watch(); }, FB_OK ? 8000 : 1800);
 
+/* Kommt das Tablet aus dem Standby oder aus einer anderen App zurueck,
+   wird sofort neu gezeichnet – keine alten Bestellungen auf dem Schirm. */
+function wakeUp(){ if(SHOP_ID){ watch(); paintShop(); } }
+document.addEventListener('visibilitychange', function(){ if(!document.hidden) wakeUp(); });
+window.addEventListener('pageshow', wakeUp);
+window.addEventListener('online',  wakeUp);
+
 /* =====================================================================
    ANMELDUNG
    ===================================================================== */
 function stage(id){
-  ['lgAuth','lgNo','lgOff'].forEach(function(k){
+  ['lgBoot','lgAuth','lgNo','lgOff'].forEach(function(k){
     var el = document.getElementById(k); if(el) el.classList.toggle('hide', k!==id);
   });
   document.getElementById('login').classList.remove('hide');
@@ -1175,6 +1173,7 @@ function doAuth(){
   });
 }
 function logout(){
+  if(!confirm('Wirklich abmelden?\n\nDanach braucht ihr wieder E-Mail und Passwort. Zum Feierabend reicht der Schalter "Schließen" oben.')) return;
   if(shopRef){ try{ shopRef.off(); }catch(e){} shopRef = null; }
   SHOP_ID = null; SHOP = null; seen = null;
   try{ localStorage.removeItem('bx_shop_pick'); }catch(e){}

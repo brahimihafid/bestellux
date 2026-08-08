@@ -9,14 +9,20 @@
 <link rel="apple-touch-icon" href="icon-180.png">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
 <style>
-/* Gutschein-Liste (2.13) – nur Anzeige */
-.gs{display:flex;flex-direction:column;gap:8px;margin:10px 0}
-.gs-r{background:#fff;border:1px solid #e6e0d6;border-radius:12px;padding:10px 12px}
-.gs-c{font-weight:800;letter-spacing:.5px;font-size:15px}
-.gs-t{font-size:13px;opacity:.75;margin-top:2px}
+/* =====================================================================
+   BESTELLUX ZENTRALE
+   ---------------------------------------------------------------------
+   Eine Regel für diese Seite: WENIGER. Es gab hier einmal sechs Reiter
+   und Zahlen überall. Im Betrieb schaut niemand auf sechs Reiter.
+   Jetzt gibt es drei Fragen und für jede genau einen Bildschirm:
+     1. JETZT    – was läuft in diesem Moment schief oder gut?
+     2. FAHRER   – wer arbeitet, wer wartet auf Freischaltung?
+     3. GELD     – was hat mir welcher Partner heute gebracht?
+   Alles, was keine dieser drei Fragen beantwortet, steht nicht hier.
+   ===================================================================== */
 :root{
-  --yellow:#FFB800; --yellow-dark:#E09E00; --gold:#C9A24B;
-  --red:#A0152C; --red-dark:#7C0F21;
+  --yellow:#FFB800; --yellow-dark:#E09E00;
+  --red:#C81E3A; --red-dark:#8E1128;
   --bg:#12100B; --bg2:#1B1810; --card:#221E14; --card2:#2B2618;
   --line:rgba(255,184,0,0.16);
   --tx:#F6F1E4; --tx2:#B7AE99; --tx3:#7E7767;
@@ -29,7 +35,7 @@ body{
   background:var(--bg);color:var(--tx);
   font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;
   font-size:15px;line-height:1.45;
-  padding-bottom:calc(74px + env(safe-area-inset-bottom));
+  padding-bottom:calc(78px + env(safe-area-inset-bottom));
 }
 button{font-family:inherit;cursor:pointer;border:none;}
 input,select{font-family:inherit;}
@@ -42,10 +48,7 @@ input,select{font-family:inherit;}
   display:flex;flex-direction:column;align-items:center;justify-content:center;
   padding:26px 20px calc(30px + env(safe-area-inset-bottom));
 }
-.lg-logo{
-  margin-bottom:16px;display:flex;align-items:center;justify-content:center;
-  animation:lgFloat 3.4s ease-in-out infinite;
-}
+.lg-logo{margin-bottom:16px;display:flex;align-items:center;justify-content:center;}
 .lg-title{font-size:25px;font-weight:900;letter-spacing:-0.4px;margin:0;}
 .lg-title b{color:var(--yellow);}
 .lg-sub{color:var(--tx2);font-size:13.5px;margin:5px 0 26px;text-align:center;}
@@ -78,454 +81,241 @@ input,select{font-family:inherit;}
   background:linear-gradient(180deg,rgba(27,24,16,0.98),rgba(18,16,11,0.94));
   backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
   border-bottom:1px solid var(--line);
-  padding:calc(10px + env(safe-area-inset-top)) 14px 10px;
-  display:block;
+  padding:calc(11px + env(safe-area-inset-top)) 16px 11px;
+  display:flex;align-items:center;gap:12px;
 }
-/* Bestellux-Zeile über allem – dieselbe Zeile wie in der Fahrer- und der
-   Restaurant-App, damit die drei Apps als eine Familie zu erkennen sind. */
-.top-row{display:flex;align-items:center;gap:11px;}
-.bxbar{display:flex;align-items:center;gap:8px;margin-bottom:10px;}
-.bxbar-lg{height:26px;width:auto;flex:0 0 auto;display:block;}
-.bxbar-tx{font-size:14.5px;font-weight:900;letter-spacing:-0.3px;color:var(--gold);}
-.bxbar-tx b{color:var(--yellow);font-weight:900;}
-.bxbar-tag{font-size:10px;font-weight:900;letter-spacing:.9px;text-transform:uppercase;
-  color:var(--tx3);border:1px solid var(--line);border-radius:999px;padding:3px 9px;}
-.top .mark img{width:100%;height:100%;display:block;object-fit:cover;}
-.top .mark{
-  width:40px;height:40px;border-radius:13px;flex-shrink:0;overflow:hidden;
-  background:linear-gradient(140deg,var(--yellow),var(--yellow-dark));
-  display:flex;align-items:center;justify-content:center;font-size:19px;
+.top img{height:26px;width:auto;display:block;}
+.top-tag{
+  font-size:10px;font-weight:900;letter-spacing:1.1px;text-transform:uppercase;
+  color:var(--yellow);border:1px solid var(--line);border-radius:7px;padding:3px 7px;
 }
-.top-tx{flex:1;min-width:0;}
-.top-tx b{display:block;font-size:15px;font-weight:900;}
-.top-tx span{display:block;font-size:11.5px;color:var(--tx3);font-weight:700;
-  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.top-out{background:transparent;border:1.5px solid rgba(255,255,255,.14);color:var(--tx2);
-  border-radius:11px;padding:8px 12px;font-size:12.5px;font-weight:800;}
+.top-sp{flex:1;}
+.top-live{
+  display:flex;align-items:center;gap:6px;font-size:11.5px;font-weight:800;color:var(--tx2);
+}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--green);
+  box-shadow:0 0 0 0 rgba(43,182,115,.6);animation:pulse 2.1s infinite;}
+.dot.off{background:var(--tx3);animation:none;box-shadow:none;}
+@keyframes pulse{70%{box-shadow:0 0 0 9px rgba(43,182,115,0);}100%{box-shadow:0 0 0 0 rgba(43,182,115,0);}}
+.top-exit{background:none;color:var(--tx3);font-size:11.5px;font-weight:800;padding:5px 2px;}
 
-/* ============ LAYOUT ============ */
-.wrap{max-width:1180px;margin:0 auto;padding:14px;}
-.sec-h{display:flex;align-items:center;justify-content:space-between;margin:4px 2px 11px;}
-.sec-h h2{font-size:18px;font-weight:900;margin:0;letter-spacing:-0.3px;}
-.sec-h em{font-style:normal;font-size:12px;color:var(--tx3);font-weight:800;}
+/* ============ SEITE ============ */
+main{padding:16px 15px 10px;max-width:760px;margin:0 auto;}
+h2.sec{font-size:12.5px;font-weight:900;color:var(--tx2);text-transform:uppercase;
+  letter-spacing:.9px;margin:26px 2px 11px;}
+h2.sec:first-child{margin-top:4px;}
+h2.sec em{font-style:normal;color:var(--tx3);text-transform:none;letter-spacing:0;
+  font-weight:700;font-size:11.5px;display:block;margin-top:3px;}
 
-.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:16px;}
-.kpi{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px 15px;}
-.kpi b{display:block;font-size:24px;font-weight:900;letter-spacing:-0.6px;line-height:1.2;}
-.kpi span{display:block;font-size:11.5px;color:var(--tx3);font-weight:800;
-  text-transform:uppercase;letter-spacing:0.5px;margin-top:3px;}
-.kpi.g b{color:var(--green);} .kpi.y b{color:var(--yellow);} .kpi.b b{color:var(--blue);}
+/* ---- Die eine große Zahl oben ---- */
+.hero{
+  background:linear-gradient(150deg,var(--card2),var(--card));
+  border:1px solid var(--line);border-radius:20px;padding:19px 18px;margin-bottom:12px;
+}
+.hero .lb{font-size:11.5px;font-weight:900;color:var(--tx3);text-transform:uppercase;letter-spacing:.9px;}
+.hero .big{font-size:39px;font-weight:900;letter-spacing:-1.4px;color:var(--yellow);line-height:1.1;margin-top:4px;}
+.hero .sm{font-size:12.5px;font-weight:700;color:var(--tx2);margin-top:5px;}
 
-/* ============ MAP ============ */
-#map{height:340px;border-radius:18px;border:1px solid var(--line);overflow:hidden;
-  background:var(--card2);margin-bottom:16px;}
-.leaflet-container{background:#1B1810;}
-.leaflet-tile{filter:invert(1) hue-rotate(185deg) brightness(.78) contrast(1.05) saturate(.6);}
-.leaflet-control-attribution{background:rgba(0,0,0,.55)!important;color:#8C8474!important;font-size:9px!important;}
-.leaflet-control-attribution a{color:#B7AE99!important;}
-.mk{width:40px;height:40px;border-radius:13px;display:flex;align-items:center;justify-content:center;
-  font-size:13px;font-weight:900;color:#fff;border:2.5px solid var(--bg);
-  background:linear-gradient(140deg,var(--red),var(--red-dark));box-shadow:0 5px 14px rgba(0,0,0,.5);}
-.mk.on{background:linear-gradient(140deg,var(--green),var(--green-dark));}
-.map-none{display:flex;align-items:center;justify-content:center;height:100%;
-  color:var(--tx3);font-size:13.5px;font-weight:700;text-align:center;padding:20px;}
+/* ---- Vier Kacheln nebeneinander ---- */
+.tiles{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;}
+.tile{
+  background:var(--card);border:1px solid var(--line);border-radius:15px;
+  padding:12px 8px;text-align:center;
+}
+.tile b{display:block;font-size:24px;font-weight:900;letter-spacing:-.8px;line-height:1.1;}
+.tile span{display:block;font-size:10.5px;font-weight:800;color:var(--tx3);margin-top:3px;
+  text-transform:uppercase;letter-spacing:.4px;}
+.tile.warn b{color:var(--yellow);}
+.tile.go   b{color:var(--blue);}
+.tile.ok   b{color:var(--green);}
+.tile.zero b{color:var(--tx3);}
 
-/* ============ CARDS ============ */
-.list{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:11px;}
-.dc{background:var(--card);border:1px solid var(--line);border-radius:17px;padding:14px;}
-.dc.off{opacity:.68;}
-.dc-h{display:flex;align-items:center;gap:11px;margin-bottom:11px;}
-.dc-av{width:44px;height:44px;border-radius:14px;flex-shrink:0;position:relative;
-  background:linear-gradient(140deg,var(--red),var(--red-dark));
-  display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:900;color:#fff;}
-.dc-av::after{content:"";position:absolute;right:-2px;bottom:-2px;width:13px;height:13px;
-  border-radius:50%;background:var(--tx3);border:2.5px solid var(--card);}
-.dc.online .dc-av::after{background:var(--green);}
-.dc-n{flex:1;min-width:0;}
-.dc-n b{display:block;font-size:15.5px;font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.dc-n span{display:block;font-size:11.5px;color:var(--tx3);font-weight:700;
-  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.tag{display:inline-block;border-radius:8px;padding:3px 8px;font-size:10.5px;font-weight:900;
-  text-transform:uppercase;letter-spacing:0.4px;}
-.tag.on{background:rgba(43,182,115,.16);color:var(--green);}
-.tag.off{background:rgba(255,255,255,.07);color:var(--tx3);}
-.tag.wait{background:rgba(255,184,0,.15);color:var(--yellow);}
-.tag.blocked{background:rgba(224,60,60,.15);color:#FF8A8A;}
-.dc-rows{border-top:1px solid rgba(255,255,255,.06);padding-top:10px;margin-bottom:11px;}
-.dc-row{display:flex;justify-content:space-between;gap:10px;font-size:13px;padding:3px 0;}
-.dc-row i{font-style:normal;color:var(--tx3);font-weight:700;}
-.dc-row b{font-weight:800;text-align:right;}
-.dc-btns{display:flex;gap:8px;}
-.bt{flex:1;border-radius:12px;padding:11px;font-size:13.5px;font-weight:900;transition:transform .14s;}
-.bt:active{transform:scale(.97);}
-.bt.ok{background:linear-gradient(140deg,var(--green),var(--green-dark));color:#fff;}
-.bt.no{background:rgba(224,60,60,.14);border:1.5px solid rgba(224,60,60,.4);color:#FF8A8A;}
-.bt.gh{background:transparent;border:1.5px solid rgba(255,255,255,.14);color:var(--tx2);}
+/* ---- Zeile für Auftrag / Fahrer / Lokal ---- */
+.row{
+  background:var(--card);border:1px solid var(--line);border-radius:15px;
+  padding:13px 14px;margin-bottom:8px;display:flex;gap:12px;align-items:center;
+}
+.row .av{
+  width:40px;height:40px;flex:0 0 40px;border-radius:12px;background:var(--card2);
+  display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:900;
+  color:var(--tx);letter-spacing:-.3px;
+}
+.row .mid{flex:1;min-width:0;}
+.row .mid .nm{display:flex;align-items:center;gap:7px;min-width:0;}
+.row .mid b{display:block;font-size:14.5px;font-weight:800;letter-spacing:-.2px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;}
+.row .mid span.sub{display:block;font-size:12px;font-weight:700;color:var(--tx2);margin-top:3px;
+  line-height:1.45;}
+.row .rt{text-align:right;flex:0 0 auto;}
+.row .rt b{display:block;font-size:15px;font-weight:900;letter-spacing:-.3px;}
+.row .rt span{display:block;font-size:10.5px;font-weight:800;color:var(--tx3);margin-top:1px;}
 
-.oc{background:var(--card);border:1px solid var(--line);border-radius:17px;padding:13px 14px;}
-.oc-h{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px;}
-.oc-id{font-family:ui-monospace,Menlo,monospace;font-size:12.5px;color:var(--tx3);font-weight:700;}
-.oc-b{font-size:14.5px;font-weight:800;margin:0 0 4px;}
-.oc-s{font-size:12.5px;color:var(--tx2);}
-.oc-f{display:flex;justify-content:space-between;align-items:baseline;margin-top:10px;
-  border-top:1px solid rgba(255,255,255,.06);padding-top:9px;}
-.oc-f b{font-size:16px;font-weight:900;color:var(--yellow);}
-.oc-f span{font-size:11.5px;color:var(--tx3);font-weight:700;}
-.st{display:inline-block;border-radius:8px;padding:3px 9px;font-size:10.5px;font-weight:900;
-  text-transform:uppercase;letter-spacing:0.4px;background:rgba(255,255,255,.07);color:var(--tx2);}
-.st.neu{background:rgba(255,184,0,.16);color:var(--yellow);}
-.st.lauf{background:rgba(61,139,242,.16);color:var(--blue);}
-.st.fertig{background:rgba(43,182,115,.16);color:var(--green);}
-.st.no{background:rgba(224,60,60,.16);color:#FF8A8A;}
+/* Statusfarbe links am Auftrag */
+.row.neu   {border-left:3px solid var(--yellow);}
+.row.lauf  {border-left:3px solid var(--blue);}
+.row.fertig{border-left:3px solid var(--green);}
+.row.no    {border-left:3px solid #C0392B;opacity:.72;}
 
-/* ============ STATS ============ */
-.bars{background:var(--card);border:1px solid var(--line);border-radius:17px;padding:16px 14px;margin-bottom:12px;}
-.bars h3{margin:0 0 14px;font-size:14px;font-weight:900;color:var(--tx2);}
-.bar{display:flex;align-items:center;gap:10px;margin-bottom:9px;}
-.bar i{font-style:normal;width:78px;flex-shrink:0;font-size:11.5px;color:var(--tx3);font-weight:800;}
-.bar u{flex:1;text-decoration:none;height:22px;background:var(--bg2);border-radius:7px;overflow:hidden;display:block;}
-.bar u em{display:block;height:100%;border-radius:7px;
-  background:linear-gradient(90deg,var(--yellow-dark),var(--yellow));min-width:2px;transition:width .4s;}
-.bar b{width:74px;text-align:right;flex-shrink:0;font-size:12.5px;font-weight:900;}
+.pill{
+  display:inline-block;flex:0 0 auto;font-size:10.5px;font-weight:900;padding:3px 8px;
+  border-radius:7px;letter-spacing:.3px;white-space:nowrap;
+}
+.pill.on {background:rgba(43,182,115,.16);color:var(--green);border:1px solid rgba(43,182,115,.4);}
+.pill.off{background:rgba(255,255,255,.05);color:var(--tx3);border:1px solid var(--line);}
+.pill.wait{background:rgba(255,184,0,.14);color:var(--yellow);border:1px solid rgba(255,184,0,.4);}
+.pill.bad{background:rgba(224,60,60,.14);color:#FF8A8A;border:1px solid rgba(224,60,60,.4);}
 
-.empty{text-align:center;color:var(--tx3);font-size:13.5px;padding:34px 20px;font-weight:700;}
+/* ---- Freischalten: die einzige Sache, die hier wirklich dringend ist ---- */
+.wait-box{
+  background:linear-gradient(150deg,rgba(255,184,0,.13),rgba(255,184,0,.05));
+  border:1.5px solid rgba(255,184,0,.42);border-radius:18px;padding:15px;margin-bottom:14px;
+}
+.wait-box h3{margin:0 0 3px;font-size:15px;font-weight:900;color:var(--yellow);}
+.wait-box p{margin:0 0 12px;font-size:12.5px;font-weight:700;color:var(--tx2);}
+.wait-row{
+  background:var(--card);border-radius:13px;padding:12px 13px;margin-bottom:8px;
+  display:flex;gap:11px;align-items:center;flex-wrap:wrap;
+}
+.wait-row .mid{flex:1;min-width:150px;}
+.wait-row .mid b{display:block;font-size:14.5px;font-weight:900;}
+.wait-row .mid span{display:block;font-size:11.5px;font-weight:700;color:var(--tx2);word-break:break-all;}
+.b-go{background:linear-gradient(140deg,var(--green),var(--green-dark));color:#fff;
+  border-radius:11px;padding:11px 16px;font-size:13.5px;font-weight:900;}
+.b-no{background:rgba(255,255,255,.06);color:var(--tx2);border:1px solid var(--line);
+  border-radius:11px;padding:11px 14px;font-size:13px;font-weight:800;}
+.b-go:active,.b-no:active{transform:scale(.97);}
 
-/* ============ LOKALE / PROVISION ============ */
-.range{display:flex;gap:7px;margin-bottom:14px;flex-wrap:wrap;}
+/* ---- Zeitraum ---- */
+.range{display:flex;gap:7px;margin-bottom:12px;}
 .range button{
-  flex:1 1 0;min-width:78px;background:var(--card);border:1px solid var(--line);
-  border-radius:12px;padding:10px 6px;color:var(--tx2);font-size:12.5px;font-weight:800;
+  flex:1;background:var(--card);border:1px solid var(--line);color:var(--tx2);
+  border-radius:11px;padding:9px 4px;font-size:12.5px;font-weight:800;
 }
-.range button.on{background:linear-gradient(140deg,var(--yellow),var(--yellow-dark));
-  border-color:var(--yellow);color:#241C00;}
+.range button.on{background:var(--yellow);color:#241C00;border-color:var(--yellow);}
 
-.rl{display:flex;flex-direction:column;gap:11px;}
-.rcard{background:var(--card);border:1px solid var(--line);border-radius:18px;
-  padding:15px 16px;box-shadow:0 6px 18px rgba(0,0,0,.22);}
-.rcard.top{border-color:rgba(255,184,0,.42);}
-.rc-h{display:flex;align-items:center;gap:11px;margin-bottom:13px;}
-.rc-av{width:42px;height:42px;border-radius:13px;flex-shrink:0;color:#fff;
-  display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:900;}
-.rc-n{flex:1;min-width:0;}
-.rc-n b{display:block;font-size:16px;font-weight:900;letter-spacing:-.2px;}
-.rc-n span{display:block;font-size:11.5px;color:var(--tx3);font-weight:700;}
-.rc-zu{font-size:10.5px;font-weight:900;border-radius:8px;padding:4px 9px;
-  text-transform:uppercase;letter-spacing:.4px;flex-shrink:0;}
-.rc-zu.auf{background:rgba(43,182,115,.16);color:var(--green);}
-.rc-zu.zu{background:rgba(255,255,255,.07);color:var(--tx3);}
-
-.rc-g{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px;}
-.rc-b{background:var(--bg2);border:1px solid rgba(255,255,255,.055);border-radius:12px;
-  padding:10px 9px;text-align:center;}
-.rc-b b{display:block;font-size:20px;font-weight:900;line-height:1.15;letter-spacing:-.4px;}
-.rc-b span{display:block;font-size:10px;color:var(--tx3);font-weight:900;
-  text-transform:uppercase;letter-spacing:.5px;margin-top:2px;}
-.rc-b.ok b{color:var(--green);} .rc-b.no b{color:#FF8A8A;} .rc-b.wa b{color:var(--blue);}
-
-.rc-m{display:flex;align-items:center;gap:10px;padding:11px 12px;border-radius:13px;
-  background:var(--bg2);border:1px solid rgba(255,255,255,.055);margin-bottom:9px;}
-.rc-m i{font-style:normal;font-size:12px;color:var(--tx3);font-weight:800;
-  text-transform:uppercase;letter-spacing:.5px;}
-.rc-m b{margin-left:auto;font-size:18px;font-weight:900;letter-spacing:-.4px;}
-
-/* Was ein einzelnes Lokal mir bringt – Provision und Lieferung getrennt,
-   darunter die Summe aus beidem. */
-.rc-sum{margin-top:10px;padding:11px 12px;border-radius:13px;background:var(--bg2);
-  border:1px solid rgba(255,255,255,.055);}
-.rs-r{display:flex;align-items:center;gap:10px;padding:4px 0;}
-.rs-r i{font-style:normal;font-size:12.5px;color:var(--tx2);font-weight:800;}
-.rs-r b{margin-left:auto;font-size:14.5px;font-weight:900;}
-.rs-r.tot{margin-top:5px;padding-top:9px;border-top:1px dashed rgba(255,255,255,.13);}
-.rs-r.tot i{color:var(--tx);}
-.rs-r.tot b{font-size:18px;color:var(--yellow);letter-spacing:-.4px;}
-
-/* Tag für Tag */
-.dl{display:flex;flex-direction:column;gap:9px;}
-.dcard{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:12px 13px;}
-.dc-h{display:flex;align-items:baseline;gap:9px;}
-.dc-h b{font-size:14.5px;font-weight:900;}
-.dc-h span{font-size:11.5px;color:var(--tx3);font-weight:700;}
-.dc-h u{margin-left:auto;text-decoration:none;font-size:17px;font-weight:900;
-  color:var(--yellow);letter-spacing:-.4px;}
-.dc-g{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px;}
-.dc-b{border-radius:12px;padding:9px 11px;background:var(--bg2);
-  border:1px solid rgba(255,255,255,.055);}
-.dc-b b{display:block;font-size:15px;font-weight:900;letter-spacing:-.3px;}
-.dc-b span{display:block;font-size:11px;color:var(--tx3);font-weight:800;margin-top:1px;}
-.dc-b.p b{color:var(--yellow);}
-.dc-b.f b{color:var(--blue);}
-.dc-none{background:var(--card);border:1px solid var(--line);border-radius:16px;
-  padding:18px 14px;text-align:center;color:var(--tx3);font-size:13px;font-weight:700;}
-
-/* Bewerbungen */
-.dcard.erl{opacity:.55;}
-.bw-t{margin:9px 0 0;font-size:13px;color:var(--tx2);font-weight:600;line-height:1.55;
-  background:var(--bg2);border-radius:11px;padding:9px 11px;}
-.bw-a{display:flex;flex-wrap:wrap;gap:7px;margin-top:10px;}
-.bw-b{flex:1 1 auto;text-align:center;border-radius:11px;padding:10px 9px;
-  font-size:12.5px;font-weight:900;border:1px solid var(--line);background:var(--bg2);
-  color:var(--tx);text-decoration:none;}
-.bw-b.tel{color:var(--yellow);}
-.bw-b.wa{color:#25D366;border-color:rgba(37,211,102,.35);}
-.bw-b.ok{color:var(--tx2);}
-
-.prov{display:flex;align-items:center;gap:10px;padding:12px;border-radius:14px;
-  background:linear-gradient(140deg,rgba(255,184,0,.14),rgba(255,184,0,.04));
-  border:1.5px solid rgba(255,184,0,.34);}
-.prov .lb{font-size:11.5px;color:var(--yellow);font-weight:900;
-  text-transform:uppercase;letter-spacing:.6px;}
-.prov .sm{font-size:11px;color:var(--tx3);font-weight:700;margin-top:1px;}
-.prov input{
-  width:66px;background:var(--bg);border:1.5px solid rgba(255,184,0,.45);border-radius:11px;
-  padding:9px 6px;color:var(--yellow);font-size:17px;font-weight:900;text-align:center;
-  outline:none;flex-shrink:0;-moz-appearance:textfield;
+/* ---- Provision ---- */
+.rate{
+  width:62px;background:var(--bg2);border:1.5px solid var(--line);border-radius:9px;
+  padding:7px 8px;color:var(--yellow);font-size:14px;font-weight:900;text-align:center;outline:none;
 }
-.prov input::-webkit-outer-spin-button,.prov input::-webkit-inner-spin-button{
-  -webkit-appearance:none;margin:0;}
-.prov input:focus{border-color:var(--yellow);}
-.prov .pc{font-size:16px;font-weight:900;color:var(--yellow);margin-left:-4px;}
-.prov .amt{margin-left:auto;text-align:right;flex-shrink:0;}
-.prov .amt b{display:block;font-size:22px;font-weight:900;color:var(--yellow);letter-spacing:-.6px;}
-.prov .amt span{display:block;font-size:10px;color:var(--tx3);font-weight:900;
-  text-transform:uppercase;letter-spacing:.5px;}
-.hint{font-size:11.5px;color:var(--tx3);font-weight:700;line-height:1.6;
-  margin:14px 2px 0;text-align:center;}
+.rate:focus{border-color:var(--yellow);}
 
-/* ============ MEIN VERDIENST ==========================================
-   Die eine Zahl, die Bestellux wirklich interessiert: was bleibt bei mir.
-   Ganz oben, groß, und darunter aufgeschlüsselt, woher sie kommt –
-   Provision von den Lokalen plus die Liefergebühren.
-   Diese Seite ist die EINZIGE, die das zeigt. Die Lokale sehen nur
-   ihren eigenen Umsatz, nie meine Provision.
-   ==================================================================== */
-.vd{background:linear-gradient(150deg,#2A2415,#1D1A11);
-  border:1px solid rgba(255,184,0,.34);border-radius:20px;
-  padding:18px 17px 15px;margin-bottom:12px;}
-.vd-lb{font-size:11.5px;font-weight:900;color:var(--yellow);
-  text-transform:uppercase;letter-spacing:.9px;}
-.vd-big{font-size:40px;font-weight:900;color:var(--yellow);
-  letter-spacing:-1.8px;line-height:1.1;margin:5px 0 3px;}
-.vd-sub{font-size:12.5px;color:var(--tx2);font-weight:700;}
-.vd-g{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:14px;}
-.vd-c{background:rgba(0,0,0,.26);border:1px solid rgba(255,255,255,.06);
-  border-radius:13px;padding:11px 12px;}
-.vd-c b{display:block;font-size:19px;font-weight:900;letter-spacing:-.5px;}
-.vd-c span{display:block;font-size:10.5px;color:var(--tx3);font-weight:900;
-  text-transform:uppercase;letter-spacing:.5px;margin-top:3px;}
-.vd-c.p b{color:var(--yellow);}
-.vd-c.f b{color:var(--green);}
-/* Der Fahreranteil wird abgezogen – darum rot und über die ganze Breite. */
-.vd-c.m b{color:#FF6B6B;}
-.vd-c.wide{grid-column:1/-1;}
-.vd-pro{display:flex;align-items:center;gap:9px;margin-top:10px;
-  padding:10px 12px;border-radius:12px;background:rgba(0,0,0,.26);
-  font-size:12.5px;font-weight:800;color:var(--tx2);}
-.vd-pro b{margin-left:auto;font-size:16px;font-weight:900;color:var(--tx);}
+/* ---- Karte ---- */
+#map{height:250px;border-radius:16px;border:1px solid var(--line);overflow:hidden;background:var(--card);}
+.leaflet-container{background:#1B1810;}
 
-/* ============ TABS ============ */
+.empty{text-align:center;color:var(--tx3);font-size:13px;font-weight:700;padding:30px 16px;
+  background:var(--card);border:1px dashed var(--line);border-radius:15px;}
+.empty .ic{display:block;font-size:32px;margin-bottom:8px;opacity:.55;}
+.note{font-size:11.5px;color:var(--tx3);font-weight:700;line-height:1.6;margin:10px 2px 0;}
+
+/* ============ REITER UNTEN ============ */
 .tabs{
   position:fixed;left:0;right:0;bottom:0;z-index:70;display:flex;
-  background:rgba(18,16,11,0.96);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
-  border-top:1px solid var(--line);padding:8px 6px calc(8px + env(safe-area-inset-bottom));
+  background:rgba(18,16,11,.97);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+  border-top:1px solid var(--line);
+  padding:8px 8px calc(8px + env(safe-area-inset-bottom));
 }
 .tabs button{
-  flex:1;background:none;color:var(--tx3);font-size:10.5px;font-weight:800;
-  display:flex;flex-direction:column;align-items:center;gap:3px;padding:5px 2px;
-  border-radius:12px;transition:color .16s;
+  flex:1;background:none;color:var(--tx3);font-size:11px;font-weight:800;
+  display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 2px;position:relative;
 }
-.tabs button em{font-style:normal;font-size:20px;line-height:1;}
+.tabs button em{font-style:normal;font-size:20px;line-height:1;filter:grayscale(1) opacity(.55);}
 .tabs button.on{color:var(--yellow);}
-.tabs .bdg{position:absolute;transform:translate(15px,-4px);background:var(--red);color:#fff;
-  font-size:9.5px;font-weight:900;border-radius:9px;padding:1px 5px;}
+.tabs button.on em{filter:none;}
+.bdg{
+  position:absolute;top:0;right:50%;transform:translateX(20px);
+  background:var(--red);color:#fff;font-size:10px;font-weight:900;
+  min-width:17px;height:17px;border-radius:9px;display:flex;align-items:center;
+  justify-content:center;padding:0 4px;
+}
 
 #toast{
-  position:fixed;left:50%;bottom:calc(88px + env(safe-area-inset-bottom));transform:translateX(-50%) translateY(14px);
-  background:var(--card2);border:1px solid var(--line);border-radius:13px;padding:11px 17px;
-  font-size:13.5px;font-weight:800;box-shadow:0 12px 30px rgba(0,0,0,.5);
-  opacity:0;pointer-events:none;transition:all .22s;z-index:200;max-width:90vw;text-align:center;
+  position:fixed;left:50%;bottom:calc(90px + env(safe-area-inset-bottom));transform:translateX(-50%) translateY(16px);
+  background:var(--card2);border:1px solid var(--line);color:var(--tx);
+  padding:11px 17px;border-radius:13px;font-size:13.5px;font-weight:800;
+  opacity:0;pointer-events:none;transition:.22s;z-index:400;box-shadow:0 12px 30px rgba(0,0,0,.5);
+  max-width:88vw;text-align:center;
 }
 #toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
-@media(max-width:520px){ #map{height:270px;} .kpi b{font-size:21px;} }
 </style>
 </head>
 <body>
 
 <!-- ================= LOGIN ================= -->
 <div id="login">
-  <div class="lg-logo"><img src="logo-wort-dunkel.png" alt="Bestellux"
-       style="height:58px;width:auto;display:block"></div>
+  <div class="lg-logo"><img src="logo-wort-dunkel.png" alt="Bestellux" style="height:54px;width:auto;display:block"></div>
   <h1 class="lg-title"><b>Zentrale</b></h1>
-  <p class="lg-sub">Nur für die Betriebsleitung</p>
 
-  <div class="lg-card" id="lgBox">
-    <div class="fld">
-      <label>E-Mail</label>
-      <input id="inMail" type="email" inputmode="email" autocomplete="username" placeholder="bestellux1@gmail.com">
+  <!-- Stufe 0: gespeicherte Anmeldung laden, damit nichts aufblitzt -->
+  <div id="lgBoot">
+    <div class="lg-card" style="text-align:center;margin-top:22px">
+      <div style="font-size:32px">🔄</div>
+      <p style="font-size:14.5px;font-weight:800;margin:8px 0 0">Einen Moment</p>
+      <p style="font-size:12.5px;color:var(--tx2);font-weight:700;margin:6px 0 0">Zentrale wird geladen …</p>
     </div>
-    <div class="fld">
-      <label>Passwort</label>
-      <input id="inPw" type="password" autocomplete="current-password" placeholder="••••••••">
-    </div>
-    <button class="btn-main" onclick="doAuth()">Anmelden</button>
-    <div id="authErr" class="lg-err hide"></div>
   </div>
-  <p class="lg-note">Dieser Bereich ist geschützt. Fahrer melden sich in der Fahrer-App an.</p>
+
+  <div id="lgAuth" class="hide">
+    <p class="lg-sub">Nur für die Betriebsleitung.</p>
+    <div class="lg-card">
+      <div class="fld"><label>E-Mail</label>
+        <input id="inMail" type="email" placeholder="name@example.com" autocomplete="username" inputmode="email"></div>
+      <div class="fld"><label>Passwort</label>
+        <input id="inPw" type="password" placeholder="••••••••" autocomplete="current-password"></div>
+      <button class="btn-main" onclick="doAuth()">Anmelden →</button>
+      <div class="lg-err hide" id="authErr"></div>
+    </div>
+    <p class="lg-note">Diese Seite ist nicht für Fahrer und nicht für Lokale.</p>
+  </div>
+
+  <div id="lgNo" class="hide">
+    <div class="lg-card" style="margin-top:22px">
+      <div class="lg-err" style="margin-top:0" id="noMail">–</div>
+      <p style="font-size:12.5px;color:var(--tx2);font-weight:700;margin:13px 0 0">
+        Dieses Konto hat keinen Zugang zur Zentrale.</p>
+      <button class="btn-main" style="margin-top:14px" onclick="logout()">Abmelden</button>
+    </div>
+  </div>
+
+  <div id="lgOff" class="hide">
+    <div class="lg-card" style="margin-top:22px">
+      <div class="lg-err" style="margin-top:0">Keine Verbindung zum Server.</div>
+      <button class="btn-main" style="margin-top:14px" onclick="location.reload()">Neu laden</button>
+    </div>
+  </div>
 </div>
 
 <!-- ================= APP ================= -->
 <div id="app" class="hide">
 
   <div class="top">
-    <div class="bxbar">
-      <img class="bxbar-lg" src="logo-wort-dunkel.png" alt="Bestellux">
-      <div class="bxbar-tag">Zentrale</div>
-    </div>
-    <div class="top-row">
-      <div class="mark"><img src="icon-192.png" alt=""></div>
-      <div class="top-tx">
-        <b>Zentrale</b>
-        <span id="topMail">—</span>
-      </div>
-      <button class="top-out" onclick="logout()">Abmelden</button>
-    </div>
+    <img src="logo-wort-dunkel.png" alt="Bestellux">
+    <div class="top-tag">Zentrale</div>
+    <div class="top-sp"></div>
+    <div class="top-live"><span class="dot" id="liveDot"></span><span id="liveTx">live</span></div>
+    <button class="top-exit" onclick="logout()">Abmelden</button>
   </div>
 
-  <div class="wrap">
-
-    <!-- TAB: Live -->
-    <div id="tab-Live">
-      <div class="kpis">
-        <div class="kpi g"><b id="kOn">0</b><span>Fahrer online</span></div>
-        <div class="kpi y"><b id="kNeu">0</b><span>offene Aufträge</span></div>
-        <div class="kpi b"><b id="kLauf">0</b><span>in Lieferung</span></div>
-        <div class="kpi"><b id="kAkt">0</b><span>aktive Konten</span></div>
-      </div>
-
-      <div class="sec-h"><h2>Karte</h2><em id="mapNote">—</em></div>
-      <div id="map"><div class="map-none">Karte wird geladen …</div></div>
-
-      <div class="sec-h"><h2>Fahrer live</h2><em id="drvNote">—</em></div>
-      <div id="liveList" class="list"></div>
+  <main>
+    <!-- Der Kartenkasten steht bewusst FEST im HTML und wird nie neu
+         gezeichnet. Würde er bei jedem 20-Sekunden-Takt aus dem DOM
+         fliegen, wäre die Leaflet-Karte danach weiß. -->
+    <div id="tab-Jetzt">
+      <div id="jetztTop"></div>
+      <h2 class="sec">Karte<em id="mapNote">—</em></h2>
+      <div id="map"></div>
+      <p class="note">Der Standort kommt nur, solange der Fahrer online ist und GPS erlaubt hat.
+        Blau = fährt einen Auftrag, grün = wartet.</p>
     </div>
-
-    <!-- TAB: Fahrer -->
-    <div id="tab-Fahrer" class="hide">
-      <div class="sec-h"><h2>Alle Fahrer</h2><em id="allNote">—</em></div>
-      <div id="drvList" class="list"></div>
-    </div>
-
-    <!-- TAB: Aufträge -->
-    <div id="tab-Orders" class="hide">
-      <div class="sec-h"><h2>Aufträge</h2><em id="ordNote">—</em></div>
-      <div id="ordList" class="list"></div>
-    </div>
-
-    <!-- TAB: Lokale -->
-    <div id="tab-Rest" class="hide">
-      <div class="sec-h"><h2>Lokale &amp; Provision</h2><em id="restNote">—</em></div>
-
-      <div class="range" id="restRange">
-        <button data-r="1"   onclick="setRange(1)">Heute</button>
-        <button data-r="7"   class="on" onclick="setRange(7)">7 Tage</button>
-        <button data-r="30"  onclick="setRange(30)">30 Tage</button>
-        <button data-r="999" onclick="setRange(999)">Alles</button>
-      </div>
-
-      <!-- Das Erste, was ich hier sehe: was habe ich verdient. -->
-      <div class="vd">
-        <div class="vd-lb">💰 Mein Verdienst</div>
-        <div class="vd-big" id="vdBig">0 €</div>
-        <div class="vd-sub" id="vdSub">noch keine gelieferte Bestellung</div>
-        <div class="vd-g">
-          <div class="vd-c p"><b id="vdProv">0 €</b><span>Provision von den Lokalen</span></div>
-          <div class="vd-c f"><b id="vdFee">0 €</b><span>Liefergebühren</span></div>
-          <!-- Was ich an die Fahrer auszahle. Geht von oben ab. -->
-          <div class="vd-c m wide"><b id="vdLohn">0 €</b><span id="vdLohnL">Fahreranteil (geht ab)</span></div>
-        </div>
-        <div class="vd-pro">Ø pro Bestellung<b id="vdAvg">0 €</b></div>
-      </div>
-
-      <div class="kpis">
-        <div class="kpi y"><b id="pGes">0 €</b><span>meine Provision</span></div>
-        <div class="kpi"><b id="pWaren">0 €</b><span>Warenkorb gesamt</span></div>
-        <div class="kpi g"><b id="pGel">0</b><span>geliefert</span></div>
-        <div class="kpi"><b id="pAbg">0</b><span>abgelehnt / storniert</span></div>
-      </div>
-
-      <div id="restList" class="rl"></div>
-
-      <!-- Tag für Tag: an welchem Tag kam wie viel herein? -->
-      <div class="sec-h"><h2>Tag für Tag</h2><em id="tagNote">—</em></div>
-      <div id="tagList" class="dl"></div>
-
-      <!-- Gutscheine: nur zum Nachlesen. Geaendert wird in index.html (CODES). -->
-      <div class="sec-h"><h2>Gutscheine</h2><em>3 Codes aktiv</em></div>
-      <div class="gs">
-        <div class="gs-r">
-          <div class="gs-c">START5</div>
-          <div class="gs-t">5,00 € Rabatt · ab 20,00 € Bestellwert · bis 31.12.2026</div>
-        </div>
-        <div class="gs-r">
-          <div class="gs-c">NACHBAR10</div>
-          <div class="gs-t">10 % Rabatt · ab 15,00 € Bestellwert · bis 31.12.2026</div>
-        </div>
-        <div class="gs-r">
-          <div class="gs-c">FREIELIEFERUNG</div>
-          <div class="gs-t">Lieferung gratis · ab 25,00 € Bestellwert · bis 31.12.2026</div>
-        </div>
-      </div>
-      <p class="hint">
-        Der Rabatt geht von meinem Anteil ab, nicht vom Lokal und nicht vom Fahrer.
-        Das Trinkgeld bleibt immer voll beim Fahrer.<br>
-        Codes ändern: in <b>index.html</b> im Block <b>CODES</b>. Diese Liste hier
-        ist nur zum Nachlesen.
-      </p>
-
-      <p class="hint">
-        Beispiel: Essen für 20,00 € + 4,00 € Liefergebühr.<br>
-        Bei 15 % sind das 3,00 € Provision + 4,00 € Liefergebühr − 2,00 € Fahreranteil
-        = <b>5,00 € für mich</b>.<br>
-        Die Liefergebühr wird geteilt: die Hälfte für den Fahrer, die Hälfte für mich.
-        Bei 5,00 € Gebühr sind das 2,50 € und 2,50 €.
-        Sein Trinkgeld gehört zu 100 % ihm und steht hier gar nicht drin.<br>
-        Gezählt wird nur, was geliefert wurde. Abgelehnte Bestellungen bringen nichts.<br>
-        Der Prozentsatz gilt sofort für die Anzeige und wird für alle Geräte gespeichert.
-      </p>
-    </div>
-
-    <!-- TAB: Bewerbungen -->
-    <div id="tab-Bew" class="hide">
-      <div class="sec-h"><h2>Bewerbungen</h2><em id="bewNote">—</em></div>
-      <div id="bewList" class="dl"></div>
-      <p class="hint">
-        Wer sich auf der Kundenseite unter „Bei uns arbeiten“ einträgt, landet hier.<br>
-        Ein Tipp auf die Nummer ruft an, ein Tipp auf WhatsApp öffnet den Chat.<br>
-        „Erledigt“ schiebt die Bewerbung nach unten – gelöscht wird nichts.
-      </p>
-    </div>
-
-    <!-- TAB: Statistik -->
-    <div id="tab-Stats" class="hide">
-      <div class="kpis">
-        <div class="kpi y"><b id="sUms">0 €</b><span>Umsatz heute</span></div>
-        <div class="kpi"><b id="sUmsW">0 €</b><span>Umsatz 7 Tage</span></div>
-        <div class="kpi g"><b id="sCnt">0</b><span>Lieferungen heute</span></div>
-        <div class="kpi b"><b id="sZeit">—</b><span>Ø Lieferzeit</span></div>
-      </div>
-      <div class="bars"><h3>Lieferungen · letzte 7 Tage</h3><div id="barDays"></div></div>
-      <div class="bars"><h3>Umsatz je Fahrer · letzte 7 Tage</h3><div id="barDrv"></div></div>
-      <div class="bars"><h3>Nach Ort · letzte 7 Tage</h3><div id="barTown"></div></div>
-    </div>
-
-  </div>
+    <div id="tab-Fahrer" class="hide"></div>
+    <div id="tab-Geld"  class="hide"></div>
+  </main>
 
   <div class="tabs">
-    <button data-tab="Live"   class="on" onclick="go('Live')"><em>🛰️</em>Live</button>
-    <button data-tab="Fahrer" onclick="go('Fahrer')"><em>🧑‍🍳</em>Fahrer<span id="bdgWait" class="bdg hide">0</span></button>
-    <button data-tab="Orders" onclick="go('Orders')"><em>📦</em>Aufträge</button>
-    <button data-tab="Rest"   onclick="go('Rest')"><em>🍽️</em>Lokale</button>
-    <button data-tab="Bew"    onclick="go('Bew')"><em>📨</em>Bewerbung<span id="bdgBew" class="bdg hide">0</span></button>
-    <button data-tab="Stats"  onclick="go('Stats')"><em>📊</em>Statistik</button>
+    <button data-tab="Jetzt"  class="on" onclick="go('Jetzt')"><em>🛰️</em>Jetzt<span id="bdgLauf" class="bdg hide">0</span></button>
+    <button data-tab="Fahrer" onclick="go('Fahrer')"><em>🛵</em>Fahrer<span id="bdgWait" class="bdg hide">0</span></button>
+    <button data-tab="Geld"   onclick="go('Geld')"><em>💰</em>Geld</button>
   </div>
 </div>
 
@@ -536,13 +326,18 @@ input,select{font-family:inherit;}
 <script src="https://www.gstatic.com/firebasejs/12.15.0/firebase-auth-compat.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
 <script>
-/* ============================================================
+/* =====================================================================
    BESTELLUX ZENTRALE
-   Nur Betriebsleitung. Steuert, wer als Fahrer arbeiten darf.
-   ============================================================ */
+   ---------------------------------------------------------------------
+   Diese Seite schreibt nur an zwei Stellen in die Datenbank:
+     drivers/<uid>/active   – wer darf als Fahrer arbeiten
+     rates/<shopId>         – wie viel Provision zahlt welches Lokal
+   Alles andere liest sie nur mit. Damit kann hier nichts kaputtgehen,
+   was der Betrieb draußen gerade braucht.
+   ===================================================================== */
 
-/* Wer hier rein darf. Muss auch in den Firebase-Regeln stehen –
-   diese Liste allein ist nur die Anzeige, nicht die Sicherheit. */
+/* Wer hier rein darf. Steht GENAUSO in den Firebase-Regeln – diese Liste
+   ist nur die Anzeige, die Sicherheit macht der Server. */
 const ADMIN_EMAILS = ['bestellux1@gmail.com', 'ibrahimi.hafid22@gmail.com'];
 
 const FB_CONFIG = {
@@ -559,15 +354,35 @@ var FB_DB = null, FB_AUTH = null, FB_OK = false;
 try{
   if(window.firebase && firebase.initializeApp){
     if(!firebase.apps || !firebase.apps.length) firebase.initializeApp(FB_CONFIG);
-    FB_DB = firebase.database();
+    FB_DB   = firebase.database();
     FB_AUTH = firebase.auth ? firebase.auth() : null;
-    FB_OK = !!(FB_DB && FB_AUTH);
+    FB_OK   = !!(FB_DB && FB_AUTH);
   }
 }catch(e){ FB_DB = null; FB_AUTH = null; FB_OK = false; }
 
+/* Die Anmeldung bleibt dauerhaft im Gerät. Wer sich einmal anmeldet,
+   wird nie wieder gefragt – bis er selbst auf "Abmelden" tippt. */
+try{
+  if(FB_AUTH && firebase.auth.Auth && firebase.auth.Auth.Persistence){
+    FB_AUTH.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
+  }
+}catch(e){}
+
 var ADMIN_MAIL = '';
-var DRIVERS = [];    /* Array aus drivers/<uid> */
-var ORDERS  = [];    /* Array aus orders/<id>, neueste zuerst */
+var DRIVERS = [];    /* drivers/<uid> */
+var ORDERS  = [];    /* orders/<id>, neueste zuerst */
+
+/* Die Lokale. Muss zur Liste in restaurant.html und index.html passen. */
+const SHOPS = [
+  {id:'berlin-doener',     name:'Berlin Döner',     ini:'BD', color:'#D01E2C', town:'Langwedel'},
+  {id:'pizza-hawaii',      name:'Pizza Hawaii',     ini:'PH', color:'#F0193C', town:'Verden'},
+  {id:'getraenke-express', name:'Getränke Express', ini:'GE', color:'#1E6FB0', town:'Langwedel'}
+];
+
+const BX_RATES = 'bx_rates';
+const PROV_STD = 12;      /* Standard-Provision in Prozent */
+var RATES = {}, SHOPSTATE = {}, RANGE = 0;   /* RANGE 0 = heute */
+try{ RATES = JSON.parse(localStorage.getItem(BX_RATES) || '{}') || {}; }catch(e){ RATES = {}; }
 
 /* ---------- kleine Helfer ---------- */
 function $(id){ return document.getElementById(id); }
@@ -585,245 +400,39 @@ function toast(m){
 function ago(t){
   if(!t) return '—';
   var s = Math.floor((Date.now()-t)/1000);
-  if(s < 60) return 'gerade eben';
-  if(s < 3600) return Math.floor(s/60)+' Min';
-  if(s < 86400) return Math.floor(s/3600)+' Std';
-  return Math.floor(s/86400)+' Tage';
+  if(s < 60)    return 'gerade eben';
+  if(s < 3600)  return 'vor '+Math.floor(s/60)+' Min';
+  if(s < 86400) return 'vor '+Math.floor(s/3600)+' Std';
+  return 'vor '+Math.floor(s/86400)+' Tagen';
 }
 function uhr(t){
   if(!t) return '—';
   var d = new Date(t);
   return ('0'+d.getHours()).slice(-2)+':'+('0'+d.getMinutes()).slice(-2);
 }
-function tagStart(off){    /* 0 = heute 00:00, 1 = gestern 00:00 … */
+function tagStart(off){
   var d = new Date(); d.setHours(0,0,0,0);
   return d.getTime() - (off||0)*86400000;
 }
-function wtag(t){
-  return ['So','Mo','Di','Mi','Do','Fr','Sa'][new Date(t).getDay()];
+function minSeit(t){ return t ? Math.max(0, Math.round((Date.now()-t)/60000)) : 0; }
+function initials(n){
+  var p = String(n||'').trim().split(/\s+/).filter(Boolean);
+  if(!p.length) return '??';
+  return (p[0][0] + (p[1] ? p[1][0] : '')).toUpperCase();
 }
+
 /* =====================================================================
    WAS BEKOMMT DER FAHRER?
    ---------------------------------------------------------------------
-   Die Liefergebühr wird geteilt: die HÄLFTE geht an den Fahrer, die
-   andere Hälfte bleibt bei Bestellux.
-     4,00 € Liefergebühr  ->  2,00 € Fahrer / 2,00 € Bestellux
-     5,00 € Liefergebühr  ->  2,50 € Fahrer / 2,50 € Bestellux
-   Das Trinkgeld gehört zusätzlich zu 100 % dem Fahrer – davon geht
-   nichts ab, es war nie das Geld von Bestellux.
-   ACHTUNG: Derselbe Anteil steht auch in fahrer.html (FAHRER_ANTEIL).
-   Wird er hier geändert, muss er dort GENAUSO geändert werden –
-   sonst rechnen die beiden Apps verschieden.
+   Die Liefergebühr wird geteilt: die HÄLFTE an den Fahrer, die andere
+   Hälfte bleibt bei Bestellux. Das Trinkgeld gehört zu 100 % dem Fahrer.
+   ACHTUNG: derselbe Anteil steht in fahrer.html. Ändert er sich hier,
+   muss er dort GENAUSO geändert werden.
    ===================================================================== */
-var FAHRER_ANTEIL = 0.50;                 /* die Hälfte der Liefergebühr */
-function fahrerLohn(o){
-  /* Auf den Cent gerundet – genau wie in fahrer.html, damit Fahrer und
-     Zentrale nie 1 Cent auseinanderliegen. */
-  return Math.round((Number(o.fee)||0) * FAHRER_ANTEIL * 100) / 100;
-}
+var FAHRER_ANTEIL = 0.50;
+function fahrerLohn(o){ return Math.round((Number(o.fee)||0) * FAHRER_ANTEIL * 100) / 100; }
 function payout(o){ return fahrerLohn(o) + (Number(o.tip)||0); }
-
-const ST_TXT = {
-  neu:'beim Lokal', bestaetigt:'Küche kocht', abgelehnt:'abgelehnt',
-  angenommen:'angenommen', am_restaurant:'am Lokal',
-  abgeholt:'abgeholt', unterwegs:'unterwegs', geliefert:'geliefert',
-  storniert:'vom Kunden storniert'
-};
-function stClass(s){
-  if(s === 'neu' || s === 'bestaetigt') return 'neu';
-  if(s === 'geliefert') return 'fertig';
-  if(s === 'abgelehnt' || s === 'storniert') return 'no';
-  return 'lauf';
-}
-
-/* ============================================================
-   LOGIN
-   ============================================================ */
-function authErr(msg){
-  var e = $('authErr');
-  if(!e) return;
-  if(!msg){ e.classList.add('hide'); e.textContent = ''; return; }
-  e.classList.remove('hide'); e.textContent = msg;
-}
-
-function doAuth(){
-  var mail = ($('inMail').value||'').trim().toLowerCase();
-  var pw   = $('inPw').value||'';
-  if(!mail || pw.length < 6){ authErr('Bitte E-Mail und Passwort eingeben.'); return; }
-  if(!FB_OK){ authErr('Keine Verbindung zum Server. Bitte Internet prüfen.'); return; }
-  authErr('');
-  FB_AUTH.signInWithEmailAndPassword(mail, pw).catch(function(err){
-    var c = (err && err.code) || '';
-    if(c.indexOf('wrong-password')>=0 || c.indexOf('invalid-credential')>=0)
-      authErr('E-Mail oder Passwort ist falsch.');
-    else if(c.indexOf('user-not-found')>=0) authErr('Dieses Konto gibt es nicht.');
-    else if(c.indexOf('invalid-email')>=0)  authErr('Diese E-Mail-Adresse ist ungültig.');
-    else if(c.indexOf('too-many-requests')>=0) authErr('Zu viele Versuche. Bitte kurz warten.');
-    else if(c.indexOf('network')>=0) authErr('Keine Internetverbindung.');
-    else authErr('Anmeldung fehlgeschlagen. Bitte nochmal.');
-  });
-}
-
-function logout(){
-  try{ if(FB_AUTH) FB_AUTH.signOut(); }catch(e){}
-  setTimeout(function(){ location.reload(); }, 150);
-}
-
-/* ============================================================
-   TABS
-   ============================================================ */
-var TAB = 'Live';
-function go(t){
-  TAB = t;
-  ['Live','Fahrer','Orders','Rest','Bew','Stats'].forEach(function(x){
-    var el = $('tab-'+x); if(el) el.classList.toggle('hide', x !== t);
-  });
-  var bs = document.querySelectorAll('.tabs button');
-  for(var i=0;i<bs.length;i++) bs[i].classList.toggle('on', bs[i].getAttribute('data-tab') === t);
-  window.scrollTo(0,0);
-  render();
-  if(t === 'Live') setTimeout(function(){ if(MAP) MAP.invalidateSize(); }, 60);
-}
-
-/* ============================================================
-   KARTE
-   ============================================================ */
-var MAP = null, MARKS = {};
-function mapInit(){
-  if(MAP || !window.L) return;
-  try{
-    $('map').innerHTML = '';
-    MAP = L.map('map', { zoomControl:true, attributionControl:true })
-           .setView([52.9230, 9.1870], 11);   /* Langwedel / Verden */
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      maxZoom:18, attribution:'© OpenStreetMap'
-    }).addTo(MAP);
-  }catch(e){ MAP = null; }
-}
-/* Wenn Leaflet nicht geladen werden konnte, soll da kein ewiges "wird geladen" stehen. */
-function mapFail(){
-  if(MAP || !$('map')) return;
-  $('map').innerHTML = '<div class="map-none">Die Karte konnte nicht geladen werden.<br>Die Fahrerliste unten funktioniert trotzdem.</div>';
-}
-function mapDraw(){
-  if(!MAP) return;
-  var seen = {}, pts = [];
-  DRIVERS.forEach(function(d){
-    if(!d.pos || typeof d.pos.lat !== 'number' || typeof d.pos.lng !== 'number') return;
-    if(!d.active) return;                       /* gesperrte Fahrer nicht anzeigen */
-    seen[d.uid] = 1;
-    pts.push([d.pos.lat, d.pos.lng]);
-    var html = '<div class="mk'+(d.online?' on':'')+'">'+esc(d.ini||'?')+'</div>';
-    var ic = L.divIcon({ html:html, className:'', iconSize:[40,40], iconAnchor:[20,20] });
-    var pop = '<b>'+esc(d.name||'Fahrer')+'</b><br>'
-            + (d.online?'🟢 online':'⚫ offline')+' · '+esc(d.veh||'—')+'<br>'
-            + 'Position: '+ago(d.pos.t);
-    if(MARKS[d.uid]){
-      MARKS[d.uid].setLatLng([d.pos.lat, d.pos.lng]);
-      MARKS[d.uid].setIcon(ic);
-      MARKS[d.uid].setPopupContent(pop);
-    }else{
-      MARKS[d.uid] = L.marker([d.pos.lat, d.pos.lng], {icon:ic}).addTo(MAP).bindPopup(pop);
-    }
-  });
-  for(var k in MARKS){
-    if(!seen[k]){ try{ MAP.removeLayer(MARKS[k]); }catch(e){} delete MARKS[k]; }
-  }
-  if(pts.length && !mapDraw._fit){
-    mapDraw._fit = true;
-    try{ MAP.fitBounds(pts, {padding:[50,50], maxZoom:14}); }catch(e){}
-  }
-  $('mapNote').textContent = pts.length ? (pts.length+' Position'+(pts.length>1?'en':'')) : 'keine GPS-Daten';
-}
-
-/* ============================================================
-   FAHRER-KARTEN
-   ============================================================ */
-function jobOf(uid){
-  for(var i=0;i<ORDERS.length;i++){
-    var o = ORDERS[i];
-    if(o.status !== 'geliefert' && o.status !== 'neu' && o.status !== 'bestaetigt' &&
-       o.status !== 'abgelehnt' && o.status !== 'storniert' &&
-       o.driver && o.driver.uid === uid) return o;
-  }
-  return null;
-}
-function drvCard(d, kurz){
-  var job = jobOf(d.uid);
-  var cls = 'dc' + (d.online ? ' online' : ' off');
-  var tag = !d.active ? '<span class="tag blocked">gesperrt</span>'
-          : (d.online ? '<span class="tag on">online</span>' : '<span class="tag off">offline</span>');
-  var h = '<div class="'+cls+'">'
-    + '<div class="dc-h">'
-    +   '<div class="dc-av">'+esc(d.ini||'?')+'</div>'
-    +   '<div class="dc-n"><b>'+esc(d.name||'Ohne Namen')+'</b><span>'+esc(d.email||'')+'</span></div>'
-    +   tag
-    + '</div>'
-    + '<div class="dc-rows">'
-    +   '<div class="dc-row"><i>Fahrzeug</i><b>'+esc(d.veh||'—')+'</b></div>'
-    +   '<div class="dc-row"><i>Standort-Ort</i><b>'+esc(d.town||'—')+'</b></div>'
-    +   '<div class="dc-row"><i>Telefon</i><b>'+esc(d.phone||'—')+'</b></div>'
-    +   '<div class="dc-row"><i>GPS</i><b>'+(d.pos ? ago(d.pos.t)+(d.pos.acc?' · ±'+d.pos.acc+' m':'') : 'keine Daten')+'</b></div>'
-    +   '<div class="dc-row"><i>zuletzt gesehen</i><b>'+ago(d.lastSeen)+'</b></div>'
-    +   '<div class="dc-row"><i>Auftrag</i><b>'+(job ? esc(job.id)+' · '+esc(ST_TXT[job.status]||job.status) : 'frei')+'</b></div>';
-  if(!kurz){
-    var w = umsatzDrv(d, 7);
-    h += '<div class="dc-row"><i>7 Tage</i><b>'+w.n+' Lieferungen · '+eur(w.sum)+'</b></div>';
-  }
-  h += '</div><div class="dc-btns">';
-  if(d.active){
-    h += '<button class="bt no" onclick="setActive(\''+d.uid+'\',false)">Sperren</button>';
-  }else{
-    h += '<button class="bt ok" onclick="setActive(\''+d.uid+'\',true)">Aktivieren</button>';
-  }
-  if(d.phone) h += '<a class="bt gh" style="text-decoration:none;text-align:center;display:block;line-height:1.4" href="tel:'+esc(d.phone)+'">Anrufen</a>';
-  h += '</div></div>';
-  return h;
-}
-
-/* Nur die Zentrale schreibt dieses Feld. Die Fahrer-App fasst es nie an. */
-function setActive(uid, on){
-  var d = DRIVERS.filter(function(x){ return x.uid === uid; })[0];
-  var nm = d ? (d.name || d.email || 'Fahrer') : 'Fahrer';
-  if(!on && !confirm('„'+nm+'“ wirklich sperren?\n\nDer Fahrer kann dann keine Aufträge mehr annehmen.')) return;
-  if(!FB_OK){ toast('Keine Verbindung'); return; }
-  FB_DB.ref('drivers/'+uid+'/active').set(!!on)
-    .then(function(){ toast(on ? '✓ '+nm+' ist aktiviert' : '⛔ '+nm+' ist gesperrt'); })
-    .catch(function(){ toast('Keine Berechtigung dafür'); });
-}
-
-/* ============================================================
-   LOKALE  ·  ANNAHMEN, ABLEHNUNGEN, UMSATZ, PROVISION
-   ------------------------------------------------------------
-   Wie die Provision gerechnet wird:
-     Provision = Prozentsatz × Warenkorb der GELIEFERTEN Bestellungen
-   Der Warenkorb ist nur das Essen dieses Lokals (stops[i].items).
-   Die Liefergebühr steckt NICHT drin – die wird getrennt gerechnet und
-   danach halbiert: die Hälfte für den Fahrer, die Hälfte für Bestellux
-   (siehe FAHRER_ANTEIL weiter oben).
-   Abgelehnte Bestellungen bringen keine Provision.
-
-   Der Prozentsatz steht in rates/<id>. Steht dort nichts, gelten 15 %.
-   Schreiben darf ihn nur die Zentrale (siehe firebase-rules.json).
-   Diese Seite ist die EINZIGE, die Provision anzeigt – die Lokale
-   sehen in ihrer App nur ihren eigenen Umsatz.
-   ============================================================ */
-const PROV_STD = 15;          /* Startwert für jedes Lokal */
-const BX_RATES = 'bx_rates';  /* Notfall-Kopie im Gerät, falls kein Netz */
-
-/* Dieselbe Liste wie in restaurant.html und in der Kunden-App.
-   Sie steht hier, damit auch Lokale ohne Bestellung eine Zeile bekommen. */
-const SHOPS = [
-  {id:'berlin-doener',     name:'Berlin Döner',     ini:'BD', color:'#D01E2C', town:'Langwedel'},
-  {id:'pizza-hawaii',      name:'Pizza Hawaii',     ini:'PH', color:'#F0193C', town:'Verden'},
-  {id:'getraenke-express', name:'Getränke Express', ini:'GE', color:'#1E6FB0', town:'Langwedel'}
-];
-
-var RATES = {};        /* {shopId: prozent} */
-var SHOPSTATE = {};    /* {shopId: {open, until}} – nur zur Anzeige offen/zu */
-var RANGE = 7;         /* wie viele Tage die Auswertung umfasst */
-
-try{ RATES = JSON.parse(localStorage.getItem(BX_RATES) || '{}') || {}; }catch(e){ RATES = {}; }
+function bxFee(o){ return (Number(o.fee)||0) - fahrerLohn(o); }
 
 function rateOf(id){
   var r = RATES[id];
@@ -832,7 +441,7 @@ function rateOf(id){
 function setRate(id, val){
   var v = parseFloat(String(val).replace(',','.'));
   if(!isFinite(v) || v < 0 || v > 100){ toast('Bitte eine Zahl zwischen 0 und 100'); render(); return; }
-  v = Math.round(v * 10) / 10;               /* eine Nachkommastelle reicht */
+  v = Math.round(v * 10) / 10;
   RATES[id] = v;
   try{ localStorage.setItem(BX_RATES, JSON.stringify(RATES)); }catch(e){}
   var nm = (SHOPS.filter(function(s){ return s.id===id; })[0]||{}).name || id;
@@ -840,13 +449,10 @@ function setRate(id, val){
     FB_DB.ref('rates/'+id).set(v)
       .then(function(){ toast('✓ '+nm+': '+String(v).replace('.',',')+' % gespeichert'); })
       .catch(function(){ toast('Gespeichert – aber nur auf diesem Gerät'); });
-  }else{
-    toast('Gespeichert – aber nur auf diesem Gerät');
-  }
+  } else toast('Gespeichert – aber nur auf diesem Gerät');
   render();
 }
 
-/* Was hat dieses Lokal an dieser Bestellung? */
 function stopOf(o, id){
   var st = o.stops || [];
   for(var i=0;i<st.length;i++) if(st[i].id === id) return st[i];
@@ -857,29 +463,373 @@ function warenkorb(s){
   for(var i=0;i<it.length;i++) t += (Number(it[i].qty)||0) * (Number(it[i].price)||0);
   return t;
 }
-/* Zahlen für EIN Lokal im gewählten Zeitraum. */
+
 /* =====================================================================
-   ZWEI TÖPFE JE BESTELLUNG
-   ---------------------------------------------------------------------
-   ordProv(o) – was mir die Lokale dieser Bestellung an Provision bringen.
-   bxFee(o)   – was mir von der Liefergebühr bleibt, also die Gebühr
-                minus dem, was der Fahrer davon bekommt.
-   Wichtig: eine Bestellung hat nur EINE Liefergebühr, auch wenn zwei
-   Lokale darin stecken. Wenn ich die Gebühr einem einzelnen Lokal
-   zuordnen will, muss ich sie darum durch die Zahl der Lokale teilen –
-   sonst zähle ich dasselbe Geld zweimal.
+   ZUSTÄNDE EINER BESTELLUNG – in normalen Worten
    ===================================================================== */
-function ordProv(o){
-  var t = 0;
-  (o.stops||[]).forEach(function(s){
-    if(s.ok === 1) t += warenkorb(s) * rateOf(s.id) / 100;
-  });
-  return t;
+const ST_TXT = {
+  neu:'wartet beim Lokal', bestaetigt:'Küche kocht · Fahrer gesucht',
+  angenommen:'Fahrer fährt zum Lokal', am_restaurant:'Fahrer steht im Lokal',
+  abgeholt:'abgeholt', unterwegs:'unterwegs zum Kunden',
+  geliefert:'geliefert', abgelehnt:'vom Lokal abgelehnt', storniert:'vom Kunden storniert'
+};
+function stClass(s){
+  if(s === 'neu' || s === 'bestaetigt') return 'neu';
+  if(s === 'geliefert') return 'fertig';
+  if(s === 'abgelehnt' || s === 'storniert') return 'no';
+  return 'lauf';
 }
-function bxFee(o){ return (Number(o.fee)||0) - fahrerLohn(o); }
+/* Läuft gerade = noch nicht abgeschlossen und nicht abgesagt. */
+function laufend(){
+  return ORDERS.filter(function(o){
+    return ['geliefert','abgelehnt','storniert'].indexOf(o.status) < 0;
+  });
+}
+function heute(){
+  var t0 = tagStart(0);
+  return ORDERS.filter(function(o){ return (o.at||0) >= t0; });
+}
+/* Steht das Essen schon abholbereit? */
+function istFertig(o){
+  var st = (o && o.stops) || [];
+  if(!st.length) return false;
+  for(var i=0;i<st.length;i++) if(!st[i].fertig) return false;
+  return true;
+}
+function lokaleVon(o){
+  return ((o && o.stops) || []).map(function(s){ return s.name; }).join(' + ') || '–';
+}
+
+/* =====================================================================
+   IST DER FAHRER WIRKLICH DA?
+   ---------------------------------------------------------------------
+   "online" setzt nur der Fahrer selbst. Damit die Zentrale trotzdem
+   sieht, wer erreichbar ist, meldet sich sein Handy alle 25 Sekunden.
+   Wer sich seit über 2 Minuten nicht gemeldet hat, steht hier als
+   "keine Verbindung" – seine Schicht läuft aber weiter.
+   ===================================================================== */
+const TOT_MS = 130000;
+function erreichbar(d){ return !!d.online && (Date.now() - (d.lastSeen||0)) < TOT_MS; }
+function drvState(d){
+  if(!d.active)      return {k:'gesperrt', t:'nicht freigeschaltet', c:'off'};
+  if(!d.online)      return {k:'frei',     t:'Schicht beendet',      c:'off'};
+  if(!erreichbar(d)) return {k:'weg',      t:'online, aber keine Verbindung ('+ago(d.lastSeen)+')', c:'wait'};
+  return {k:'da', t:'online', c:'on'};
+}
+function jobOf(uid){
+  for(var i=0;i<ORDERS.length;i++){
+    var o = ORDERS[i];
+    if(o.driver && o.driver.uid === uid &&
+       ['angenommen','am_restaurant','abgeholt','unterwegs'].indexOf(o.status) >= 0) return o;
+  }
+  return null;
+}
+
+/* ============================================================
+   LOGIN
+   ============================================================ */
+function stage(id){
+  ['lgBoot','lgAuth','lgNo','lgOff'].forEach(function(k){
+    var el = $(k); if(el) el.classList.toggle('hide', k !== id);
+  });
+  $('login').classList.remove('hide');
+  $('app').classList.add('hide');
+}
+function authErr(msg){
+  var e = $('authErr'); if(!e) return;
+  if(!msg){ e.classList.add('hide'); e.textContent = ''; return; }
+  e.classList.remove('hide'); e.textContent = msg;
+}
+function doAuth(){
+  var mail = ($('inMail').value||'').trim().toLowerCase();
+  var pw   = $('inPw').value||'';
+  if(!mail || pw.length < 6){ authErr('Bitte E-Mail und Passwort eingeben.'); return; }
+  if(!FB_OK){ authErr('Keine Verbindung zum Server. Bitte Internet prüfen.'); return; }
+  authErr('');
+  FB_AUTH.signInWithEmailAndPassword(mail, pw).catch(function(err){
+    var c = (err && err.code) || '';
+    if(c.indexOf('wrong-password')>=0 || c.indexOf('invalid-credential')>=0) authErr('E-Mail oder Passwort ist falsch.');
+    else if(c.indexOf('user-not-found')>=0)    authErr('Dieses Konto gibt es nicht.');
+    else if(c.indexOf('invalid-email')>=0)     authErr('Diese E-Mail-Adresse ist ungültig.');
+    else if(c.indexOf('too-many-requests')>=0) authErr('Zu viele Versuche. Bitte kurz warten.');
+    else if(c.indexOf('network')>=0)           authErr('Keine Internetverbindung.');
+    else authErr('Anmeldung fehlgeschlagen. Bitte nochmal.');
+  });
+}
+function logout(){
+  if(!confirm('Wirklich abmelden?')) return;
+  try{ if(FB_AUTH) FB_AUTH.signOut(); }catch(e){}
+  setTimeout(function(){ location.reload(); }, 150);
+}
+
+/* ============================================================
+   REITER
+   ============================================================ */
+var TAB = 'Jetzt';
+function go(t){
+  TAB = t;
+  ['Jetzt','Fahrer','Geld'].forEach(function(x){
+    var el = $('tab-'+x); if(el) el.classList.toggle('hide', x !== t);
+  });
+  var bs = document.querySelectorAll('.tabs button');
+  for(var i=0;i<bs.length;i++) bs[i].classList.toggle('on', bs[i].getAttribute('data-tab') === t);
+  window.scrollTo(0,0);
+  render();
+  if(t === 'Jetzt') setTimeout(function(){ if(MAP) MAP.invalidateSize(); }, 60);
+}
+
+/* ============================================================
+   KARTE – nur die Fahrer, die gerade unterwegs sind
+   ============================================================ */
+var MAP = null, MARKS = {};
+function mapInit(){
+  if(MAP || !window.L || !$('map')) return;
+  try{
+    $('map').innerHTML = '';
+    MAP = L.map('map', { zoomControl:true, attributionControl:true })
+           .setView([52.9230, 9.1870], 11);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+      { maxZoom:18, attribution:'© OpenStreetMap' }).addTo(MAP);
+  }catch(e){ MAP = null; }
+}
+function mapDraw(){
+  if(!MAP) return;
+  var live = DRIVERS.filter(function(d){ return d.active && erreichbar(d) && d.pos && d.pos.lat; });
+  var seen = {};
+  live.forEach(function(d){
+    seen[d.uid] = 1;
+    var ll = [d.pos.lat, d.pos.lng];
+    var job = jobOf(d.uid);
+    var farbe = job ? '#3D8BF2' : '#2BB673';
+    if(MARKS[d.uid]){
+      MARKS[d.uid].setLatLng(ll);
+      MARKS[d.uid].setIcon(pin(d, farbe));
+    } else {
+      MARKS[d.uid] = L.marker(ll, { icon: pin(d, farbe) }).addTo(MAP);
+    }
+    MARKS[d.uid].bindPopup('<b>'+esc(d.name||'Fahrer')+'</b><br>'+
+      (job ? esc(job.id)+' · '+esc(ST_TXT[job.status]||job.status) : 'wartet auf einen Auftrag')+
+      '<br><small>'+esc(ago(d.lastSeen))+'</small>');
+  });
+  Object.keys(MARKS).forEach(function(uid){
+    if(!seen[uid]){ try{ MAP.removeLayer(MARKS[uid]); }catch(e){} delete MARKS[uid]; }
+  });
+  if(live.length){
+    try{ MAP.fitBounds(live.map(function(d){ return [d.pos.lat, d.pos.lng]; }), {padding:[40,40], maxZoom:14}); }catch(e){}
+  }
+}
+function pin(d, farbe){
+  return L.divIcon({
+    className:'', iconSize:[34,34], iconAnchor:[17,17],
+    html:'<div style="width:34px;height:34px;border-radius:50%;background:'+farbe+';'+
+         'border:2.5px solid #fff;box-shadow:0 3px 10px rgba(0,0,0,.5);color:#fff;'+
+         'font:900 12px/29px -apple-system,sans-serif;text-align:center">'+
+         esc(d.ini || initials(d.name)) + '</div>'
+  });
+}
+
+/* ============================================================
+   BILDSCHIRM 1 – JETZT
+   ------------------------------------------------------------
+   Die Frage, die man morgens um 19 Uhr hat: läuft alles?
+   Darum oben vier Zahlen, danach jede laufende Bestellung als
+   eine einzige Zeile in normalen Worten. Keine Tabellen.
+   ============================================================ */
+function renderJetzt(){
+  var lauf = laufend();
+  var h = heute();
+  var geliefert = h.filter(function(o){ return o.status === 'geliefert'; });
+  var wartetLokal = lauf.filter(function(o){ return o.status === 'neu'; });
+  var suchtFahrer = lauf.filter(function(o){ return o.status === 'bestaetigt'; });
+  var frei = DRIVERS.filter(function(d){ return d.active && erreichbar(d) && !jobOf(d.uid); });
+  var umsatzHeute = 0;
+  geliefert.forEach(function(o){
+    (o.stops||[]).forEach(function(s){ if(s.ok===1) umsatzHeute += warenkorb(s) * rateOf(s.id) / 100; });
+    umsatzHeute += bxFee(o);
+  });
+
+  var out =
+    '<div class="hero">'+
+      '<div class="lb">Mein Verdienst heute</div>'+
+      '<div class="big">'+eur(umsatzHeute)+'</div>'+
+      '<div class="sm">'+geliefert.length+' geliefert · '+lauf.length+' läuft gerade</div>'+
+    '</div>'+
+
+    '<div class="tiles">'+
+      tile(wartetLokal.length, 'beim Lokal', wartetLokal.length ? 'warn' : 'zero')+
+      tile(suchtFahrer.length, 'sucht Fahrer', suchtFahrer.length ? 'warn' : 'zero')+
+      tile(lauf.length - wartetLokal.length - suchtFahrer.length, 'unterwegs',
+           (lauf.length - wartetLokal.length - suchtFahrer.length) ? 'go' : 'zero')+
+      tile(frei.length, 'Fahrer frei', frei.length ? 'ok' : 'zero')+
+    '</div>';
+
+  /* -- Achtung-Zeilen: nur was wirklich klemmt ------------------------ */
+  var alarm = [];
+  wartetLokal.forEach(function(o){
+    if(minSeit(o.at) >= 5) alarm.push('⚠️ '+esc(lokaleVon(o))+' hat seit '+minSeit(o.at)+
+      ' Min nicht geantwortet · '+esc(o.id));
+  });
+  suchtFahrer.forEach(function(o){
+    var m = minSeit(freiSeit(o));
+    if(istFertig(o))
+      alarm.push('🔥 Das Essen steht seit '+minSeit(o.prepEnd||freiSeit(o))+' Min fertig bei '+
+                 esc(lokaleVon(o))+' – kein Fahrer hat den Auftrag genommen · '+esc(o.id));
+    else if(m >= 3)
+      alarm.push('⚠️ Sucht seit '+m+' Min einen Fahrer · '+esc(o.id));
+  });
+  if(suchtFahrer.length && !frei.length)
+    alarm.push('⚠️ Es sind Aufträge offen, aber kein Fahrer ist online.');
+  if(alarm.length){
+    out += '<h2 class="sec">Das braucht dich<em>'+alarm.length+
+      (alarm.length===1?' Sache':' Sachen')+' hängen gerade</em></h2>'+
+      alarm.map(function(a){
+        return '<div class="row no" style="opacity:1;font-size:13.5px;font-weight:700;line-height:1.5">'+a+'</div>';
+      }).join('');
+  }
+
+  /* -- Alles, was gerade läuft --------------------------------------- */
+  out += '<h2 class="sec">Läuft gerade<em>'+lauf.length+
+         (lauf.length===1?' Bestellung':' Bestellungen')+' offen</em></h2>';
+  if(!lauf.length){
+    out += '<div class="empty"><span class="ic">☕</span>Nichts offen. Alles ausgeliefert.</div>';
+  } else {
+    out += lauf.slice().sort(function(a,b){ return (a.at||0)-(b.at||0); }).map(function(o){
+      var fahrer = o.driver ? o.driver.name : null;
+      var lage   = (o.status === 'bestaetigt' && istFertig(o))
+                 ? '✅ Essen fertig · Fahrer gesucht'
+                 : (ST_TXT[o.status] || o.status);
+      return '<div class="row '+stClass(o.status)+'">'+
+        '<div class="av" style="font-size:17px">'+(o.status==='neu'?'🔔':(o.status==='bestaetigt'?'👨‍🍳':'🛵'))+'</div>'+
+        '<div class="mid">'+
+          '<div class="nm"><b>'+esc(lokaleVon(o))+' → '+esc(o.town||'–')+'</b></div>'+
+          '<span class="sub">'+esc(lage)+
+            (fahrer ? ' · '+esc(fahrer) : '')+' · seit '+minSeit(o.at)+' Min</span>'+
+        '</div>'+
+        '<div class="rt"><b>'+eur(o.total)+'</b><span>'+esc(o.id.replace('BX-',''))+'</span></div>'+
+      '</div>';
+    }).join('');
+  }
+
+  $('jetztTop').innerHTML = out;
+
+  /* -- Karte: nur die Beschriftung wird neu geschrieben, der Kasten bleibt -- */
+  var live = DRIVERS.filter(function(d){ return d.active && erreichbar(d) && d.pos && d.pos.lat; });
+  $('mapNote').textContent = live.length
+    ? live.length+' Fahrer mit GPS sichtbar'
+    : 'Kein Fahrer sendet gerade seinen Standort';
+  mapInit(); mapDraw();
+}
+function tile(n, label, cls){
+  return '<div class="tile '+cls+'"><b>'+n+'</b><span>'+label+'</span></div>';
+}
+/* Seit wann ist der Auftrag für die Fahrer frei? */
+function freiSeit(o){
+  var hh = ((o && o.hist) || []).filter(function(x){ return x.s === 'bestaetigt'; });
+  return hh.length ? hh[hh.length-1].t : ((o && o.at) || 0);
+}
+
+/* ============================================================
+   BILDSCHIRM 2 – FAHRER
+   ------------------------------------------------------------
+   Ganz oben, was dringend ist: wer wartet auf Freischaltung.
+   Danach die Mannschaft, sortiert nach "arbeitet gerade".
+   ============================================================ */
+function renderFahrer(){
+  var wart = DRIVERS.filter(function(d){ return !d.active && d.name; });
+  var frei = DRIVERS.filter(function(d){ return d.active; });
+
+  var out = '';
+
+  /* -- Freischalten -------------------------------------------------- */
+  if(wart.length){
+    out += '<div class="wait-box">'+
+      '<h3>'+wart.length+' '+(wart.length===1?'Fahrer wartet':'Fahrer warten')+' auf Freischaltung</h3>'+
+      '<p>Er hat sich mit seiner E-Mail angemeldet und sein Profil ausgefüllt. '+
+      'Erst wenn du hier freischaltest, sieht er Aufträge.</p>'+
+      wart.map(function(d){
+        return '<div class="wait-row">'+
+          '<div class="av" style="width:38px;height:38px;flex:0 0 38px;border-radius:11px;background:var(--card2);display:flex;align-items:center;justify-content:center;font-weight:900">'+
+            esc(d.ini || initials(d.name))+'</div>'+
+          '<div class="mid"><b>'+esc(d.name)+'</b>'+
+            '<span>'+esc(d.email||'')+'</span>'+
+            '<span>'+esc(d.veh||'–')+' · '+esc(d.town||'–')+' · '+esc(d.phone||'keine Nummer')+'</span></div>'+
+          '<button class="b-go" onclick="setActive(\''+esc(d.uid)+'\',true)">✓ Freischalten</button>'+
+        '</div>';
+      }).join('')+
+    '</div>';
+  }
+
+  /* -- Die Mannschaft ------------------------------------------------- */
+  out += '<h2 class="sec">Meine Fahrer<em>'+frei.length+' freigeschaltet · '+
+         frei.filter(function(d){ return erreichbar(d); }).length+' gerade online</em></h2>';
+
+  if(!frei.length){
+    out += '<div class="empty"><span class="ic">🛵</span>Noch kein Fahrer freigeschaltet.</div>';
+  } else {
+    /* Wer arbeitet, steht oben. Dann die Online-Wartenden, dann der Rest. */
+    var rang = function(d){
+      if(jobOf(d.uid)) return 0;
+      if(erreichbar(d)) return 1;
+      if(d.online) return 2;
+      return 3;
+    };
+    out += frei.slice().sort(function(a,b){
+      return rang(a) - rang(b) || String(a.name||'').localeCompare(String(b.name||''));
+    }).map(function(d){
+      var job = jobOf(d.uid), st = drvState(d);
+      var t0  = tagStart(0);
+      var heuteN = ORDERS.filter(function(o){
+        return o.status==='geliefert' && (o.at||0)>=t0 && o.driver && o.driver.uid===d.uid;
+      });
+      var lohn = heuteN.reduce(function(a,o){ return a + payout(o); }, 0);
+      return '<div class="row '+(job?'lauf':'')+'" style="flex-wrap:wrap">'+
+        '<div class="av">'+esc(d.ini || initials(d.name))+'</div>'+
+        '<div class="mid">'+
+          '<div class="nm"><b>'+esc(d.name||'Fahrer')+'</b>'+
+            '<span class="pill '+st.c+'">'+
+            (st.k==='da' ? '● online' : (st.k==='weg' ? 'keine Verbindung' : 'Schicht aus'))+'</span></div>'+
+          '<span class="sub">'+(job
+            ? '🛵 '+esc(ST_TXT[job.status]||job.status)+' · '+esc(job.id)
+            : (st.k==='da' ? '⏳ wartet auf einen Auftrag'
+                           : esc(d.veh||'–')+' · '+esc(d.town||'–')+' · '+esc(ago(d.lastSeen))))+
+            '<br>Heute '+heuteN.length+' Fahrt'+(heuteN.length===1?'':'en')+
+            ' · <b style="display:inline;color:var(--green);font-size:12px">'+eur(lohn)+'</b> Lohn</span>'+
+        '</div>'+
+        '<button class="b-no" style="padding:8px 12px;font-size:12px" '+
+          'onclick="setActive(\''+esc(d.uid)+'\',false)">sperren</button>'+
+      '</div>';
+    }).join('');
+  }
+
+  out += '<p class="note"><b>So bekommt ein neuer Fahrer Zugang:</b><br>'+
+    '1. Du legst sein Konto in der Firebase-Konsole an (Authentication → Users → Add user) '+
+    'mit seiner E-Mail und einem Passwort, das <b>er</b> sich aussucht.<br>'+
+    '2. Er öffnet fahrer.html, meldet sich an und füllt sein Profil aus.<br>'+
+    '3. Er erscheint hier oben – du tippst auf „Freischalten“, fertig.<br><br>'+
+    'Sperren nimmt ihm sofort alle Aufträge weg, sein Konto bleibt aber bestehen.</p>';
+
+  $('tab-Fahrer').innerHTML = out;
+}
+
+function setActive(uid, on){
+  var d = DRIVERS.filter(function(x){ return x.uid === uid; })[0] || {};
+  if(!on && !confirm('Zugang von '+(d.name||'diesem Fahrer')+' sperren?\n\nEr sieht sofort keine Aufträge mehr.')) return;
+  if(!FB_OK){ toast('Keine Verbindung zum Server'); return; }
+  FB_DB.ref('drivers/'+uid+'/active').set(!!on)
+    .then(function(){ toast(on ? '✓ '+(d.name||'Fahrer')+' ist freigeschaltet' : (d.name||'Fahrer')+' gesperrt'); })
+    .catch(function(){ toast('Ging nicht – bist du mit dem Betreiber-Konto angemeldet?'); });
+}
+
+/* ============================================================
+   BILDSCHIRM 3 – GELD
+   ------------------------------------------------------------
+   Eine Frage: was hat mir welches Lokal gebracht?
+   Erst die eine große Zahl, dann pro Lokal eine Zeile.
+   ============================================================ */
+function setRange(n){ RANGE = n; render(); }
 
 function restStats(id){
-  var von = (RANGE >= 999) ? 0 : tagStart(RANGE - 1);
+  var von = (RANGE >= 999) ? 0 : tagStart(RANGE);
   var r = { ang:0, gel:0, abg:0, offen:0, waren:0, fee:0 };
   ORDERS.forEach(function(o){
     if((o.at||0) < von) return;
@@ -888,468 +838,193 @@ function restStats(id){
       r.ang++;
       if(o.status === 'geliefert'){
         r.gel++; r.waren += warenkorb(s);
-        /* Anteil dieses Lokals an meinem Gewinn aus der Liefergebühr */
-        var n = (o.stops||[]).length || 1;
-        r.fee += bxFee(o) / n;
-      }
-      else if(o.status !== 'abgelehnt' && o.status !== 'storniert'){ r.offen++; }
-    }else if(s.ok === 0){
-      r.abg++;                       /* dieses Lokal hat selbst abgelehnt */
-    }
+        r.fee += bxFee(o) / ((o.stops||[]).length || 1);
+      } else if(o.status !== 'abgelehnt' && o.status !== 'storniert') r.offen++;
+    } else if(s.ok === 0) r.abg++;
   });
-  r.satz = rateOf(id);
-  r.prov = r.waren * r.satz / 100;
-  r.gesamt = r.prov + r.fee;         /* Provision + Lieferung = was mir dieses Lokal bringt */
+  r.satz   = rateOf(id);
+  r.prov   = r.waren * r.satz / 100;
+  r.gesamt = r.prov + r.fee;
   return r;
 }
 
-/* Tag für Tag: was ist an welchem Tag hereingekommen? */
-function tageListe(){
-  var von = (RANGE >= 999) ? 0 : tagStart(RANGE - 1);
-  var map = {};
+function renderGeld(){
+  /* Tippt gerade jemand einen Prozentsatz, nicht neu zeichnen –
+     sonst springt der Cursor beim 20-Sekunden-Takt weg. */
+  var a = document.activeElement;
+  if(a && a.tagName === 'INPUT' && a.closest && a.closest('#tab-Geld')) return;
+
+  var von = (RANGE >= 999) ? 0 : tagStart(RANGE);
+  var rows = SHOPS.map(function(s){ var r = restStats(s.id); r.shop = s; return r; })
+                  .sort(function(x,y){ return y.gesamt - x.gesamt; });
+
+  var gGes = 0, gProv = 0, gFee = 0, gWaren = 0;
+  rows.forEach(function(r){ gGes+=r.gesamt; gProv+=r.prov; gFee+=r.fee; gWaren+=r.waren; });
+  /* Bestellungen zählen, NICHT Lokale: eine Sammelbestellung bei zwei
+     Lokalen ist eine Bestellung, keine zwei. */
+  var gGel = ORDERS.filter(function(o){
+    return o.status === 'geliefert' && (o.at||0) >= von;
+  }).length;
+
+  var zeitTxt = RANGE === 0 ? 'heute' : (RANGE >= 999 ? 'insgesamt' : 'in '+(RANGE+1)+' Tagen');
+
+  var out =
+    '<div class="range">'+
+      [[0,'Heute'],[6,'7 Tage'],[29,'30 Tage'],[999,'Alles']].map(function(x){
+        return '<button class="'+(RANGE===x[0]?'on':'')+'" onclick="setRange('+x[0]+')">'+x[1]+'</button>';
+      }).join('')+
+    '</div>'+
+
+    '<div class="hero">'+
+      '<div class="lb">Mein Verdienst '+zeitTxt+'</div>'+
+      '<div class="big">'+eur(gGes)+'</div>'+
+      '<div class="sm">'+eur(gProv)+' Provision + '+eur(gFee)+' aus der Lieferung · '+
+        gGel+' gelieferte Bestellung'+(gGel===1?'':'en')+'</div>'+
+    '</div>'+
+
+    '<h2 class="sec">Was bringt mir welches Lokal?'+
+      '<em>Der Prozentsatz ist die Provision. Du kannst ihn hier ändern.</em></h2>';
+
+  out += rows.map(function(r){
+    var s = r.shop;
+    var auf = shopAuf(s.id);
+    return '<div class="row" style="flex-wrap:wrap">'+
+      '<div class="av" style="background:'+s.color+';color:#fff">'+esc(s.ini)+'</div>'+
+      '<div class="mid">'+
+        '<div class="nm"><b>'+esc(s.name)+'</b>'+
+          '<span class="pill '+(auf?'on':'off')+'">'+(auf?'geöffnet':'zu')+'</span></div>'+
+        '<span class="sub">'+r.gel+' geliefert'+(r.offen?' · '+r.offen+' läuft':'')+
+          (r.abg?' · '+r.abg+' abgelehnt':'')+' · '+eur(r.waren)+' Warenwert</span>'+
+      '</div>'+
+      '<div class="rt"><b style="color:var(--yellow)">'+eur(r.gesamt)+'</b><span>für mich</span></div>'+
+      '<div style="flex:1 0 100%;display:flex;align-items:center;gap:9px;'+
+        'border-top:1px solid var(--line);margin-top:11px;padding-top:11px">'+
+        '<span style="font-size:12px;font-weight:800;color:var(--tx2)">Provision</span>'+
+        '<input class="rate" value="'+String(r.satz).replace('.',',')+'" inputmode="decimal" '+
+          'onchange="setRate(\''+s.id+'\',this.value)" title="Provision in Prozent">'+
+        '<span style="font-size:13px;font-weight:900;color:var(--yellow)">%</span>'+
+        '<span style="font-size:11.5px;font-weight:700;color:var(--tx3);margin-left:auto;text-align:right">'+
+          eur(r.prov)+' Provision<br>'+eur(r.fee)+' aus der Lieferung</span>'+
+      '</div>'+
+    '</div>';
+  }).join('');
+
+  /* -- Fahrer-Auszahlung ---------------------------------------------- */
+  var byDrv = {};
   ORDERS.forEach(function(o){
-    if(o.status !== 'geliefert') return;
-    if((o.at||0) < von) return;
-    var d = new Date(o.at||0); d.setHours(0,0,0,0);
-    var k = d.getTime();
-    if(!map[k]) map[k] = { t:k, n:0, prov:0, fee:0 };
-    map[k].n++;
-    map[k].prov += ordProv(o);
-    map[k].fee  += bxFee(o);
+    if(o.status !== 'geliefert' || (o.at||0) < von || !o.driver) return;
+    var k = o.driver.uid || o.driver.name || '?';
+    if(!byDrv[k]) byDrv[k] = { name:o.driver.name || 'Fahrer', n:0, lohn:0, tip:0 };
+    byDrv[k].n++; byDrv[k].lohn += fahrerLohn(o); byDrv[k].tip += (Number(o.tip)||0);
   });
-  return Object.keys(map).map(function(k){ return map[k]; })
-              .sort(function(a,b){ return b.t - a.t; });
-}
-var WT = ['Sonntag','Montag','Dienstag','Mittwoch','Donnerstag','Freitag','Samstag'];
-function tagName(ms){
-  var d = new Date(ms), h = tagStart(0);
-  if(ms === h) return 'Heute';
-  if(ms === tagStart(1)) return 'Gestern';
-  return WT[d.getDay()] + ', ' + ('0'+d.getDate()).slice(-2) + '.' + ('0'+(d.getMonth()+1)).slice(-2) + '.';
+  var drvRows = Object.keys(byDrv).map(function(k){ return byDrv[k]; })
+                      .sort(function(x,y){ return y.lohn - x.lohn; });
+
+  out += '<h2 class="sec">Was muss ich den Fahrern zahlen?'+
+         '<em>Die Hälfte der Liefergebühr plus das Trinkgeld – das gehört ganz ihm.</em></h2>';
+  if(!drvRows.length){
+    out += '<div class="empty"><span class="ic">🛵</span>In diesem Zeitraum hat noch niemand geliefert.</div>';
+  } else {
+    out += drvRows.map(function(d){
+      return '<div class="row">'+
+        '<div class="av">'+esc(initials(d.name))+'</div>'+
+        '<div class="mid"><div class="nm"><b>'+esc(d.name)+'</b></div>'+
+          '<span class="sub">'+d.n+' Fahrt'+(d.n===1?'':'en')+
+          ' · '+eur(d.tip)+' Trinkgeld</span></div>'+
+        '<div class="rt"><b style="color:var(--green)">'+eur(d.lohn + d.tip)+'</b><span>auszahlen</span></div>'+
+      '</div>';
+    }).join('');
+  }
+
+  out += '<p class="note">Alle Zahlen sind aus den Bestellungen dieser App gerechnet, '+
+    'nicht aus einer Buchhaltung. Für Steuer und Jahresabschluss zählt allein das, '+
+    'was dein Steuerberater aus den echten Belegen macht.</p>';
+
+  $('tab-Geld').innerHTML = out;
 }
 function shopAuf(id){
   var s = SHOPSTATE[id];
-  if(!s) return true;                                 /* kein Eintrag = geöffnet */
+  if(!s) return true;
   var st = !!s.open;
   if(s.until && Date.now() >= s.until) st = !st;
   return st;
 }
-function setRange(n){
-  RANGE = n;
-  var bs = document.querySelectorAll('#restRange button');
-  for(var i=0;i<bs.length;i++)
-    bs[i].classList.toggle('on', bs[i].getAttribute('data-r') === String(n));
-  render();
-}
-
-function renderRest(){
-  /* Tippt gerade jemand einen Prozentsatz ein, wird die Liste NICHT neu
-     gezeichnet – sonst springt der Cursor beim 20-Sekunden-Takt weg. */
-  var a = document.activeElement;
-  if(a && a.tagName === 'INPUT' && a.closest && a.closest('#restList')) return;
-
-  var rows = SHOPS.map(function(s){
-    var st = restStats(s.id); st.shop = s; return st;
-  });
-  /* Das Lokal, das mir am meisten bringt, steht oben. */
-  rows.sort(function(a,b){ return b.gesamt - a.gesamt || b.waren - a.waren; });
-
-  var gProv = 0, gWaren = 0, gGel = 0, gAbg = 0, gAng = 0;
-  rows.forEach(function(r){ gProv+=r.prov; gWaren+=r.waren; gGel+=r.gel; gAbg+=r.abg; gAng+=r.ang; });
-
-  /* ------------------------------------------------------------------
-     MEIN VERDIENST
-     Zwei Töpfe kommen rein, einer geht raus:
-       + Provision – der Prozentsatz vom Warenkorb jedes Lokals.
-       + Liefergebühr – die zahlt der Kunde fürs Bringen, davon geht
-         nichts an das Lokal.
-       − Fahreranteil – die HÄLFTE der Liefergebühr geht an den Fahrer.
-         Das Trinkgeld taucht hier gar nicht auf: es geht direkt vom
-         Kunden an den Fahrer und war nie mein Geld.
-     Gezählt wird immer nur, was auch wirklich GELIEFERT wurde.
-     Eine Bestellung mit zwei Lokalen hat trotzdem nur EINE
-     Liefergebühr und EINEN Fahreranteil – darum je Bestellung zählen,
-     nicht je Lokal.
-     ------------------------------------------------------------------ */
-  var vonZ = (RANGE >= 999) ? 0 : tagStart(RANGE - 1);
-  var gFee = 0, gBest = 0, gLohn = 0;
-  ORDERS.forEach(function(o){
-    if((o.at||0) < vonZ) return;
-    if(o.status !== 'geliefert') return;
-    gBest++;
-    gFee  += (Number(o.fee) || 0);
-    gLohn += fahrerLohn(o);          /* je Bestellung die Hälfte der Gebühr */
-  });
-  var gesamt = gProv + gFee - gLohn;
-
-  $('vdBig').textContent  = eur(gesamt);
-  $('vdProv').textContent = eur(gProv);
-  $('vdFee').textContent  = eur(gFee);
-  $('vdLohn').textContent = '− ' + eur(gLohn);
-  $('vdLohnL').textContent = 'Fahreranteil · die Hälfte von ' + eur(gFee) + ' Liefergebühr aus ' +
-                             gBest + (gBest === 1 ? ' Lieferung' : ' Lieferungen');
-  $('vdAvg').textContent  = eur(gBest ? gesamt / gBest : 0);
-  $('vdSub').textContent  = gBest
-    ? ('aus ' + gBest + (gBest === 1 ? ' gelieferten Bestellung' : ' gelieferten Bestellungen')
-       + ' · ' + (RANGE >= 999 ? 'seit dem Start' : 'letzte ' + RANGE + ' Tage'))
-    : 'noch keine gelieferte Bestellung';
-
-  $('pGes').textContent   = eur(gProv);
-  $('pWaren').textContent = eur(gWaren);
-  $('pGel').textContent   = gGel;
-  $('pAbg').textContent   = gAbg;
-  $('restNote').textContent = (RANGE>=999 ? 'seit dem Start' : 'letzte '+RANGE+' Tage')
-    + ' · ' + SHOPS.length + ' Lokale';
-
-  $('restList').innerHTML = rows.map(function(r, i){
-    var s = r.shop;
-    var quote = (r.ang + r.abg) > 0 ? Math.round(r.ang*100/(r.ang+r.abg)) : 100;
-    var auf = shopAuf(s.id);
-    return '<div class="rcard'+(i===0 && r.prov>0 ? ' top' : '')+'">'
-      + '<div class="rc-h">'
-      +   '<div class="rc-av" style="background:'+s.color+'">'+esc(s.ini)+'</div>'
-      +   '<div class="rc-n"><b>'+esc(s.name)+'</b><span>'+esc(s.town)
-      +     ' · Annahme-Quote '+quote+' %</span></div>'
-      +   '<span class="rc-zu '+(auf?'auf':'zu')+'">'+(auf?'geöffnet':'zu')+'</span>'
-      + '</div>'
-
-      + '<div class="rc-g">'
-      +   '<div class="rc-b ok"><b>'+r.ang+'</b><span>angenommen</span></div>'
-      +   '<div class="rc-b wa"><b>'+r.gel+'</b><span>geliefert</span></div>'
-      +   '<div class="rc-b no"><b>'+r.abg+'</b><span>abgelehnt</span></div>'
-      + '</div>'
-
-      + '<div class="rc-m"><i>Warenkorb (geliefert)</i><b>'+eur(r.waren)+'</b></div>'
-
-      + '<div class="prov">'
-      +   '<div><div class="lb">Provision</div><div class="sm">tippen zum Ändern</div></div>'
-      +   '<input type="number" step="0.5" min="0" max="100" value="'+r.satz+'" '
-      +     'onchange="setRate(\''+s.id+'\', this.value)" '
-      +     'onclick="this.select()"><span class="pc">%</span>'
-      +   '<div class="amt"><b>'+eur(r.prov)+'</b><span>mein Anteil</span></div>'
-      + '</div>'
-
-      /* Was mir DIESES Lokal unterm Strich bringt: die Provision und der
-         Teil der Liefergebühr, der auf seine Bestellungen entfällt. */
-      + '<div class="rc-sum">'
-      +   '<div class="rs-r"><i>Provision</i><b>'+eur(r.prov)+'</b></div>'
-      +   '<div class="rs-r"><i>Lieferung (mein Teil)</i><b>'+eur(r.fee)+'</b></div>'
-      +   '<div class="rs-r tot"><i>Bringt mir zusammen</i><b>'+eur(r.gesamt)+'</b></div>'
-      + '</div>'
-      + '</div>';
-  }).join('');
-
-  /* ---------- Tag für Tag ---------- */
-  var tage = tageListe();
-  var gT = 0; tage.forEach(function(d){ gT += d.prov + d.fee; });
-  $('tagNote').textContent = tage.length
-    ? tage.length + (tage.length===1 ? ' Tag' : ' Tage') + ' · zusammen ' + eur(gT)
-    : 'noch nichts geliefert';
-  $('tagList').innerHTML = tage.length
-    ? tage.map(function(d){
-        return '<div class="dcard">'
-          + '<div class="dc-h"><b>'+esc(tagName(d.t))+'</b>'
-          +   '<span>'+d.n+(d.n===1?' Lieferung':' Lieferungen')+'</span>'
-          +   '<u>'+eur(d.prov + d.fee)+'</u></div>'
-          + '<div class="dc-g">'
-          +   '<div class="dc-b p"><b>'+eur(d.prov)+'</b><span>Provision</span></div>'
-          +   '<div class="dc-b f"><b>'+eur(d.fee)+'</b><span>Lieferung</span></div>'
-          + '</div>'
-          + '</div>';
-      }).join('')
-    : '<div class="dc-none">Für diesen Zeitraum ist noch keine Bestellung ausgeliefert worden.</div>';
-}
 
 /* ============================================================
-   STATISTIK
-   ============================================================ */
-function geliefert(tage){
-  var von = tagStart((tage||1) - 1);
-  return ORDERS.filter(function(o){ return o.status === 'geliefert' && (o.at||0) >= von; });
-}
-function umsatzDrv(d, tage){
-  var a = geliefert(tage).filter(function(o){
-    return o.driver && (o.driver.uid ? o.driver.uid === d.uid : o.driver.name === d.name);
-  });
-  return { n:a.length, sum:a.reduce(function(s,o){ return s + payout(o); }, 0) };
-}
-function lieferMin(o){
-  if(!o.hist || !o.hist.length) return null;
-  var a = null, b = null;
-  o.hist.forEach(function(h){
-    if(h.s === 'neu') a = h.t;
-    if(h.s === 'geliefert') b = h.t;
-  });
-  if(!a) a = o.at;
-  if(!a || !b || b <= a) return null;
-  var m = (b - a) / 60000;
-  return (m > 0 && m < 300) ? m : null;    /* Ausreißer raus */
-}
-function bars(host, rows, fmt){
-  var el = $(host); if(!el) return;
-  if(!rows.length){ el.innerHTML = '<div class="empty" style="padding:12px">Noch keine Daten.</div>'; return; }
-  var max = Math.max.apply(null, rows.map(function(r){ return r.v; })) || 1;
-  el.innerHTML = rows.map(function(r){
-    return '<div class="bar"><i>'+esc(r.k)+'</i><u><em style="width:'
-         + Math.max(2, Math.round(r.v/max*100)) + '%"></em></u><b>'+fmt(r)+'</b></div>';
-  }).join('');
-}
-function renderStats(){
-  var heute = geliefert(1), woche = geliefert(7);
-  var sum = function(a){ return a.reduce(function(s,o){ return s + (Number(o.total)||0); }, 0); };
-  $('sUms').textContent  = eur(sum(heute));
-  $('sUmsW').textContent = eur(sum(woche));
-  $('sCnt').textContent  = heute.length;
-
-  var mins = woche.map(lieferMin).filter(function(x){ return x !== null; });
-  $('sZeit').textContent = mins.length
-    ? Math.round(mins.reduce(function(s,x){ return s+x; },0)/mins.length) + ' Min' : '—';
-
-  /* Lieferungen je Tag */
-  var days = [];
-  for(var i=6;i>=0;i--){
-    var a = tagStart(i), b = a + 86400000;
-    var n = ORDERS.filter(function(o){ return o.status==='geliefert' && (o.at||0)>=a && (o.at||0)<b; }).length;
-    days.push({ k:(i===0?'heute':wtag(a)+' '+new Date(a).getDate()+'.'), v:n });
-  }
-  bars('barDays', days, function(r){ return r.v + (r.v===1?' Lief.':' Lief.'); });
-
-  /* Umsatz je Fahrer */
-  var drv = DRIVERS.map(function(d){
-    var w = umsatzDrv(d, 7);
-    return { k:(d.name||d.email||'?').split(' ')[0], v:w.sum, n:w.n };
-  }).filter(function(r){ return r.n > 0; }).sort(function(a,b){ return b.v - a.v; });
-  bars('barDrv', drv, function(r){ return eur(r.v); });
-
-  /* Nach Ort */
-  var by = {};
-  woche.forEach(function(o){
-    var t = o.town || (o.stops && o.stops[0] ? o.stops[0].town : '') || 'unbekannt';
-    by[t] = (by[t]||0) + 1;
-  });
-  var towns = Object.keys(by).map(function(k){ return {k:k, v:by[k]}; })
-                    .sort(function(a,b){ return b.v - a.v; });
-  bars('barTown', towns, function(r){ return r.v + ' Lief.'; });
-}
-
-/* ============================================================
-   RENDER
+   ZEICHNEN
    ============================================================ */
 function render(){
-  var aktiv  = DRIVERS.filter(function(d){ return d.active; });
-  var online = aktiv.filter(function(d){ return d.online; });
-  var warten = DRIVERS.filter(function(d){ return !d.active; });
-  /* "offen" = wartet noch: beim Lokal (neu) oder Küche kocht und
-     es hat noch kein Fahrer übernommen (bestaetigt). */
-  var neu    = ORDERS.filter(function(o){ return o.status === 'neu' || o.status === 'bestaetigt'; });
-  var lauf   = ORDERS.filter(function(o){
-    return o.status !== 'neu' && o.status !== 'bestaetigt' &&
-           o.status !== 'geliefert' && o.status !== 'abgelehnt' &&
-           o.status !== 'storniert';
-  });
+  if(!ADMIN_MAIL) return;
+  var lauf = laufend().length;
+  var bl = $('bdgLauf'); bl.textContent = lauf; bl.classList.toggle('hide', lauf === 0);
+  var w  = DRIVERS.filter(function(d){ return !d.active && d.name; }).length;
+  var bw = $('bdgWait'); bw.textContent = w; bw.classList.toggle('hide', w === 0);
 
-  $('kOn').textContent   = online.length;
-  $('kNeu').textContent  = neu.length;
-  $('kLauf').textContent = lauf.length;
-  $('kAkt').textContent  = aktiv.length;
-
-  var bd = $('bdgWait');
-  bd.textContent = warten.length;
-  bd.classList.toggle('hide', warten.length === 0);
-
-  if(TAB === 'Live'){
-    mapDraw();
-    $('drvNote').textContent = online.length + ' von ' + aktiv.length + ' online';
-    $('liveList').innerHTML = online.length
-      ? online.map(function(d){ return drvCard(d, true); }).join('')
-      : '<div class="empty">Gerade ist kein Fahrer online.</div>';
-  }
-
-  if(TAB === 'Fahrer'){
-    $('allNote').textContent = DRIVERS.length + ' Konten'
-      + (warten.length ? ' · '+warten.length+' wartet auf Freigabe' : '');
-    var sort = DRIVERS.slice().sort(function(a,b){
-      if(!!a.active !== !!b.active) return a.active ? 1 : -1;      /* Wartende zuerst */
-      if(!!a.online !== !!b.online) return a.online ? -1 : 1;
-      return String(a.name||'').localeCompare(String(b.name||''));
-    });
-    $('drvList').innerHTML = sort.length
-      ? sort.map(function(d){ return drvCard(d, false); }).join('')
-      : '<div class="empty">Noch keine Fahrer registriert.</div>';
-  }
-
-  if(TAB === 'Orders'){
-    var list = ORDERS.slice(0, 60);
-    $('ordNote').textContent = neu.length + ' offen · ' + lauf.length + ' laufend';
-    $('ordList').innerHTML = list.length ? list.map(function(o){
-      var st = o.stops && o.stops.length ? o.stops.map(function(s){ return s.rest || s.name || ''; }).join(' + ') : '—';
-      return '<div class="oc">'
-        + '<div class="oc-h"><span class="oc-id">'+esc(o.id)+'</span>'
-        +   '<span class="st '+stClass(o.status)+'">'+esc(ST_TXT[o.status]||o.status)+'</span></div>'
-        + '<p class="oc-b">'+esc(st)+'</p>'
-        + '<div class="oc-s">📍 '+esc(o.town||'—')+' '+esc(o.street||'')+' · '+uhr(o.at)+' Uhr</div>'
-        + '<div class="oc-s">'+(o.driver ? '🧑‍🍳 '+esc(o.driver.name||'—') : '⏳ noch kein Fahrer')+'</div>'
-        + '<div class="oc-f"><span>'+esc(o.pay||'—')+'</span><b>'+eur(o.total)+'</b></div>'
-        + '</div>';
-    }).join('') : '<div class="empty">Noch keine Aufträge.</div>';
-  }
-
-  /* Rote Zahl am Reiter: wie viele Bewerbungen habe ich noch nicht angefasst? */
-  var offen = BEWERB.filter(function(b){ return b.status !== 'erledigt'; }).length;
-  var bb = $('bdgBew');
-  if(bb){ bb.textContent = offen; bb.classList.toggle('hide', offen === 0); }
-
-  if(TAB === 'Rest')  renderRest();
-  if(TAB === 'Bew')   renderBew();
-  if(TAB === 'Stats') renderStats();
-}
-
-/* =====================================================================
-   BEWERBUNGEN
-   ---------------------------------------------------------------------
-   Kommen von der Kundenseite (Zweig "bewerbungen"). Hier steht nur, was
-   ich zum Anrufen brauche: Name, Nummer, Ort, Fahrzeug. Nichts wird
-   gelöscht – „Erledigt“ setzt nur eine Markierung, damit die Liste
-   übersichtlich bleibt.
-   ===================================================================== */
-var BEWERB = [];
-function bewSetzen(id, st){
-  BEWERB.forEach(function(b){ if(b.id === id) b.status = st; });
-  if(FB_OK){ try{ FB_DB.ref('bewerbungen/'+id+'/status').set(st); }catch(e){} }
-  toast(st === 'erledigt' ? 'Als erledigt markiert' : 'Wieder als offen markiert');
-  render();
-}
-function renderBew(){
-  var a = BEWERB.slice().sort(function(x,y){
-    var ex = x.status === 'erledigt' ? 1 : 0, ey = y.status === 'erledigt' ? 1 : 0;
-    if(ex !== ey) return ex - ey;                 /* Offene zuerst */
-    return (y.at||0) - (x.at||0);
-  });
-  var offen = a.filter(function(b){ return b.status !== 'erledigt'; }).length;
-  $('bewNote').textContent = a.length
-    ? a.length + (a.length===1?' Bewerbung':' Bewerbungen') + ' · ' + offen + ' offen'
-    : 'noch keine';
-
-  $('bewList').innerHTML = a.length ? a.map(function(b){
-    var tel = String(b.tel||'').replace(/\s/g,'');
-    var wa  = tel.replace(/\D/g,'').replace(/^0/, '49');
-    var erl = b.status === 'erledigt';
-    return '<div class="dcard'+(erl?' erl':'')+'">'
-      + '<div class="dc-h"><b>'+esc(b.name||'—')+'</b>'
-      +   '<span>'+esc(b.ort||'—')+' · '+esc(b.fzg||'—')+'</span>'
-      +   '<u>'+datum(b.at)+'</u></div>'
-      + (b.text ? '<p class="bw-t">'+esc(b.text)+'</p>' : '')
-      + '<div class="bw-a">'
-      +   '<a class="bw-b tel" href="tel:'+esc(tel)+'">📞 '+esc(b.tel||'')+'</a>'
-      +   '<a class="bw-b wa" href="https://wa.me/'+esc(wa)+'" target="_blank" rel="noopener">💬 WhatsApp</a>'
-      +   '<button class="bw-b ok" onclick="bewSetzen(\''+esc(b.id)+'\',\''+(erl?'neu':'erledigt')+'\')">'
-      +     (erl ? '↩︎ Wieder offen' : '✓ Erledigt') + '</button>'
-      + '</div>'
-      + '</div>';
-  }).join('') : '<div class="dc-none">Noch hat sich niemand beworben.</div>';
-}
-function datum(ms){
-  if(!ms) return '—';
-  var d = new Date(ms);
-  return ('0'+d.getDate()).slice(-2)+'.'+('0'+(d.getMonth()+1)).slice(-2)+'. · '+uhr(ms)+' Uhr';
+  if(TAB === 'Jetzt')  renderJetzt();
+  if(TAB === 'Fahrer') renderFahrer();
+  if(TAB === 'Geld')   renderGeld();
 }
 
 /* ============================================================
-   DATEN
+   DATEN LESEN
    ============================================================ */
-var started = false;
-function start(){
-  if(started) return;
-  started = true;
-  mapInit();
-  if(!MAP) setTimeout(function(){ mapInit(); if(!MAP) mapFail(); else mapDraw(); }, 2500);
+function startApp(){
+  $('login').classList.add('hide');
+  $('app').classList.remove('hide');
+
+  FB_DB.ref('.info/connected').on('value', function(s){
+    var on = !!s.val();
+    $('liveDot').classList.toggle('off', !on);
+    $('liveTx').textContent = on ? 'live' : 'offline';
+  });
 
   FB_DB.ref('drivers').on('value', function(snap){
-    var v = snap.val() || {}, a = [];
-    for(var k in v){
-      if(!v[k]) continue;
-      var d = v[k]; d.uid = d.uid || k;
-      a.push(d);
-    }
-    DRIVERS = a;
+    var v = snap.val() || {}, arr = [];
+    for(var k in v){ if(v[k]){ v[k].uid = v[k].uid || k; arr.push(v[k]); } }
+    DRIVERS = arr;
     render();
-  }, function(){ toast('Kein Zugriff auf die Fahrerliste'); });
+  }, function(){ toast('Keine Leseberechtigung für Fahrer'); });
 
   FB_DB.ref('orders').on('value', function(snap){
-    var v = snap.val() || {}, a = [];
-    for(var k in v){ if(v[k] && v[k].id) a.push(v[k]); }
-    a.sort(function(x,y){ return (y.at||0)-(x.at||0); });
-    ORDERS = a;
+    var v = snap.val() || {}, arr = [];
+    for(var k in v){ if(v[k] && v[k].id) arr.push(v[k]); }
+    arr.sort(function(x,y){ return (y.at||0) - (x.at||0); });
+    ORDERS = arr;
     render();
-  }, function(){ toast('Kein Zugriff auf die Aufträge'); });
+  }, function(){ toast('Keine Leseberechtigung für Bestellungen'); });
 
-  /* Provisionssätze – auf jedem Gerät gleich. Fehlt einer, gelten 15 %. */
   FB_DB.ref('rates').on('value', function(snap){
     var v = snap.val() || {};
-    for(var k in v){ if(typeof v[k] === 'number') RATES[k] = v[k]; }
+    for(var k in v) if(typeof v[k] === 'number') RATES[k] = v[k];
     try{ localStorage.setItem(BX_RATES, JSON.stringify(RATES)); }catch(e){}
-    render();
-  }, function(){ /* kein Zugriff -> es gilt der lokale Stand */ });
-
-  /* Bewerbungen von der Kundenseite */
-  FB_DB.ref('bewerbungen').on('value', function(snap){
-    var v = snap.val() || {}, a = [];
-    for(var k in v){ if(v[k] && v[k].id) a.push(v[k]); }
-    BEWERB = a;
-    render();
-  }, function(){ /* kein Zugriff -> Liste bleibt leer */ });
-
-  /* Nur zur Anzeige: welches Lokal hat gerade offen? */
-  FB_DB.ref('shops').on('value', function(snap){
-    SHOPSTATE = snap.val() || {};
     render();
   }, function(){});
 
-  /* „vor 3 Min“ soll mitlaufen, auch wenn nichts Neues kommt */
+  FB_DB.ref('shops').on('value', function(snap){ SHOPSTATE = snap.val() || {}; render(); }, function(){});
+
+  /* Zeitangaben wie "seit 7 Min" müssen von selbst weiterlaufen. */
   setInterval(render, 20000);
+  render();
 }
 
-/* ============================================================
-   START
-   ============================================================ */
 function onAuth(u){
-  if(!u){
-    ADMIN_MAIL = '';
-    $('login').classList.remove('hide');
-    $('app').classList.add('hide');
-    return;
-  }
-  var mail = (u.email||'').toLowerCase();
+  if(!u){ ADMIN_MAIL = ''; stage('lgAuth'); return; }
+  var mail = (u.email || '').toLowerCase();
   if(ADMIN_EMAILS.indexOf(mail) < 0){
-    /* WICHTIG: hier NICHT abmelden!
-       Firebase teilt die Anmeldung auf der ganzen Domain. Ein signOut() hier
-       hat auch restaurant.html und fahrer.html in anderen Tabs rausgeworfen –
-       genau das war der Fehler "ich melde mich an und fliege sofort raus".
-       Wir zeigen nur den Hinweis; abgemeldet wird nur per Knopf. */
-    $('login').classList.remove('hide');
-    $('app').classList.add('hide');
-    authErr('Dieses Konto ('+mail+') hat keinen Zugang zur Zentrale. '+
-            'Wenn du dich als Zentrale anmelden willst, erst abmelden.');
+    $('noMail').textContent = mail;
+    stage('lgNo');
     return;
   }
   ADMIN_MAIL = mail;
-  $('topMail').textContent = mail;
-  authErr('');
-  $('login').classList.add('hide');
-  $('app').classList.remove('hide');
-  start();
-  setTimeout(function(){ if(MAP) MAP.invalidateSize(); }, 120);
+  startApp();
 }
 
-document.addEventListener('keydown', function(e){
-  if(e.key === 'Enter' && !$('login').classList.contains('hide')) doAuth();
-});
+/* Zurück aus einer anderen App: sofort frische Zahlen. */
+document.addEventListener('visibilitychange', function(){ if(!document.hidden) render(); });
+window.addEventListener('pageshow', function(){ render(); });
 
-if(FB_OK){
-  FB_AUTH.onAuthStateChanged(onAuth);
-}else{
-  authErr('Keine Verbindung zum Server. Bitte Seite neu laden.');
-}
+if(FB_OK && FB_AUTH){ FB_AUTH.onAuthStateChanged(onAuth); }
+else { stage('lgOff'); }
 </script>
 </body>
 </html>
