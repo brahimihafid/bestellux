@@ -471,6 +471,13 @@ function tagStart(off){
   return d.getTime() - (off||0)*86400000;
 }
 function minSeit(t){ return t ? Math.max(0, Math.round((Date.now()-t)/60000)) : 0; }
+/* "7183 Min" kann kein Mensch lesen. Ab 90 Minuten Stunden, ab 2 Tagen Tage. */
+function dauer(t){
+  var m = minSeit(t);
+  if(m < 90)   return m + ' Min';
+  if(m < 2880) return Math.round(m/60) + ' Std';
+  return Math.round(m/1440) + ' Tagen';
+}
 function initials(n){
   var p = String(n||'').trim().split(/\s+/).filter(Boolean);
   if(!p.length) return '??';
@@ -728,26 +735,33 @@ function renderJetzt(){
     '</div>';
 
   /* -- Achtung-Zeilen: nur was wirklich klemmt ------------------------ */
+  /* Jede Alarmzeile ist ANKLICKBAR und öffnet genau die Bestellung, um die
+     es geht. Ein Hinweis, den man nicht antippen kann, ist nur Lärm. */
   var alarm = [];
   wartetLokal.forEach(function(o){
-    if(minSeit(o.at) >= 5) alarm.push('⚠️ '+esc(lokaleVon(o))+' hat seit '+minSeit(o.at)+
-      ' Min nicht geantwortet · '+esc(o.id));
+    if(minSeit(o.at) >= 5) alarm.push({ id:o.id,
+      t:'⚠️ '+esc(lokaleVon(o))+' hat seit '+dauer(o.at)+' nicht geantwortet' });
   });
   suchtFahrer.forEach(function(o){
     var m = minSeit(freiSeit(o));
-    if(istFertig(o))
-      alarm.push('🔥 Das Essen steht seit '+minSeit(o.prepEnd||freiSeit(o))+' Min fertig bei '+
-                 esc(lokaleVon(o))+' – kein Fahrer hat den Auftrag genommen · '+esc(o.id));
-    else if(m >= 3)
-      alarm.push('⚠️ Sucht seit '+m+' Min einen Fahrer · '+esc(o.id));
+    if(istFertig(o)) alarm.push({ id:o.id,
+      t:'🔥 Essen steht seit '+dauer(o.prepEnd||freiSeit(o))+' fertig bei '+esc(lokaleVon(o))+
+        ' – kein Fahrer hat den Auftrag genommen' });
+    else if(m >= 3) alarm.push({ id:o.id,
+      t:'⚠️ Sucht seit '+dauer(freiSeit(o))+' einen Fahrer · '+esc(lokaleVon(o)) });
   });
   if(suchtFahrer.length && !frei.length)
-    alarm.push('⚠️ Es sind Aufträge offen, aber kein Fahrer ist online.');
+    alarm.push({ id:null, t:'⚠️ Es sind Aufträge offen, aber kein Fahrer ist online.' });
+
   if(alarm.length){
-    out += '<h2 class="sec">Das braucht dich<em>'+alarm.length+
-      (alarm.length===1?' Sache':' Sachen')+' hängen gerade</em></h2>'+
+    out += '<h2 class="sec">Das braucht dich<em>Tipp eine Zeile an – dann kannst du '+
+      'anrufen, freigeben, stornieren oder löschen</em></h2>'+
       alarm.map(function(a){
-        return '<div class="row no" style="opacity:1;font-size:13.5px;font-weight:700;line-height:1.5">'+a+'</div>';
+        return '<div class="row no" style="opacity:1;font-size:13.5px;font-weight:700;'+
+          'line-height:1.5'+(a.id?';cursor:pointer':'')+'"'+
+          (a.id ? ' onclick="openOrder(\''+esc(a.id)+'\')"' : '')+'>'+
+          a.t + (a.id ? ' <span style="color:var(--tx3)">· '+esc(a.id)+' ›</span>' : '')+
+        '</div>';
       }).join('');
   }
   /* Im Browser-Tab sichtbar machen, wie viel hängt. So siehst du es auch,
@@ -755,23 +769,40 @@ function renderJetzt(){
   document.title = (alarm.length ? '('+alarm.length+') ' : '') + 'Bestellux Zentrale';
 
   /* -- Alles, was gerade läuft --------------------------------------- */
+  var laufSort = lauf.slice().sort(function(a,b){ return (a.at||0)-(b.at||0); });
   out += '<h2 class="sec">Läuft gerade<em>'+lauf.length+
-         (lauf.length===1?' Bestellung':' Bestellungen')+' offen</em></h2>';
+         (lauf.length===1?' Bestellung':' Bestellungen')+' offen · '+
+         (AUSWAHL ? 'Häkchen setzen und löschen' : 'tipp eine an')+'</em></h2>';
+  if(lauf.length){
+    out += '<div class="tools">'+
+      (AUSWAHL
+        ? '<button onclick=\'selAlle('+JSON.stringify(laufSort.map(function(o){return o.id;}))+')\'>Alle '+lauf.length+'</button>'+
+          '<button onclick="selKeine()">Keine</button>'+
+          '<button class="'+(selAnzahl()?'gold':'')+'" '+(selAnzahl()?'':'disabled ')+
+            'onclick="selLoeschen()" style="flex:1">🗑 '+selAnzahl()+' löschen</button>'+
+          '<button onclick="selAus()">Abbrechen</button>'
+        : '<button onclick="selAn()" style="flex:1">🗑 Mehrere löschen (Testbestellungen aufräumen)</button>')+
+    '</div>';
+  }
   if(!lauf.length){
     out += '<div class="empty"><span class="ic">☕</span>Nichts offen. Alles ausgeliefert.</div>';
   } else {
-    out += lauf.slice().sort(function(a,b){ return (a.at||0)-(b.at||0); }).map(function(o){
+    out += laufSort.map(function(o){
       var fahrer = o.driver ? o.driver.name : null;
       var lage   = (o.status === 'bestaetigt' && istFertig(o))
                  ? '✅ Essen fertig · Fahrer gesucht'
                  : (ST_TXT[o.status] || o.status);
-      return '<div class="row '+stClass(o.status)+'" style="cursor:pointer" '+
-        'onclick="openOrder(\''+esc(o.id)+'\')">'+
-        '<div class="av" style="font-size:17px">'+(o.status==='neu'?'🔔':(o.status==='bestaetigt'?'👨‍🍳':'🛵'))+'</div>'+
+      var an = !!SEL[o.id];
+      return '<div class="row '+stClass(o.status)+'" style="cursor:pointer'+
+        (an ? ';border-color:var(--yellow);background:rgba(255,184,0,.07)' : '')+'" '+
+        'onclick="'+(AUSWAHL ? 'selTog(\''+esc(o.id)+'\')' : 'openOrder(\''+esc(o.id)+'\')')+'">'+
+        '<div class="av" style="font-size:17px'+(an?';background:var(--yellow);color:#241C00':'')+'">'+
+          (AUSWAHL ? (an ? '✓' : '')
+                   : (o.status==='neu'?'🔔':(o.status==='bestaetigt'?'👨‍🍳':'🛵')))+'</div>'+
         '<div class="mid">'+
           '<div class="nm"><b>'+esc(lokaleVon(o))+' → '+esc(o.town||'–')+'</b></div>'+
           '<span class="sub">'+esc(lage)+
-            (fahrer ? ' · '+esc(fahrer) : '')+' · seit '+minSeit(o.at)+' Min</span>'+
+            (fahrer ? ' · '+esc(fahrer) : '')+' · seit '+dauer(o.at)+'</span>'+
         '</div>'+
         '<div class="rt"><b>'+eur(o.total)+'</b><span>'+esc(o.id.replace('BX-',''))+'</span></div>'+
       '</div>';
@@ -944,7 +975,7 @@ function openOrder(id){
     '<div class="grip"></div>'+
     '<h3>'+esc(o.id)+'</h3>'+
     '<div class="sh-sub">'+esc(ST_TXT[o.status]||o.status)+' · '+uhr(o.at)+' Uhr · seit '+
-      minSeit(o.at)+' Min</div>'+
+      dauer(o.at)+'</div>'+
 
     waren +
 
@@ -1044,11 +1075,11 @@ function loeschen(id){
    einmal löschen.
    ===================================================================== */
 var AUSWAHL = false, SEL = {};
-function selAn(){ AUSWAHL = true;  SEL = {}; renderGeld(); }
-function selAus(){ AUSWAHL = false; SEL = {}; renderGeld(); }
-function selTog(id){ if(SEL[id]) delete SEL[id]; else SEL[id] = 1; renderGeld(); }
-function selAlle(ids){ ids.forEach(function(i){ SEL[i] = 1; }); renderGeld(); }
-function selKeine(){ SEL = {}; renderGeld(); }
+function selAn(){ AUSWAHL = true;  SEL = {}; render(); }
+function selAus(){ AUSWAHL = false; SEL = {}; render(); }
+function selTog(id){ if(SEL[id]) delete SEL[id]; else SEL[id] = 1; render(); }
+function selAlle(ids){ ids.forEach(function(i){ SEL[i] = 1; }); render(); }
+function selKeine(){ SEL = {}; render(); }
 function selAnzahl(){ return Object.keys(SEL).length; }
 
 function selLoeschen(){
@@ -1065,7 +1096,7 @@ function selLoeschen(){
   var up = {};
   ids.forEach(function(i){ up['orders/'+i] = null; });
   FB_DB.ref().update(up)
-    .then(function(){ SEL = {}; AUSWAHL = false; toast('🗑 '+ids.length+' gelöscht'); })
+    .then(function(){ SEL = {}; AUSWAHL = false; render(); toast('🗑 '+ids.length+' gelöscht'); })
     .catch(function(){ toast('Ging nicht – Verbindung prüfen'); });
 }
 
