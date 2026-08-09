@@ -16,7 +16,7 @@
 </script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="theme-color" content="#FFB800">
-<title>Bestellux – Essen schnell geliefert in Langwedel, Etelsen & Verden</title>
+<title>Bestellux – Essen aus deiner Stadt, schnell geliefert</title>
 <!-- PWA: macht die Seite "installierbar" (Startbildschirm, eigenes Fenster ohne Browserleiste) -->
 <link rel="manifest" href="manifest.json">
 <link rel="icon" href="icon-192.png">
@@ -532,12 +532,16 @@
     <!-- Animated promo strip -->
     <div class="promo-marquee">
       <div class="promo-track">
-        <span>🛵 <b>Bestellux</b> – auch in <b>Etelsen &amp; Langwedel</b></span>
-        <span>🛍️ <b>Bestellux</b>: mehrere Restaurants, <b>eine Lieferung</b></span>
-        <span>🎁 5 Lieferungen bei <b>Bestellux</b> – die <b>6. ohne Liefergebühr</b></span>
-        <span>🛵 <b>Bestellux</b> – auch in <b>Etelsen &amp; Langwedel</b></span>
-        <span>🛍️ <b>Bestellux</b>: mehrere Restaurants, <b>eine Lieferung</b></span>
-        <span>🎁 5 Lieferungen bei <b>Bestellux</b> – die <b>6. ohne Liefergebühr</b></span>
+        <span>🎁 <b>5 € Rabatt</b> auf die erste Bestellung – Code <b>START5</b>, ab 20 € Bestellwert</span>
+        <span>🛍️ Mehrere Restaurants, <b>eine Lieferung</b> – das kann sonst kaum jemand</span>
+        <span>💶 <b>Bar oder mit Karte</b> bezahlen an der Tür – keine App, kein Konto</span>
+        <span>🤝 Dein Geld bleibt <b>im Ort</b> – wir fahren für die Lokale nebenan</span>
+        <span>🎁 5 Lieferungen – die <b>6. ohne Liefergebühr</b></span>
+        <span>🎁 <b>5 € Rabatt</b> auf die erste Bestellung – Code <b>START5</b>, ab 20 € Bestellwert</span>
+        <span>🛍️ Mehrere Restaurants, <b>eine Lieferung</b> – das kann sonst kaum jemand</span>
+        <span>💶 <b>Bar oder mit Karte</b> bezahlen an der Tür – keine App, kein Konto</span>
+        <span>🤝 Dein Geld bleibt <b>im Ort</b> – wir fahren für die Lokale nebenan</span>
+        <span>🎁 5 Lieferungen – die <b>6. ohne Liefergebühr</b></span>
       </div>
     </div>
 
@@ -546,7 +550,7 @@
       <div class="hero-content">
         <div class="hero-eyebrow">🛵 Essen schnell geliefert</div>
         <h1 class="hero-title">Dein Lieblingsessen,<br>heiß &amp; frisch zu dir.</h1>
-        <p class="hero-sub">Bestell aus deinen Lieblingsrestaurants in Langwedel, Etelsen &amp; Verden – schnell, frisch und persönlich.</p>
+        <p class="hero-sub">Bestell bei den Restaurants aus deiner Nachbarschaft – schnell, frisch und persönlich.</p>
         <button class="hero-cta" onclick="document.getElementById('restList').scrollIntoView({behavior:'smooth'})">Jetzt bestellen →</button>
       </div>
       <div class="hero-photo">
@@ -582,7 +586,7 @@
     <div class="section-label" style="margin-top:22px;"><h2>Warum Bestellux?</h2></div>
     <div class="perk-scroll">
       <div class="perk-card hl"><div class="perk-icon">🛍️</div><h3>Mehrere Restaurants, eine Lieferung</h3><p>Kombiniere Burger, Pizza &amp; Dessert in einer einzigen Bestellung.</p></div>
-      <div class="perk-card"><div class="perk-icon">📍</div><h3>Auch in Etelsen &amp; Langwedel</h3><p>Wir liefern dort, wo andere gar nicht erst anfangen.</p></div>
+      <div class="perk-card"><div class="perk-icon">📍</div><h3>Auch in kleinen Orten</h3><p>Wir liefern dort, wo andere gar nicht erst anfangen.</p></div>
       <div class="perk-card"><div class="perk-icon">🕒</div><h3>Schnell da</h3><p>Im Schnitt in etwa 25 Minuten bei dir.</p></div>
       <div class="perk-card"><div class="perk-icon">🛵</div><h3>Live-Tracking</h3><p>Sieh genau, wo dein Fahrer gerade ist.</p></div>
       <div class="perk-card"><div class="perk-icon">💵</div><h3>Bargeld oder Karte</h3><p>Zahl bei Lieferung, wie es dir passt.</p></div>
@@ -606,7 +610,7 @@
       <div class="step-mini"><div class="num">4</div><div><h4>Fahrer live verfolgen</h4><p>Bis es an der Tür klingelt.</p></div></div>
     </div>
 
-    <p style="text-align:center;font-size:11px;color:var(--gray);margin-top:26px;">© 2026 Bestellux · Essen schnell geliefert · Langwedel, Etelsen &amp; Verden<br>Demo-Prototyp · nicht live geschaltet</p>
+    <p style="text-align:center;font-size:11px;color:var(--gray);margin-top:26px;">© 2026 Bestellux · Essen schnell geliefert<br>Demo-Prototyp · nicht live geschaltet</p>
   </div>
 
   <div class="tabbar">
@@ -3289,6 +3293,14 @@ function renderFallbackTrack(mapDiv, restaurants, townTo, farthest){
 /* ===== I18N DICT START ===== */
 const I18N = {
 en: {
+  "🎁 <b>5 € Rabatt</b> auf die erste Bestellung – Code <b>START5</b>, ab 20 € Bestellwert": "🎁 <b>€5 off</b> your first order – code <b>START5</b>, from €20 order value",
+  "🛍️ Mehrere Restaurants, <b>eine Lieferung</b> – das kann sonst kaum jemand": "🛍️ Several restaurants, <b>one delivery</b> – hardly anyone else does that",
+  "💶 <b>Bar oder mit Karte</b> bezahlen an der Tür – keine App, kein Konto": "💶 <b>Pay cash or by card</b> at the door – no app, no account",
+  "🤝 Dein Geld bleibt <b>im Ort</b> – wir fahren für die Lokale nebenan": "🤝 Your money stays <b>local</b> – we drive for the places next door",
+  "🎁 5 Lieferungen – die <b>6. ohne Liefergebühr</b>": "🎁 5 deliveries – the <b>6th with no delivery fee</b>",
+  "Bestell bei den Restaurants aus deiner Nachbarschaft – schnell, frisch und persönlich.": "Order from the restaurants in your neighbourhood – fast, fresh and personal.",
+  "Auch in kleinen Orten": "Also in small towns",
+  "Bestellux – Essen aus deiner Stadt, schnell geliefert": "Bestellux – food from your town, delivered fast",
   "ab 2,50 €": "from €2.50",
   "Warum Bestellux?": "Why Bestellux?",
   "✨ Neu": "✨ New",
@@ -3403,7 +3415,7 @@ en: {
   "Alle Details direkt in deinem Chat.": "All details right in your chat.",
   "Fahrer live verfolgen": "Follow the driver live",
   "Bis es an der Tür klingelt.": "Until the doorbell rings.",
-  "© 2026 Bestellux · Essen schnell geliefert · Langwedel, Etelsen &amp; Verden<br>Demo-Prototyp · nicht live geschaltet": "© 2026 Bestellux · Food delivered fast · Langwedel, Etelsen &amp; Verden<br>Demo prototype · not live yet",
+  "© 2026 Bestellux · Essen schnell geliefert<br>Demo-Prototyp · nicht live geschaltet": "© 2026 Bestellux · Food delivered fast<br>Demo prototype · not live yet",
   "Start": "Home",
   "Warenkorb": "Cart",
   "Reklamation": "Complaint",
@@ -3698,8 +3710,6 @@ en: {
   "Mozzarella · Ø32 cm: 12,50 €": "Mozzarella · Ø32 cm: 12,50 €",
   "Türk. Knoblauchwurst · Ø32 cm: 14,00 €": "Turkish garlic sausage · Ø32 cm: 14,00 €",
   "Drehspieß-Fleisch · Ø32 cm: 14,00 €": "Kebab meat · Ø32 cm: 14,00 €",
-  "Bestellux – Essen schnell geliefert in Langwedel, Etelsen &amp; Verden": "Bestellux – food delivered fast in Langwedel, Etelsen &amp; Verden",
-  "Bestellux – Essen schnell geliefert in Langwedel, Etelsen & Verden": "Bestellux – food delivered fast in Langwedel, Etelsen & Verden",
   "🛵 <b>Bestellux</b> – auch in <b>Etelsen &amp; Langwedel</b>": "🛵 <b>Bestellux</b> – also in <b>Etelsen &amp; Langwedel</b>",
   "🛍️ <b>Bestellux</b>: mehrere Restaurants, <b>eine Lieferung</b>": "🛍️ <b>Bestellux</b>: several restaurants, <b>one delivery</b>",
   "🎁 5 Lieferungen bei <b>Bestellux</b> – die <b>6. ohne Liefergebühr</b>": "🎁 5 deliveries with <b>Bestellux</b> – the <b>6th with no delivery fee</b>",
@@ -3754,6 +3764,14 @@ en: {
   "Bitte wähle aus, womit du fahren möchtest.": "Please choose what you would like to drive."
 },
 ar: {
+  "🎁 <b>5 € Rabatt</b> auf die erste Bestellung – Code <b>START5</b>, ab 20 € Bestellwert": "🎁 خصم <b>5 يورو</b> على أول طلب – الرمز <b>START5</b>، ابتداءً من 20 يورو",
+  "🛍️ Mehrere Restaurants, <b>eine Lieferung</b> – das kann sonst kaum jemand": "🛍️ عدة مطاعم، <b>توصيل واحد</b> – قلّ من يقدر على ذلك",
+  "💶 <b>Bar oder mit Karte</b> bezahlen an der Tür – keine App, kein Konto": "💶 <b>الدفع نقداً أو بالبطاقة</b> عند الباب – بدون تطبيق ولا حساب",
+  "🤝 Dein Geld bleibt <b>im Ort</b> – wir fahren für die Lokale nebenan": "🤝 أموالك تبقى <b>في مدينتك</b> – نوصّل لمطاعم الحي",
+  "🎁 5 Lieferungen – die <b>6. ohne Liefergebühr</b>": "🎁 خمس توصيلات – <b>السادسة بدون رسوم توصيل</b>",
+  "Bestell bei den Restaurants aus deiner Nachbarschaft – schnell, frisch und persönlich.": "اطلب من مطاعم حيّك – بسرعة، طازج وبخدمة شخصية.",
+  "Auch in kleinen Orten": "حتى في المدن الصغيرة",
+  "Bestellux – Essen aus deiner Stadt, schnell geliefert": "Bestellux – طعام من مدينتك، يصل بسرعة",
   "ab 2,50 €": "ابتداءً من 2,50 €",
   "Warum Bestellux?": "لماذا Bestellux؟",
   "✨ Neu": "✨ جديد",
@@ -3868,7 +3886,7 @@ ar: {
   "Alle Details direkt in deinem Chat.": "كل التفاصيل مباشرة في محادثتك.",
   "Fahrer live verfolgen": "تابع السائق مباشرة",
   "Bis es an der Tür klingelt.": "حتى يرن جرس بابك.",
-  "© 2026 Bestellux · Essen schnell geliefert · Langwedel, Etelsen &amp; Verden<br>Demo-Prototyp · nicht live geschaltet": "© 2026 Bestellux · طعام يصلك بسرعة · Langwedel، Etelsen و Verden<br>نموذج تجريبي · غير مفعّل بعد",
+  "© 2026 Bestellux · Essen schnell geliefert<br>Demo-Prototyp · nicht live geschaltet": "© 2026 Bestellux · طعام يصلك بسرعة<br>نموذج تجريبي · غير مفعّل بعد",
   "Start": "الرئيسية",
   "Warenkorb": "السلة",
   "Reklamation": "شكوى",
@@ -4163,8 +4181,6 @@ ar: {
   "Mozzarella · Ø32 cm: 12,50 €": "موزاريلا · Ø32 سم: 12,50 €",
   "Türk. Knoblauchwurst · Ø32 cm: 14,00 €": "سجق تركي بالثوم · Ø32 سم: 14,00 €",
   "Drehspieß-Fleisch · Ø32 cm: 14,00 €": "لحم شاورما · Ø32 سم: 14,00 €",
-  "Bestellux – Essen schnell geliefert in Langwedel, Etelsen &amp; Verden": "Bestellux – طعام يصلك بسرعة في Langwedel و Etelsen و Verden",
-  "Bestellux – Essen schnell geliefert in Langwedel, Etelsen & Verden": "Bestellux – طعام يصلك بسرعة في Langwedel و Etelsen و Verden",
   "🛵 <b>Bestellux</b> – auch in <b>Etelsen &amp; Langwedel</b>": "🛵 <b>Bestellux</b> – أيضاً في <b>Etelsen و Langwedel</b>",
   "🛍️ <b>Bestellux</b>: mehrere Restaurants, <b>eine Lieferung</b>": "🛍️ <b>Bestellux</b>: عدة مطاعم، <b>توصيلة واحدة</b>",
   "🎁 5 Lieferungen bei <b>Bestellux</b> – die <b>6. ohne Liefergebühr</b>": "🎁 5 توصيلات مع <b>Bestellux</b> – والـ<b>6 بدون رسوم توصيل</b>",
