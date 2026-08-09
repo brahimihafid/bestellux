@@ -356,6 +356,17 @@ body.online .sw::after{transform:translateX(28px);}
 }
 
 /* ================= TOAST ================= */
+/* Roter Balken ganz oben, solange etwas nicht beim Server angekommen ist. */
+#syncBar{display:none;}
+#syncBar.on{
+  display:flex;position:fixed;left:0;right:0;top:0;z-index:500;align-items:center;gap:10px;
+  background:#B3261E;color:#fff;padding:calc(9px + env(safe-area-inset-top)) 14px 9px;
+  font-size:13px;font-weight:800;line-height:1.35;box-shadow:0 4px 16px rgba(0,0,0,.45);
+}
+#syncBar span{flex:1;}
+#syncBar button{background:rgba(255,255,255,.2);color:#fff;border-radius:9px;
+  padding:8px 12px;font-size:12.5px;font-weight:900;white-space:nowrap;}
+
 #toast{
   position:fixed;left:50%;transform:translateX(-50%) translateY(-140%);
   top:calc(12px + env(safe-area-inset-top));z-index:900;
@@ -595,16 +606,64 @@ function bxSave(a){
   if(a.length > 80) a.length = 80;
   try{ localStorage.setItem(BX_ORDERS, JSON.stringify(a.slice(0,80))); }catch(e){}
   if(!FB_OK) return;
-  try{
-    var up = {}, n = 0;
-    for(var i=0;i<a.length;i++){
-      var o = a[i]; if(!o || !o.id) continue;
-      var js = JSON.stringify(o);
-      if(FB_SNAP[o.id] !== js){ FB_SNAP[o.id] = js; up['orders/'+o.id] = o; n++; }
-    }
-    if(n) FB_DB.ref().update(up);
-  }catch(e){}
+  var up = {}, ids = [], n = 0;
+  for(var i=0;i<a.length;i++){
+    var o = a[i]; if(!o || !o.id) continue;
+    var js = JSON.stringify(o);
+    if(FB_SNAP[o.id] !== js){ up['orders/'+o.id] = o; ids.push([o.id, js]); n++; }
+  }
+  if(!n) return;
+  sendeUpdate(up, ids);
 }
+
+/* =====================================================================
+   SPEICHERN MIT QUITTUNG
+   ---------------------------------------------------------------------
+   Ein Fahrer tippt "Geliefert", steckt das Handy ein und fährt weiter.
+   Wenn dieser eine Schreibvorgang im Funkloch verlorengeht und niemand
+   es sagt, steht die Bestellung für immer auf "unterwegs" und am Abend
+   stimmt sein Verdienst nicht.
+   Darum: FB_SNAP erst nach der Bestätigung setzen, automatisch bis zu
+   5× wiederholen, und solange etwas offen ist, oben einen roten Balken
+   zeigen. Kommt das Netz zurück, geht es sofort raus.
+   ===================================================================== */
+var SYNC_OFFEN = null, SYNC_VERSUCHE = 0;
+function syncBanner(an, txt){
+  var el = document.getElementById('syncBar');
+  if(!el){
+    if(!an) return;
+    el = document.createElement('div');
+    el.id = 'syncBar';
+    document.body.appendChild(el);
+  }
+  el.className = an ? 'on' : '';
+  if(an) el.innerHTML = '<span>⚠️ '+esc(txt||'Nicht gespeichert')+'</span>'+
+    '<button onclick="syncNochmal()">Nochmal</button>';
+}
+function syncNochmal(){
+  if(!SYNC_OFFEN){ syncBanner(false); return; }
+  SYNC_VERSUCHE = 0;
+  sendeUpdate(SYNC_OFFEN.up, SYNC_OFFEN.ids);
+}
+function sendeUpdate(up, ids){
+  FB_DB.ref().update(up).then(function(){
+    for(var i=0;i<ids.length;i++) FB_SNAP[ids[i][0]] = ids[i][1];
+    SYNC_OFFEN = null; SYNC_VERSUCHE = 0;
+    syncBanner(false);
+  }).catch(function(){
+    SYNC_OFFEN = { up:up, ids:ids };
+    SYNC_VERSUCHE++;
+    syncBanner(true, SYNC_VERSUCHE >= 5
+      ? 'Nicht gespeichert! Prüf dein Internet und tipp auf Nochmal.'
+      : 'Wird noch gesendet … ('+SYNC_VERSUCHE+'/5)');
+    if(SYNC_VERSUCHE < 5){
+      setTimeout(function(){
+        if(SYNC_OFFEN) sendeUpdate(SYNC_OFFEN.up, SYNC_OFFEN.ids);
+      }, Math.min(8000, 900*SYNC_VERSUCHE));
+    }
+  });
+}
+window.addEventListener('online', function(){ if(SYNC_OFFEN) syncNochmal(); });
 function bxUpdate(id, fn){
   const a = bxLoad(); const i = a.findIndex(o=>o.id===id);
   if(i<0) return null;
@@ -665,17 +724,21 @@ function stepIdx(st){ const i = STEPS.findIndex(x=>x.k===st); return i<0?-1:i; }
    schreibt dieses Feld nie. */
 let ME = null;
 try{ ME = JSON.parse(localStorage.getItem(BX_DRIVER)||'null'); }catch(e){ ME = null; }
+/* Das Profil MUSS ankommen: aus "Ich bin gerade in" ergibt sich, welche
+   Auftraege dieser Fahrer mit 30 Sekunden Vorsprung bekommt. Bliebe hier
+   ein alter Ort stehen, wuerde er dauerhaft die falschen Auftraege sehen.
+   Darum hier eine echte Meldung, kein stilles Schlucken. */
 function saveMe(){
   try{ localStorage.setItem(BX_DRIVER, JSON.stringify(ME)); }catch(e){}
   if(!FB_OK || !AUTH_UID || !ME) return;
-  try{
-    FB_DB.ref('drivers/'+AUTH_UID).update({
-      uid:AUTH_UID, email:(ME.email||AUTH_MAIL||''),
-      name:(ME.name||''), ini:(ME.ini||''), phone:(ME.phone||''),
-      veh:(ME.veh||''), town:(ME.town||''),
-      online:!!ME.online, lastSeen:Date.now()
-    });
-  }catch(e){}
+  FB_DB.ref('drivers/'+AUTH_UID).update({
+    uid:AUTH_UID, email:(ME.email||AUTH_MAIL||''),
+    name:(ME.name||''), ini:(ME.ini||''), phone:(ME.phone||''),
+    veh:(ME.veh||''), town:(ME.town||''),
+    online:!!ME.online, lastSeen:Date.now()
+  }).catch(function(){
+    toast('⚠️ Profil nicht gespeichert – prüf dein Internet');
+  });
 }
 function isMine(o){
   if(!o || !o.driver || !ME) return false;
@@ -747,7 +810,10 @@ function logout(){
   if(!confirm('Wirklich abmelden?\n\nDu musst dich danach neu mit E-Mail und Passwort anmelden. Zum Feierabend reicht der Schalter "Schicht beenden".')) return;
   if(ME){ ME.online=false; saveMe(); }
   geoStop(); hbStop();
-  try{ if(FB_OK && AUTH_UID) FB_DB.ref('drivers/'+AUTH_UID+'/online').set(false); }catch(e){}
+  /* ABSICHTLICH still: gleich danach wird ohnehin abgemeldet und die Seite
+     neu geladen. Scheitert das Offline-Setzen, faellt der Fahrer nach zwei
+     Minuten ohne Heartbeat von selbst auf "nicht erreichbar". */
+  try{ if(FB_OK && AUTH_UID) FB_DB.ref('drivers/'+AUTH_UID+'/online').set(false).catch(function(){}); }catch(e){}
   localStorage.removeItem(BX_DRIVER);
   if(FB_AUTH){ FB_AUTH.signOut().then(function(){ location.reload(); }).catch(function(){ location.reload(); }); }
   else location.reload();
@@ -766,7 +832,9 @@ function geoStart(){
                   acc:Math.round(p.coords.accuracy||0), t:now };
       if(ME) ME.pos = pos;
       if(FB_OK && AUTH_UID){
-        try{ FB_DB.ref('drivers/'+AUTH_UID).update({ pos:pos, lastSeen:now }); }catch(e){}
+        /* ABSICHTLICH still: die Position geht alle 15 Sekunden erneut raus.
+           Eine Meldung pro verlorenem GPS-Punkt waere nur Laerm. */
+        FB_DB.ref('drivers/'+AUTH_UID).update({ pos:pos, lastSeen:now }).catch(function(){});
       }
     }, function(){ /* Fahrer hat GPS abgelehnt – App läuft trotzdem */ },
        { enableHighAccuracy:true, maximumAge:10000, timeout:20000 });
@@ -806,7 +874,11 @@ function startApp(){
 var hbT = null;
 function heartbeat(){
   if(!FB_OK || !AUTH_UID || !ME || !ME.online) return;
-  try{ FB_DB.ref('drivers/'+AUTH_UID).update({ online:true, lastSeen:Date.now() }); }catch(e){}
+  /* ABSICHTLICH still: das hier läuft alle 25 Sekunden von selbst wieder.
+     Eine Fehlermeldung pro Funkloch waere nur Laerm, und beim naechsten
+     Takt ist die Zentrale ohnehin wieder aktuell. */
+  FB_DB.ref('drivers/'+AUTH_UID).update({ online:true, lastSeen:Date.now() })
+    .catch(function(){});
 }
 function hbStart(){ if(hbT===null){ heartbeat(); hbT = setInterval(heartbeat, 25000); } }
 function hbStop(){ if(hbT!==null){ clearInterval(hbT); hbT = null; } }
@@ -867,7 +939,7 @@ function toast(msg){
 /* Steht unten im Profil. Damit sieht man auf dem Handy sofort, ob wirklich
    die neue Fassung läuft – oder ob das Telefon noch eine alte Datei zeigt.
    Bei jedem Hochladen mit der Zahl in sw.js gleichziehen. */
-const APP_VERSION = 'v24 · Zentrale: Auftrag öffnen, stornieren, CSV, löschen';
+const APP_VERSION = 'v25 · Nichts geht mehr still verloren';
 
 const FAHRER_ANTEIL = 0.50;                 /* die Hälfte der Liefergebühr */
 function fahrerLohn(o){

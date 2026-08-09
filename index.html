@@ -1230,11 +1230,58 @@ try{
 
 function bxLoad(){ try{ return JSON.parse(localStorage.getItem(BX_ORDERS)||'[]'); }catch(e){ return []; } }
 function bxSave(a){ try{ localStorage.setItem(BX_ORDERS, JSON.stringify(a.slice(0,80))); }catch(e){} }
+/* =====================================================================
+   DIE BESTELLUNG MUSS WIRKLICH ANKOMMEN
+   ---------------------------------------------------------------------
+   Das war die gefährlichste Stelle der ganzen App. Hier stand:
+       try{ FB_DB.ref('orders/'+o.id).set(o); }catch(e){}
+   Schlug das Schreiben fehl – Funkloch, WLAN weg, Server kurz weg –,
+   dann sah der Kunde trotzdem seine Bestätigungsseite mit Lieferzeit,
+   aber KEIN Lokal und KEIN Fahrer hat die Bestellung je gesehen. Er
+   hätte eine Stunde auf Essen gewartet, das niemand kocht.
+   Jetzt wird bis zu 6× wiederholt, und wenn es endgültig nicht klappt,
+   sagt die App es dem Kunden deutlich und bietet WhatsApp als Notweg an.
+   ===================================================================== */
+var BX_UNGESENDET = null, BX_VERSUCHE = 0;
+
+function bxWarnung(an){
+  var el = document.getElementById('sendWarn');
+  if(!el){
+    if(!an) return;
+    el = document.createElement('div');
+    el.id = 'sendWarn';
+    el.style.cssText = 'position:fixed;left:0;right:0;top:0;z-index:9000;background:#B3261E;'+
+      'color:#fff;padding:calc(11px + env(safe-area-inset-top)) 15px 12px;font-size:13.5px;'+
+      'font-weight:800;line-height:1.45;box-shadow:0 4px 18px rgba(0,0,0,.4)';
+    document.body.appendChild(el);
+  }
+  if(!an){ el.remove(); return; }
+  el.innerHTML = '⚠️ <b>Deine Bestellung ist noch nicht angekommen.</b><br>'+
+    'Wir versuchen es weiter. Bitte prüf deine Internetverbindung und schließe '+
+    'diese Seite noch nicht.<br>'+
+    '<button onclick="bxNochmal()" style="margin-top:9px;background:#fff;color:#B3261E;'+
+    'border-radius:9px;padding:9px 14px;font-size:13px;font-weight:900">Nochmal senden</button>';
+}
+function bxNochmal(){ BX_VERSUCHE = 0; if(BX_UNGESENDET) bxSenden(BX_UNGESENDET); }
+
+function bxSenden(o){
+  FB_DB.ref('orders/'+o.id).set(o).then(function(){
+    BX_UNGESENDET = null; BX_VERSUCHE = 0; bxWarnung(false);
+  }).catch(function(){
+    BX_UNGESENDET = o; BX_VERSUCHE++;
+    if(BX_VERSUCHE >= 3) bxWarnung(true);
+    if(BX_VERSUCHE < 6) setTimeout(function(){
+      if(BX_UNGESENDET) bxSenden(BX_UNGESENDET);
+    }, Math.min(6000, 800*BX_VERSUCHE));
+  });
+}
+
 /* Die Kunden-App schreibt nur ihre EIGENE neue Bestellung – nie alte mit. */
 function bxPush(o){
   const a = bxLoad(); a.unshift(o); bxSave(a);
-  if(FB_OK){ try{ FB_DB.ref('orders/'+o.id).set(o); }catch(e){} }
+  if(FB_OK) bxSenden(o);
 }
+window.addEventListener('online', function(){ if(BX_UNGESENDET) bxNochmal(); });
 var LIVE_O = null;          /* aktueller Stand der eigenen Bestellung aus Firebase */
 function bxGet(id){
   if(LIVE_O && LIVE_O.id===id) return LIVE_O;
@@ -2290,7 +2337,16 @@ function bewSenden(){
     var a = JSON.parse(localStorage.getItem('bx_bew') || '[]');
     a.push(b); localStorage.setItem('bx_bew', JSON.stringify(a));
   }catch(e){}
-  if(FB_OK){ try{ FB_DB.ref('bewerbungen/'+id).set(b); }catch(e){} }
+  /* Auch hier gilt: nur "danke" sagen, wenn es wirklich angekommen ist.
+     Sonst wartet ein Bewerber auf einen Rückruf, den nie jemand sieht. */
+  if(FB_OK){
+    FB_DB.ref('bewerbungen/'+id).set(b).catch(function(){
+      alert('Deine Bewerbung konnte gerade nicht übermittelt werden.\n\n'+
+            'Bitte prüf deine Internetverbindung und schick sie noch einmal ab.');
+      document.getElementById('bewForm').style.display = '';
+      document.getElementById('bewOk').style.display   = 'none';
+    });
+  }
 
   document.getElementById('bewForm').style.display = 'none';
   document.getElementById('bewOk').style.display   = '';

@@ -313,6 +313,21 @@ main{padding:13px 15px 30px;}
 #alertOv .zu .zu-h{padding-top:9px;}
 
 /* ================= TOAST ================= */
+/* Roter Balken ganz oben, solange etwas nicht beim Server angekommen ist.
+   Er verschwindet erst, wenn der Server bestätigt hat – nicht vorher. */
+#syncBar{display:none;}
+#syncBar.on{
+  display:flex;position:fixed;left:0;right:0;top:0;z-index:500;
+  align-items:center;gap:10px;
+  background:#B3261E;color:#fff;padding:calc(9px + env(safe-area-inset-top)) 14px 9px;
+  font-size:13px;font-weight:800;line-height:1.35;box-shadow:0 4px 16px rgba(0,0,0,.45);
+}
+#syncBar span{flex:1;}
+#syncBar button{
+  background:rgba(255,255,255,.2);color:#fff;border-radius:9px;
+  padding:8px 12px;font-size:12.5px;font-weight:900;white-space:nowrap;
+}
+
 #toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom));
   transform:translate(-50%,26px);z-index:950;background:var(--card2);
   border:1px solid var(--line);border-radius:14px;padding:12px 18px;
@@ -405,7 +420,7 @@ main{padding:13px 15px 30px;}
       <img class="bxbar-lg" src="logo-wort-dunkel.png" alt="Bestellux">
       <!-- Version immer sichtbar: so sieht man sofort, ob das Tablet
            noch eine alte Seite aus dem Cache anzeigt. -->
-      <div class="bxbar-tag">Restaurant v24</div>
+      <div class="bxbar-tag">Restaurant v25</div>
     </div>
     <div class="hd-row">
       <div class="hd-av" id="hdAv">BD</div>
@@ -530,19 +545,73 @@ function bxLoad(){
   if(FB_OK) return FB_CACHE;
   try{ return JSON.parse(localStorage.getItem(BX_ORDERS)||'[]'); }catch(e){ return []; }
 }
+/* =====================================================================
+   SPEICHERN MIT QUITTUNG
+   ---------------------------------------------------------------------
+   Vorher stand hier: schreiben und hoffen. Der Fehler daran ist nicht,
+   dass Schreiben mal schiefgeht – das passiert im Funkloch dauernd.
+   Der Fehler ist, dass NIEMAND davon erfuhr: das Lokal sah ein grünes
+   "✓ Angenommen", der Fahrer bekam nie einen Auftrag, und der Kunde
+   wartete auf Essen, das keiner kocht.
+   Zwei Dinge sind darum jetzt anders:
+     1. FB_SNAP wird erst NACH der Bestätigung des Servers gesetzt.
+        Vorher galt eine fehlgeschlagene Änderung sofort als "gesendet"
+        und wurde nie wieder versucht.
+     2. Geht es schief, versucht die App es von selbst noch einmal
+        (5×, mit wachsendem Abstand) und zeigt oben einen roten Balken,
+        solange etwas nicht angekommen ist.
+   ===================================================================== */
+var SYNC_OFFEN = null, SYNC_VERSUCHE = 0;
+
+function syncBanner(an, txt){
+  var el = document.getElementById('syncBar');
+  if(!el){
+    if(!an) return;
+    el = document.createElement('div');
+    el.id = 'syncBar';
+    document.body.appendChild(el);
+  }
+  el.className = an ? 'on' : '';
+  if(an) el.innerHTML = '<span>⚠️ '+esc(txt||'Nicht gespeichert – keine Verbindung')+
+    '</span><button onclick="syncNochmal()">Nochmal senden</button>';
+}
+function syncNochmal(){
+  if(!SYNC_OFFEN){ syncBanner(false); return; }
+  SYNC_VERSUCHE = 0;
+  sendeUpdate(SYNC_OFFEN.up, SYNC_OFFEN.ids);
+}
+function sendeUpdate(up, ids){
+  FB_DB.ref().update(up).then(function(){
+    for(var i=0;i<ids.length;i++) FB_SNAP[ids[i][0]] = ids[i][1];
+    SYNC_OFFEN = null; SYNC_VERSUCHE = 0;
+    syncBanner(false);
+  }).catch(function(err){
+    SYNC_OFFEN = { up:up, ids:ids };
+    SYNC_VERSUCHE++;
+    syncBanner(true, SYNC_VERSUCHE >= 5
+      ? 'Konnte nicht gespeichert werden. Prüft das Internet.'
+      : 'Noch nicht gespeichert – wird erneut versucht ('+SYNC_VERSUCHE+'/5)');
+    if(SYNC_VERSUCHE < 5){
+      setTimeout(function(){
+        if(SYNC_OFFEN) sendeUpdate(SYNC_OFFEN.up, SYNC_OFFEN.ids);
+      }, Math.min(8000, 900*SYNC_VERSUCHE));
+    }
+  });
+}
 function bxSave(a){
   try{ localStorage.setItem(BX_ORDERS, JSON.stringify(a.slice(0,80))); }catch(e){}
   if(!FB_OK) return;
-  try{
-    var up = {}, n = 0;
-    for(var i=0;i<a.length;i++){
-      var o = a[i]; if(!o || !o.id) continue;
-      var js = JSON.stringify(o);
-      if(FB_SNAP[o.id] !== js){ FB_SNAP[o.id] = js; up['orders/'+o.id] = o; n++; }
-    }
-    if(n) FB_DB.ref().update(up);
-  }catch(e){}
+  var up = {}, ids = [], n = 0;
+  for(var i=0;i<a.length;i++){
+    var o = a[i]; if(!o || !o.id) continue;
+    var js = JSON.stringify(o);
+    if(FB_SNAP[o.id] !== js){ up['orders/'+o.id] = o; ids.push([o.id, js]); n++; }
+  }
+  if(!n) return;
+  sendeUpdate(up, ids);
 }
+/* Kommt das Netz zurück, sofort nachschieben statt auf den Timer warten. */
+window.addEventListener('online', function(){ if(SYNC_OFFEN) syncNochmal(); });
 function bxUpdate(id, fn){
   var a = bxLoad(), i = -1;
   for(var k=0;k<a.length;k++) if(a[k].id===id){ i=k; break; }
@@ -649,12 +718,33 @@ function nextOpenText(id, now){
   return '';
 }
 
+/* =====================================================================
+   AUF / ZU MUSS BEIM SERVER ANKOMMEN
+   ---------------------------------------------------------------------
+   Ob ein Lokal geöffnet ist, entscheidet die Kunden-App aus shops/<id>.
+   Kam dieser eine Schreibvorgang nicht durch, stand hier am Tablet
+   fröhlich "Geöffnet" – und in der Kunden-App blieb das Lokal den ganzen
+   Abend grau. Verlorene Bestellungen, ohne dass jemand etwas merkt.
+   Darum: bei einem Fehler wird der Schalter sichtbar zurückgedreht und
+   das Lokal bekommt eine klare Ansage, statt sich in Sicherheit zu wiegen.
+   ===================================================================== */
 function setShop(open, untilTs){
+  var vorher = SHOP_STATE;
   SHOP_STATE = { open:!!open, until:untilTs||0, t:Date.now(),
                  by:(AUTH_MAIL||''), name:(SHOP?SHOP.name:'') };
   try{ localStorage.setItem(BX_SHOP+'_'+SHOP_ID, JSON.stringify(SHOP_STATE)); }catch(e){}
-  if(FB_OK){ try{ FB_DB.ref('shops/'+SHOP_ID).set(SHOP_STATE); }catch(e){} }
   paintShop();
+  if(!FB_OK) return;
+  var gewollt = SHOP_STATE;
+  FB_DB.ref('shops/'+SHOP_ID).set(SHOP_STATE).catch(function(){
+    if(SHOP_STATE === gewollt){        /* nur zurückdrehen, wenn niemand inzwischen umgestellt hat */
+      SHOP_STATE = vorher;
+      paintShop();
+    }
+    alert('Das hat nicht geklappt – keine Verbindung zum Server.\n\n'+
+          'ACHTUNG: Für die Kunden gilt weiter der alte Zustand. '+
+          'Prüft WLAN oder mobile Daten und tippt noch einmal.');
+  });
 }
 function toggleOpen(){
   if(isOpen(SHOP_STATE)){ setShop(false, 0); toast('⚪ Geschlossen – Kunden können nicht bestellen'); }
@@ -763,7 +853,18 @@ function seitMin(o){
    Der Fahrer fährt schon los, während gekocht wird – das spart bei jeder
    Bestellung die Zeit, die er sonst wartend verliert.
    ===================================================================== */
+/* Doppeltipp-Schutz: im Stress tippt man zweimal. Ohne Sperre laufen
+   dann zwei Schreibvorgänge gleichzeitig los und überschreiben sich. */
+var BUSY = {};
+function gesperrt(id, ms){
+  if(BUSY[id]) return true;
+  BUSY[id] = 1;
+  setTimeout(function(){ delete BUSY[id]; }, ms || 2500);
+  return false;
+}
+
 function annehmen(id){
+  if(gesperrt('a'+id)) return;
   var raus = false;                 /* ging der Auftrag jetzt an die Fahrer raus? */
   bxUpdate(id, function(o){
     var i = myIdx(o); if(i<0) return;
@@ -783,6 +884,7 @@ function annehmen(id){
   render();
 }
 function ablehnen(id, grund){
+  if(gesperrt('r'+id)) return;
   bxUpdate(id, function(o){
     var i = myIdx(o); if(i<0) return;
     o.stops[i].ok = 0; o.stops[i].grund = grund; o.stops[i].okAt = Date.now();
@@ -804,6 +906,7 @@ function ablehnen(id, grund){
    er sieht sofort einen grünen Balken.
    ===================================================================== */
 function fertig(id){
+  if(gesperrt('f'+id)) return;
   bxUpdate(id, function(o){
     var i = myIdx(o); if(i<0) return;
     o.stops[i].fertig = Date.now();

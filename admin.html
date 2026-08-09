@@ -160,6 +160,17 @@ h2.sec em{font-style:normal;color:var(--tx3);text-transform:none;letter-spacing:
   display:inline-block;flex:0 0 auto;font-size:10.5px;font-weight:900;padding:3px 8px;
   border-radius:7px;letter-spacing:.3px;white-space:nowrap;
 }
+
+/* Das ✕ ganz rechts an jeder Zeile: einmal tippen, einmal bestätigen, weg.
+   Absichtlich ein grosses Ziel (38 px) – auf dem Handy trifft man sonst
+   die Zeile darunter und öffnet aus Versehen den Bogen. */
+.row .x{
+  flex:0 0 38px;width:38px;height:38px;border-radius:11px;
+  background:rgba(224,60,60,.12);border:1px solid rgba(224,60,60,.34);
+  color:#FF9E9E;font-size:16px;font-weight:900;line-height:1;
+  display:flex;align-items:center;justify-content:center;margin-left:2px;
+}
+.row .x:active{transform:scale(.92);background:rgba(224,60,60,.28);}
 .pill.on {background:rgba(43,182,115,.16);color:var(--green);border:1px solid rgba(43,182,115,.4);}
 .pill.off{background:rgba(255,255,255,.05);color:var(--tx3);border:1px solid var(--line);}
 .pill.wait{background:rgba(255,184,0,.14);color:var(--yellow);border:1px solid rgba(255,184,0,.4);}
@@ -394,7 +405,7 @@ const ADMIN_EMAILS = ['bestellux1@gmail.com', 'ibrahimi.hafid22@gmail.com'];
 
 /* Steht oben in der Kopfzeile. Zeigt die Seite eine alte Nummer, hat der
    Browser noch die alte Datei – dann Strg+Shift+R oder ?v=… anhängen. */
-const ZENTRALE_VERSION = 'v24';
+const ZENTRALE_VERSION = 'v25';
 
 const FB_CONFIG = {
   apiKey: "AIzaSyBsCEXpAKJwYI3Zg_8XHUE8CeIyjo7zX2c",
@@ -756,11 +767,16 @@ function renderJetzt(){
   if(alarm.length){
     out += '<h2 class="sec">Das braucht dich<em>Tipp eine Zeile an – dann kannst du '+
       'anrufen, freigeben, stornieren oder löschen</em></h2>'+
+      /* Auch hier gehört das ✕ hin. Es ist die Zeile, auf die man zuerst
+         schaut – also muss man sie auch von hier aus wegbekommen, ohne
+         erst in der Liste darunter dieselbe Bestellung zu suchen. */
       alarm.map(function(a){
         return '<div class="row no" style="opacity:1;font-size:13.5px;font-weight:700;'+
           'line-height:1.5'+(a.id?';cursor:pointer':'')+'"'+
           (a.id ? ' onclick="openOrder(\''+esc(a.id)+'\')"' : '')+'>'+
-          a.t + (a.id ? ' <span style="color:var(--tx3)">· '+esc(a.id)+' ›</span>' : '')+
+          '<div class="mid" style="font-weight:700">'+a.t+
+            (a.id ? ' <span style="color:var(--tx3)">· '+esc(a.id)+' ›</span>' : '')+'</div>'+
+          (a.id ? xKnopf(a.id) : '')+
         '</div>';
       }).join('');
   }
@@ -805,6 +821,7 @@ function renderJetzt(){
             (fahrer ? ' · '+esc(fahrer) : '')+' · seit '+dauer(o.at)+'</span>'+
         '</div>'+
         '<div class="rt"><b>'+eur(o.total)+'</b><span>'+esc(o.id.replace('BX-',''))+'</span></div>'+
+        (AUSWAHL ? '' : xKnopf(o.id))+
       '</div>';
     }).join('');
   }
@@ -1074,6 +1091,55 @@ function loeschen(id){
    nach der anderen zu öffnen wäre eine Strafe. Darum: Häkchen setzen,
    einmal löschen.
    ===================================================================== */
+/* =====================================================================
+   DAS ✕ AN DER ZEILE – DER KURZE WEG
+   ---------------------------------------------------------------------
+   Für eine einzelne Zeile soll niemand erst einen Bogen öffnen und darin
+   nach einem Knopf suchen. Tippen, eine Frage, weg.
+   Das stopPropagation ist wichtig: ohne das öffnet der Klick zusätzlich
+   den Detail-Bogen, weil die ganze Zeile anklickbar ist.
+   ===================================================================== */
+function xKnopf(id){
+  return '<button class="x" title="Löschen" '+
+    'onclick="event.stopPropagation();weg(\''+esc(id)+'\')">✕</button>';
+}
+var BUSY = {};
+function weg(id){
+  if(BUSY[id]) return;                       /* zweimal getippt – einmal reicht */
+  if(!confirm('Bestellung '+id+' löschen?')) return;
+  if(!FB_OK){ toast('Keine Verbindung zum Server'); return; }
+  BUSY[id] = 1; setTimeout(function(){ delete BUSY[id]; }, 4000);
+  toast('lösche '+id+' …');
+  FB_DB.ref('orders/'+id).remove()
+    .then(function(){ nachpruefen(id); })
+    .catch(function(err){
+      /* Manche Fälle kommen mit remove() nicht durch – dann derselbe
+         Weg noch einmal als set(null). Klappt auch das nicht, sagen wir
+         WARUM, statt still nichts zu tun. */
+      FB_DB.ref('orders/'+id).set(null)
+        .then(function(){ nachpruefen(id); })
+        .catch(function(e2){
+          alert('Löschen von '+id+' hat nicht geklappt.\n\nGrund vom Server:\n'+
+                ((e2 && e2.message) || (err && err.message) || 'unbekannt')+
+                '\n\nSchick mir diesen Text, dann finde ich die Ursache.');
+        });
+    });
+}
+/* Kontrolle statt Vertrauen: ist die Zeile hinterher wirklich weg? */
+function nachpruefen(id){
+  FB_DB.ref('orders/'+id).once('value').then(function(sn){
+    if(sn.val()){
+      alert('Der Server hat '+id+' NICHT gelöscht.\n\n'+
+            'Das liegt dann an den Firebase-Regeln, nicht an der App. '+
+            'Sag mir Bescheid, dann schauen wir uns die Regeln an.');
+    } else {
+      ORDERS = ORDERS.filter(function(o){ return o.id !== id; });
+      render();
+      toast('🗑 '+id+' ist weg');
+    }
+  }).catch(function(){ toast('🗑 '+id+' gelöscht'); });
+}
+
 var AUSWAHL = false, SEL = {};
 function selAn(){ AUSWAHL = true;  SEL = {}; render(); }
 function selAus(){ AUSWAHL = false; SEL = {}; render(); }
@@ -1277,6 +1343,7 @@ function renderGeld(){
             (o.driver ? ' · '+esc(o.driver.name) : '')+'</span>'+
         '</div>'+
         '<div class="rt"><b>'+eur(o.total)+'</b><span>'+esc(String(o.id).replace('BX-',''))+'</span></div>'+
+        (AUSWAHL ? '' : xKnopf(o.id))+
       '</div>';
     }).join('');
     if(arch.length > 120)
